@@ -190,7 +190,11 @@ Action	*action;
 			case 5:
 			    if (hsolve->ininfo) h_in_msgs(hsolve);
 			    if (hsolve->calcmode) {
+#ifdef USE_OPENCL
+				ocl_chip_update(hsolve);
+#else
 				do_chip_hh4_update(hsolve);
+#endif
 			    } else {
 				do_chip_hh4ni_update(hsolve);
 			    }

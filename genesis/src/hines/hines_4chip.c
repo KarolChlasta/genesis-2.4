@@ -22,3 +22,16 @@ static char rcsid[] = "$Id: hines_4chip.c,v 1.1.1.1 2005/06/14 04:38:32 svitak E
 #include "hines_chip.c"
 #undef CHANMODE4
 #undef SOLVEINTERPOL
+
+/*
+ * ocl_chip_update_dispatch — punkt wejscia dla chanmode 4/5
+ * Jesli skompilowano z -DUSE_OPENCL: uzywa GPU.
+ * W przeciwnym razie: standardowy CPU.
+ */
+#ifdef USE_OPENCL
+#include "opencl/ocl_hsolve.h"
+int ocl_chip_update_dispatch(Hsolve *hsolve)
+{
+    return ocl_chip_update(hsolve);
+}
+#endif

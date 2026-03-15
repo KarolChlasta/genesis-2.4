@@ -103,6 +103,16 @@
 #
 
 CFLAGS 		= 	$(CFLAGS_IN) -D$(MACHINE)
+# Dodaj -DUSE_OPENCL zeby wlaczyc akceleracje GPU
+# Przyklad: make USE_OPENCL=1
+ifdef USE_OPENCL
+CFLAGS		+=	-DUSE_OPENCL -I/usr/include
+OCL_OBJS	=	opencl/ocl_hsolve.o
+OCL_LIBS	=	-lOpenCL
+else
+OCL_OBJS	=
+OCL_LIBS	=
+endif
 INSTALL_LIB 	= 	$(INSTALLDIR)/lib
 INSTALL_INCLUDE	= 	$(INSTALLDIR)/include
 INSTALL_STARTUP	= 	$(INSTALLDIR)/startup
@@ -123,6 +133,7 @@ default: $(TARGET_OBJ)
 
 
 OBJECTS =	\
+		$(OCL_OBJS) \
 		hines.o \
 		hines_init.o \
 		hh_init.o \
@@ -182,8 +193,11 @@ $(LIBRARY_NAME)_l@.c : $(LIBRARY_NAME)_g@.c $(LIBRARY_NAME)_d@.c $(OBJECTS)
 SYMBOLTAB = $(LIBRARY_NAME)_d@.o $(LIBRARY_NAME)_g@.o $(LIBRARY_NAME)_l@.o
 
 $(TARGET_OBJ): $(SYMBOLTAB) $(OBJECTS)
-	$(LIBBUILD) $(LIBBUILDFLAGS) $(TARGET_OBJ) $(OBJECTS) $(SYMBOLTAB)
+	$(LIBBUILD) $(LIBBUILDFLAGS) $(TARGET_OBJ) $(OBJECTS) $(SYMBOLTAB) $(OCL_LIBS)
 	$(LIBORDER) $(TARGET_OBJ)
+
+opencl/ocl_hsolve.o: opencl/ocl_hsolve.c opencl/ocl_hsolve.h
+	$(CC) $(CFLAGS) $(SIMINCLUDE) -I. opencl/ocl_hsolve.c -c -o opencl/ocl_hsolve.o
 
 install:
 	-cp $(TARGET_OBJ) $(INSTALL_LIB)
