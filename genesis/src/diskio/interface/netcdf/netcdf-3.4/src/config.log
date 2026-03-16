@@ -1,0 +1,32 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:1020: gcc -c -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DNDEBUG conftest.c 1>&5
+configure:2084: gcc -o conftest -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DNDEBUG  conftest.c -lc  -lfl  -lm 1>&5
+configure:2076:6: warning: conflicting types for built-in function 'tanh'; expected 'double(double)' [-Wbuiltin-declaration-mismatch]
+ 2076 | char tanh();
+      |      ^~~~
+configure:2075:1: note: 'tanh' is declared in header '<math.h>'
+ 2074 | #include "confdefs.h"
+  +++ |+#include <math.h>
+ 2075 | /* Override any gcc2 internal prototype to avoid an error.  */
+/usr/lib/gcc/x86_64-unknown-linux-gnu/15.2.0/../../../../x86_64-unknown-linux-gnu/bin/ld: /usr/lib/gcc/x86_64-unknown-linux-gnu/15.2.0/../../../x86_64-linux-gnu/libfl.so: undefined reference to `yylex'
+collect2: error: ld returned 1 exit status
+configure:2118: gcc -o conftest -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DNDEBUG  conftest.c -lm  -lfl  -lm 1>&5
+configure:2110:6: warning: conflicting types for built-in function 'tanh'; expected 'double(double)' [-Wbuiltin-declaration-mismatch]
+ 2110 | char tanh();
+      |      ^~~~
+configure:2109:1: note: 'tanh' is declared in header '<math.h>'
+ 2108 | #include "confdefs.h"
+  +++ |+#include <math.h>
+ 2109 | /* Override any gcc2 internal prototype to avoid an error.  */
+/usr/lib/gcc/x86_64-unknown-linux-gnu/15.2.0/../../../../x86_64-unknown-linux-gnu/bin/ld: /usr/lib/gcc/x86_64-unknown-linux-gnu/15.2.0/../../../x86_64-linux-gnu/libfl.so: undefined reference to `yylex'
+collect2: error: ld returned 1 exit status
+configure:2213: cpp -P -DNDEBUG conftest.c >/dev/null 2>conftest.out
+configure:2247: cpp -P -DNDEBUG conftest.c >/dev/null 2>conftest.out
+configure:2297: gcc -o conftest -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DNDEBUG  conftest.c -lfl  -lm 1>&5
+/usr/lib/gcc/x86_64-unknown-linux-gnu/15.2.0/../../../../x86_64-unknown-linux-gnu/bin/ld: /usr/lib/gcc/x86_64-unknown-linux-gnu/15.2.0/../../../x86_64-linux-gnu/libfl.so: undefined reference to `yylex'
+collect2: error: ld returned 1 exit status
+configure:2331: gcc -o conftest -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DNDEBUG  conftest.c -lfl  -lm 1>&5
+/usr/lib/gcc/x86_64-unknown-linux-gnu/15.2.0/../../../../x86_64-unknown-linux-gnu/bin/ld: /usr/lib/gcc/x86_64-unknown-linux-gnu/15.2.0/../../../x86_64-linux-gnu/libfl.so: undefined reference to `yylex'
+collect2: error: ld returned 1 exit status

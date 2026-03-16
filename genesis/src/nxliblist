@@ -1,0 +1,25 @@
+# nxliblist - This file is generated automatically.
+#             DO NOT EDIT unless you are sure you
+#             know what you are doing.  Generally
+#             Makefile should be edited instead.
+output
+hh
+devices
+buffer
+segment
+user
+olf
+tools
+concen
+hines
+param
+pore
+newconn
+diskio
+axon
+synapse
+personal
+toolconn
+simconn
+kin
+chem
