@@ -151,7 +151,7 @@ CODE_G_OBJ = code_g.o \
 	     utillib.$(LIBEXT)
 
 code_g: $(CODE_G_OBJ)
-	$(CC) $(CFLAGS) $(CODE_G_LFLAGS) $(CODE_G_OBJ) $(LEXLIB) $(TERMCAP) $(LIBS)  -o code_g
+	$(CC) $(CFLAGS) $(CODE_G_LFLAGS) $(CODE_G_OBJ) $(LEXLIB) $(TERMCAP) $(LIBS) -lncurses -o code_g
 
 .SUFFIXES: .c,v .c .h,v .h
 

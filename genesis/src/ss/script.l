@@ -496,8 +496,8 @@ yyleng = ptr-yytext;
 }
 #endif
  
-#if defined(i860) || defined(machten)
-yywrap()
+#if defined(i860) || defined(machten) || defined(Linux) || defined(__linux__)
+int yywrap()
 {
 return 1;
 }

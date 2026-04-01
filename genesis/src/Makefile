@@ -265,22 +265,19 @@ CC=gcc
 CPP=cpp -P
 
 ## 64-bit
-CFLAGS=-O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion
+CFLAGS=-O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include
 
 LD=ld
 
 RANLIB=ranlib
 AR=ar
 
-YACC=bison -y
+YACC=bison -y -Wno-yacc
 LEX=flex -l
-# -lfl na nowszych systemach nie zawiera yywrap — dodajemy go recznie
 LEXLIB=-lfl
-CODE_G_LFLAGS=-Wl,--wrap=yywrap
 
 LIBS= $(LEXLIB) $(GCMALLOCLIB) -lm
 
-# ncurses dostarcza tgetent/tgetstr wymaganych przez code_g
 TERMCAP=-lncurses -ltinfo
 TERMOPT=-DTERMIO -DDONT_USE_SIGIO
 
