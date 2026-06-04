@@ -25,7 +25,13 @@ genesis/src/**/lib*.a
 genesis/src/nxgenesis
 genesis/src/nxloadlib.c
 genesis/src/nxloadlib.o
+genesis/src/loadlib.c
+genesis/src/liblist
+genesis/src/genesis
 genesis/nxgenesis
+genesis/genesis
+genesis/src/diskio/interface/netcdf/netcdf-3.4/src/confdefs.h
+genesis/src/diskio/interface/netcdf/netcdf-3.4/src/libsrc/ncconfig.h
 genesis/bin/
 genesis/lib/
 genesis/include/
