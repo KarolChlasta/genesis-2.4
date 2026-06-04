@@ -278,7 +278,7 @@ LEXLIB=-lfl
 
 LIBS= $(LEXLIB) $(GCMALLOCLIB) -lm
 
-TERMCAP=-lncurses -ltinfo
+TERMCAP=-lncurses -ltinfo -lOpenCL
 TERMOPT=-DTERMIO -DDONT_USE_SIGIO
 
 ## end	Linux 1.2.x and up on Intel x86-based systems

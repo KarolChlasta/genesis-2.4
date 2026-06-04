@@ -52,10 +52,10 @@ static void build_comp_index(Hsolve *hsolve,
     int *opstart   = (int *)malloc(n * sizeof(int));
     int *chipstart = (int *)malloc(n * sizeof(int));
     int *cpu_only  = (int *)calloc(n, sizeof(int));
-
+    int c;
     int op_i = 0, chip_i = 0;
 
-    for (int c = 0; c < n; c++) {
+    for (c = 0; c < n; c++) {
         opstart[c]   = op_i;
         chipstart[c] = chip_i;
         chip_i += 2; /* Em/Rm + inject */
@@ -134,13 +134,15 @@ int ocl_init(Hsolve *hsolve)
     }
 
     /* szukamy pliku .cl w kilku miejscach */
+    {
     const char *cl_paths[] = {
         "opencl/ocl_channel.cl",
         "genesis/src/hines/opencl/ocl_channel.cl",
         NULL
     };
+    int i;
     char *src = NULL;
-    for (int i = 0; cl_paths[i]; i++) {
+    for (i = 0; cl_paths[i]; i++) {
         src = load_kernel_source(cl_paths[i]);
         if (src) break;
     }
@@ -152,6 +154,7 @@ int ocl_init(Hsolve *hsolve)
     ocl_state.program = clCreateProgramWithSource(ocl_state.context, 1,
                             (const char **)&src, NULL, &err);
     free(src);
+    } /* end cl_paths block */
     if (err != CL_SUCCESS) {
         fprintf(stderr, "OCL: clCreateProgram (%d)\n", err);
         return -1;

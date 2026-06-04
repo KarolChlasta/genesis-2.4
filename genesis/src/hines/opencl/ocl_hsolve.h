@@ -4,7 +4,8 @@
 #ifdef USE_OPENCL
 
 #include <CL/cl.h>
-#include "../hines_struct.h"
+/* hines_struct.h included via hines_ext.h — do not include directly */
+typedef struct hsolve_type Hsolve;
 
 typedef struct {
     cl_context       context;
