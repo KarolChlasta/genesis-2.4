@@ -178,13 +178,34 @@ int ocl_init(Hsolve *hsolve)
         return -1;
     }
 
-    /* alokacja buforow GPU */
-    int n  = hsolve->ncompts;
-    int nc = hsolve->nchips;
-    int no = hsolve->nops;
-    int nt = (hsolve->xdivs + 1) * hsolve->ncols;
-    int nx = hsolve->xdivs + 2;
-    int ns = hsolve->sntab * 6;
+    /* alokacja buforow GPU — wszystkie zmienne deklarowane na poczatku bloku (C89) */
+    {
+    int n   = hsolve->ncompts;
+    int nc  = hsolve->nchips;
+    int no  = hsolve->nops;
+    int nt  = (hsolve->xdivs > 0 && hsolve->ncols > 0)
+              ? (hsolve->xdivs + 1) * hsolve->ncols : 1;
+    int nx  = (hsolve->xdivs > 0) ? hsolve->xdivs + 2 : 1;
+    int ns  = hsolve->sntab * 6;
+    int ncols = hsolve->ncols;
+    int xdivs = hsolve->xdivs;
+    double xmin  = hsolve->xmin;
+    double invdx = hsolve->invdx;
+    int *opstart, *chipstart, *cpu_only;
+    cl_mem buf_opstart, buf_chipstart;
+    /* dummy tablica gdy brak tabeli — kernel nie bedzie jej uzywac */
+    double dummy = 0.0;
+
+    fprintf(stderr, "OCL: init n=%d nc=%d no=%d nt=%d nx=%d\n", n, nc, no, nt, nx);
+    fprintf(stderr, "OCL: tablist=%p xvals=%p ops=%p xdivs=%d ncols=%d\n",
+            (void*)hsolve->tablist, (void*)hsolve->xvals,
+            (void*)hsolve->ops, hsolve->xdivs, hsolve->ncols);
+    fflush(stderr);
+    if (n <= 0 || nc <= 0 || no <= 0) {
+        fprintf(stderr, "OCL: hsolve nie zainicjalizowany (n=%d nc=%d no=%d)\n",
+                n, nc, no);
+        return -1;
+    }
 
     ocl_state.buf_vm      = clCreateBuffer(ocl_state.context,
                                 CL_MEM_READ_ONLY,  n*sizeof(double),  NULL, &err);
@@ -203,24 +224,28 @@ int ocl_init(Hsolve *hsolve)
                                      CL_MEM_READ_ONLY, ns*sizeof(double), NULL, &err);
 
     /* buduj indeksy i uploaduj dane statyczne (tabele, ops) — tylko raz */
-    int *opstart, *chipstart, *cpu_only;
     build_comp_index(hsolve, &opstart, &chipstart, &cpu_only);
 
-    cl_mem buf_opstart = clCreateBuffer(ocl_state.context,
-                             CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                             n*sizeof(int), opstart, &err);
-    cl_mem buf_chipstart = clCreateBuffer(ocl_state.context,
-                               CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                               n*sizeof(int), chipstart, &err);
+    buf_opstart = clCreateBuffer(ocl_state.context,
+                      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                      n*sizeof(int), opstart, &err);
+    buf_chipstart = clCreateBuffer(ocl_state.context,
+                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                        n*sizeof(int), chipstart, &err);
     free(opstart); free(chipstart); free(cpu_only);
 
-    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_tablist, CL_TRUE,
-                         0, nt*sizeof(double), hsolve->tablist, 0, NULL, NULL);
-    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_xvals, CL_TRUE,
-                         0, nx*sizeof(double), hsolve->xvals, 0, NULL, NULL);
+    /* upload tabel — uzyj dummy jesli brak tabchannels */
+    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_tablist, CL_TRUE, 0,
+        nt*sizeof(double),
+        (hsolve->tablist && hsolve->xdivs > 0) ? hsolve->tablist : &dummy,
+        0, NULL, NULL);
+    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_xvals, CL_TRUE, 0,
+        nx*sizeof(double),
+        (hsolve->xvals && hsolve->xdivs > 0) ? hsolve->xvals : &dummy,
+        0, NULL, NULL);
     clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_ops, CL_TRUE,
                          0, no*sizeof(int), hsolve->ops, 0, NULL, NULL);
-    if (ns > 0)
+    if (ns > 0 && hsolve->stablist)
         clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_stablist, CL_TRUE,
                              0, ns*sizeof(double), hsolve->stablist, 0, NULL, NULL);
 
@@ -233,10 +258,10 @@ int ocl_init(Hsolve *hsolve)
     clSetKernelArg(ocl_state.kernel,  5, sizeof(cl_mem), &ocl_state.buf_ops);
     clSetKernelArg(ocl_state.kernel,  6, sizeof(cl_mem), &buf_opstart);
     clSetKernelArg(ocl_state.kernel,  7, sizeof(cl_mem), &buf_chipstart);
-    clSetKernelArg(ocl_state.kernel,  8, sizeof(int),    &hsolve->ncols);
-    clSetKernelArg(ocl_state.kernel,  9, sizeof(int),    &hsolve->xdivs);
-    clSetKernelArg(ocl_state.kernel, 10, sizeof(double), &hsolve->xmin);
-    clSetKernelArg(ocl_state.kernel, 11, sizeof(double), &hsolve->invdx);
+    clSetKernelArg(ocl_state.kernel,  8, sizeof(int),    &ncols);
+    clSetKernelArg(ocl_state.kernel,  9, sizeof(int),    &xdivs);
+    clSetKernelArg(ocl_state.kernel, 10, sizeof(double), &xmin);
+    clSetKernelArg(ocl_state.kernel, 11, sizeof(double), &invdx);
 
     ocl_state.ncompts     = n;
     ocl_state.nchips      = nc;
@@ -244,6 +269,7 @@ int ocl_init(Hsolve *hsolve)
     ocl_state.initialized = 1;
 
     printf("OCL: gotowy (%d kompartmentow, %d chips)\n", n, nc);
+    } /* end alokacja */
     return 0;
 }
 
@@ -260,6 +286,8 @@ int ocl_init(Hsolve *hsolve)
  */
 int ocl_chip_update(Hsolve *hsolve)
 {
+    fprintf(stderr, "OCL: ocl_chip_update wywolany, initialized=%d\n", ocl_state.initialized);
+    fflush(stderr);
     if (!ocl_state.initialized) {
         if (ocl_init(hsolve) != 0)
             return do_chip_hh4_update(hsolve);
