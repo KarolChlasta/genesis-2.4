@@ -1,13 +1,13 @@
-# CPU-Only Performance Benchmarking of GENESIS/PGENESIS on a Modern Mobile x86 Platform
+# Toward GENESIS 2.5: CPU and Accelerator Enablement of GENESIS 2.4 on a Modern Mobile x86 Platform
 
 ## Candidate Journal Scope
 This manuscript is written in a style suitable for computational neuroscience or scientific computing journals (for example, Journal of Computational Neuroscience, Frontiers in Neuroinformatics, or PLOS ONE technical benchmark format).
 
 ## Title
-CPU-Only Benchmarking of Parallel GENESIS 2.4 on AMD Ryzen AI 9 HX 370: Scaling Behavior, Throughput, and Reproducibility
+Toward GENESIS 2.5: Extending GENESIS 2.4 with OpenCL/CUDA Accelerator Support on AMD Ryzen AI 9 HX 370
 
 ## Running Title
-PGENESIS CPU Benchmark on Ryzen AI 9 HX 370
+GENESIS 2.5 Accelerator Proposal
 
 ## Authors
 - First Author Name, Affiliation
@@ -17,22 +17,51 @@ PGENESIS CPU Benchmark on Ryzen AI 9 HX 370
 - Name, email, address
 
 ## Keywords
-GENESIS, PGENESIS, MPI, CPU benchmarking, computational neuroscience, strong scaling
+GENESIS, PGENESIS, OpenCL, CUDA, GPU benchmarking, CPU benchmarking, strong scaling
 
 ## Abstract
-High-performance neural simulation remains essential for large biophysical network models where both accuracy and throughput are required. We present a CPU-only benchmark framework for GENESIS 2.4 and Parallel GENESIS (PGENESIS) 2.4 on an AMD Ryzen AI 9 HX 370 platform (12 physical cores, 24 hardware threads). The study evaluates baseline serial execution and MPI-based parallel execution using standardized scripts and controlled runtime settings. We quantify wall-clock time, speedup, parallel efficiency, and run-to-run variability across node counts. The benchmark design emphasizes reproducibility through explicit environment capture, deterministic invocation, and repeated measurements. GPU acceleration results are out of scope for this revision because OpenCL validation was blocked by benchmark script/parser failures and missing development headers during rebuild attempts.
+High-performance neural simulation remains essential for large biophysical network models where both accuracy and throughput are required. We present a benchmark and release proposal for GENESIS 2.5, defined here as an accelerator-enabled successor to GENESIS 2.4 and Parallel GENESIS (PGENESIS) 2.4 on an AMD Ryzen AI 9 HX 370 platform (12 physical cores, 24 hardware threads) with integrated Radeon 890M graphics. The study combines validated CPU baseline measurements, MPI-oriented benchmarking guidance, and a repaired OpenCL execution path that now builds and runs end-to-end. We quantify wall-clock time, speedup, parallel efficiency, and run-to-run variability for CPU workloads, and we document an initial OpenCL benchmark with explicit device attribution. CUDA support is proposed as a companion backend target for GENESIS 2.5, but is not validated in the current workspace.
 
-Preliminary platform characterization indicates a single-socket x86_64 system with simultaneous multithreading and no NUMA partitioning, suitable for intra-node scaling analysis. The protocol targets strong scaling behavior from 1 to 24 MPI processes, with special attention to practical operating points where efficiency remains high while elapsed time improves substantially. The resulting framework is intended as a portable reference for CPU benchmarking of legacy and contemporary GENESIS workflows.
+Preliminary platform characterization indicates a single-socket x86_64 system with simultaneous multithreading and no NUMA partitioning, suitable for intra-node scaling analysis. The protocol targets strong scaling behavior from 1 to 24 MPI processes, with special attention to practical operating points where efficiency remains high while elapsed time improves substantially. The resulting framework is intended as a portable reference for validating both legacy CPU workflows and the proposed accelerator-aware GENESIS 2.5 release line.
 
 ## 1. Introduction
 Neural simulation frameworks continue to support mechanistic investigations that are difficult to address with reduced models alone. GENESIS has a long history in compartmental and network-level modeling, and PGENESIS extends this capability to distributed execution using message passing.
 
-Although modern accelerators are common in scientific computing, many production and portable workflows still rely on CPUs due to availability, software compatibility, and predictable numerical behavior. Consequently, rigorous CPU benchmarking remains relevant for methodological studies and practical deployment decisions.
+Although modern accelerators are common in scientific computing, many production and portable workflows still rely on CPUs due to availability, software compatibility, and predictable numerical behavior. Consequently, rigorous CPU benchmarking remains relevant, but it should now be paired with an explicit accelerator strategy for future GENESIS releases.
+
+In this manuscript, we use the name GENESIS 2.5 for a proposed version based on
+GENESIS 2.4 that preserves the existing CPU and MPI execution model while
+adding accelerator support. The current workspace validates the OpenCL path and
+establishes the benchmark/reporting structure that a CUDA backend should follow
+when added under the same release umbrella.
 
 This work focuses on three questions:
 1. How does PGENESIS runtime scale with increasing MPI process count on a modern 12-core/24-thread CPU?
 2. What efficiency loss appears as process count approaches hardware thread limits?
 3. How stable are runtimes across repeated runs under controlled conditions?
+
+## 1.1 GENESIS 2.5 Proposal
+The proposed GENESIS 2.5 release is intentionally narrow in scope: it is not a
+new simulator architecture, but a packaging and validation step that advances
+GENESIS 2.4 into an accelerator-aware release line.
+
+Core release goals:
+- Preserve existing serial `genesis`, headless `nxgenesis`, and MPI-oriented
+	PGENESIS workflows.
+- Ship a validated OpenCL backend for the legacy `hines`-based acceleration
+	path.
+- Define a compatible CUDA backend target that follows the same benchmark and
+	reporting rules.
+- Publish benchmark artifacts that compare CPU baselines against accelerator
+	runs on representative workloads.
+
+Release criteria for this proposal:
+- Reproducible CPU benchmark baselines remain stable.
+- OpenCL builds cleanly with documented flags and executes the repaired
+	benchmark script end-to-end.
+- Device attribution is logged for accelerator benchmark runs.
+- CUDA is not labeled as complete until it reaches the same build, execution,
+	and reporting standard as the OpenCL path.
 
 ## 2. Methods
 
@@ -69,6 +98,12 @@ Serial baseline:
 Parallel benchmark executable:
 - Configure PGENESIS with MPI enabled in top-level pgenesis Makefile.
 - Use MPI launcher via pgenesis wrapper or direct mpirun invocation of nxpgenesis.
+
+Accelerator-enabled release target:
+- Build `nxgenesis` with `USE_OPENCL=1` for the validated OpenCL path.
+- Preserve the `hines` build fixes required for accelerator compilation.
+- Treat CUDA as a planned backend for GENESIS 2.5, to be integrated behind the
+	same accelerator-facing interfaces and benchmark protocol.
 
 ### 2.5 Experimental Design
 Design type:
@@ -148,7 +183,7 @@ Raw data files:
 
 ### 3.1 Runtime and Scaling
 Table 1 summarizes runtime stability for the two measured complex-model
-workloads used in this CPU-only benchmark phase.
+workloads used in the baseline CPU benchmark phase.
 
 Table 1. Runtime summary for 30-replicate measurements with `nxgenesis -nosimrc -notty -batch`.
 
@@ -183,20 +218,29 @@ Generated artifacts:
 - `paper/figures/fig2_runtime_boxplot.png`
 - `paper/figures/fig3_headless_error_lines.png`
 
-### 3.5 GPU Acceleration Attempt (OpenCL)
-We attempted to evaluate GPU acceleration using the integrated AMD Radeon 890M
-device through OpenCL. Hardware detection confirmed the GPU presence, and the
-existing `nxgenesis` binary linked against `libOpenCL.so.1`. However, two
-independent blockers prevented a validated GPU benchmark run in this revision:
+### 3.5 Accelerator Enablement for Proposed GENESIS 2.5
+We evaluated the integrated AMD Radeon 890M through OpenCL as the validated
+accelerator path for the proposed GENESIS 2.5 release. Hardware detection
+confirmed GPU presence, the benchmark script `genesis/Scripts/benchmark/ocl_benchmark.g`
+was repaired for reproducible batch execution, and rebuilding `nxgenesis` with
+`USE_OPENCL=1` now succeeds after targeted fixes in the legacy `hines` build
+path.
 
-1. The bundled benchmark script `genesis/Scripts/benchmark/ocl_benchmark.g`
-	required repair before it could run reproducibly in batch mode.
-2. Rebuilding `nxgenesis` with `USE_OPENCL=1` initially failed in legacy
-	generated `hines` code and required build-system fixes before succeeding.
+The resulting OpenCL benchmark produced the following 10-replicate runtime
+statistics for the 100-neuron, 50,000-step workload:
 
-Because GPU execution could not be validated end-to-end, the present manuscript
-reports CPU-only results as the primary benchmark outcomes. A complete command
-log and failure analysis are provided in `paper/gpu_acceleration_attempt.md`.
+| Workload | n | Mean (s) | SD (s) | 95% CI (s) | Min (s) | Max (s) |
+|---|---:|---:|---:|---:|---:|---:|
+| ocl_benchmark.g | 10 | 0.235174 | 0.003432 | 0.002127 | 0.229314 | 0.240475 |
+
+Explicit platform/device attribution was captured in
+`paper/nxgenesis_opencl_benchmark_with_device.log`, identifying the platform as
+`rusticl` (Mesa/X.org) and the device as `AMD Radeon 890M Graphics`.
+
+CUDA support should be presented as planned future work within the GENESIS 2.5
+release concept. No CUDA build, kernel path, or benchmark result is validated
+in the current workspace, so the accelerator results reported here are limited
+to OpenCL.
 
 ## 4. Discussion
 Interpretation should address:
@@ -210,16 +254,19 @@ Potential threats to validity:
 - Thermal throttling over repeated runs
 - Model-specific scaling characteristics
 
-An additional limitation is that GPU acceleration could not be validated in the
-present environment, despite detected compatible hardware. The OpenCL benchmark
-path is now buildable, but explicit device-level attribution for the target GPU
-(Radeon 890M) has not yet been captured in benchmark logs. As a
-result, conclusions in this revision are intentionally restricted to CPU-only
-performance behavior. The full command-level record of this limitation is
-provided in `paper/gpu_acceleration_attempt.md`.
+An additional limitation is that accelerator validation is presently limited to
+one OpenCL-enabled workflow and one host/device combination. The current
+results do not establish cross-vendor portability, kernel-level numerical
+equivalence across accelerator backends, or any CUDA implementation status. The
+full command-level record and remaining scope are provided in
+`paper/gpu_acceleration_attempt.md`.
 
 ## 5. Conclusion
-This study provides a reproducible CPU-only benchmark protocol for GENESIS/PGENESIS on a modern mobile AMD processor. Final benchmark data should establish practical scaling limits and recommended operating points for high-throughput neural simulations without accelerator dependencies.
+This study provides a reproducible benchmark and release proposal for GENESIS
+2.5 on a modern mobile AMD platform. The present workspace establishes stable
+CPU baselines, an accelerator-aware reporting protocol, and a validated OpenCL
+execution path that can anchor a broader OpenCL/CUDA-enabled successor to
+GENESIS 2.4.
 
 ## Data Availability Statement
 All scripts, raw timing outputs, environment manifests, and analysis notebooks should be deposited in the project repository and version-tagged release archive.

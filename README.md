@@ -18,6 +18,25 @@ that has now been packaged as 'genesis-pgenesis-2.4-05-2019.tar.gz' on the
 GENESIS web site http://genesis-sim.org/GENESIS. Further updates to GENESIS
 and PGENESIS will continue to appear here.
 
+Proposed GENESIS 2.5
+--------------------
+
+This workspace also contains an in-repository proposal for a GENESIS 2.5
+release, defined as GENESIS 2.4 plus first-class accelerator support while
+preserving the established CPU and MPI workflows.
+
+Current status in this repository:
+
+- CPU baseline benchmarking is documented for `nxgenesis` workloads.
+- The OpenCL path has been repaired and validated in-workspace for an AMD
+	Radeon 890M device.
+- CUDA support is part of the proposed GENESIS 2.5 scope, but is not yet
+	implemented or validated in this repository state.
+
+Paper and benchmark artifacts for this proposal are in the `paper` directory,
+including `manuscript_genesis_2_5_proposal.md`, `benchmark_run_protocol.md`,
+and `gpu_acceleration_attempt.md`.
+
 The May 2019 Update
 -------------------
 

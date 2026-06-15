@@ -1,7 +1,10 @@
-# GPU Acceleration Attempt Log (OpenCL)
+# Accelerator Enablement Log for Proposed GENESIS 2.5
 
 ## Objective
-Attempt to execute GENESIS with GPU acceleration on AMD Radeon 890M via OpenCL.
+Document the accelerator enablement status for a proposed GENESIS 2.5 release,
+defined as GENESIS 2.4 plus first-class accelerator support. The validated path
+in this workspace is OpenCL on AMD Radeon 890M; CUDA is part of the proposed
+release scope but is not validated here.
 
 ## Environment Observations
 - GPU detected:
@@ -9,7 +12,7 @@ Attempt to execute GENESIS with GPU acceleration on AMD Radeon 890M via OpenCL.
 - Existing `nxgenesis` linkage includes OpenCL runtime library:
   - `libOpenCL.so.1 => /usr/lib/x86_64-linux-gnu/libOpenCL.so.1`
 
-## Attempt 1: Run Bundled OpenCL Benchmark Script
+## Step 1: Run Bundled OpenCL Benchmark Script
 Command shape:
 - `genesis/src/nxgenesis -nosimrc -notty -batch genesis/Scripts/benchmark/ocl_benchmark.g 100`
 
@@ -22,7 +25,7 @@ Outcome (after repair in current workspace):
   the same 100-neuron case (with external wall-clock timing).
 - This removed script parsing as the primary GPU-path blocker.
 
-## Attempt 2: Rebuild `nxgenesis` with OpenCL Compile Flag
+## Step 2: Rebuild `nxgenesis` with OpenCL Compile Flag
 Command shape:
 - `make nxgenesis USE_OPENCL=1 NETCDFSUBDIR= NETCDFOBJ= NETCDFFLAGS= DISKIOSUBDIR=FMT1`
 
@@ -49,7 +52,9 @@ Interpretation:
   - device type: `GPU`
 
 ## Reproducibility Notes
-To complete GPU build and rerun benchmark, install OpenCL headers/dev package for the host distro (for example OpenCL ICD development headers), then rebuild with `USE_OPENCL=1`.
+To reproduce the validated OpenCL build and rerun the benchmark, install the
+OpenCL headers/dev package for the host distro if needed, then rebuild with
+`USE_OPENCL=1`.
 
 Recommended verification after install:
 1. Preserve the repaired benchmark script path (already validated).
@@ -58,8 +63,10 @@ Recommended verification after install:
   explicit platform/device attribution.
 
 ## Reporting Statement (for manuscript)
-GPU acceleration was attempted and the OpenCL build path was unblocked:
-`nxgenesis USE_OPENCL=1` now compiles and runs the repaired benchmark script
-with OpenCL-linked symbols present in the executable. Explicit platform/device
+Accelerator enablement now supports an evidence-based GENESIS 2.5 proposal:
+`nxgenesis USE_OPENCL=1` compiles and runs the repaired benchmark script with
+OpenCL-linked symbols present in the executable. Explicit platform/device
 attribution was captured via probe+benchmark logging, identifying a GPU device
-named `AMD Radeon 890M Graphics` on platform `rusticl`.
+named `AMD Radeon 890M Graphics` on platform `rusticl`. CUDA remains future
+work within the proposed GENESIS 2.5 scope and should not be reported as a
+validated backend from the current workspace.

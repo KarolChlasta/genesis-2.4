@@ -1,13 +1,25 @@
-# CPU Benchmark Run Protocol for GENESIS/PGENESIS
+# Benchmark and Release Protocol for Proposed GENESIS 2.5
 
 ## Objective
-Produce reproducible strong-scaling data for CPU-only execution on AMD Ryzen AI 9 HX 370.
+Produce reproducible CPU and accelerator benchmark data for a proposed
+GENESIS 2.5 release, defined here as GENESIS 2.4 with accelerator support
+extended and packaged as the next version.
 
 ## Scope
 - Serial baseline: nxgenesis
 - Parallel runs: nxpgenesis (MPI)
+- Accelerator run: OpenCL-enabled nxgenesis on Radeon 890M
+- Forward-compatible release target: CUDA backend under the same accelerator
+   support umbrella for GENESIS 2.5
 - Process counts: 1, 2, 4, 6, 8, 12, 16, 20, 24
 - Replicates: 10 per process count after 1 warm-up
+
+## Release Naming Note
+For the manuscript and benchmark artifacts in this workspace, "GENESIS 2.5"
+refers to the proposed successor to GENESIS 2.4 that retains the existing CPU
+and MPI workflows while adding first-class accelerator support. The OpenCL path
+is the validated implementation in the current workspace; CUDA is included as a
+release target and compatibility goal, not as a validated result from this host.
 
 ## Pre-Run Checklist
 1. Confirm GENESIS and PGENESIS are built successfully.
@@ -50,6 +62,7 @@ Compute and report:
 - Speedup S_N = T_1 / T_N
 - Efficiency E_N = S_N / N
 - 95% CI of T_N
+- Accelerator/runtime comparison against the serial CPU baseline where relevant
 
 ## Executed Complex-Model Baseline (Current Workspace)
 - Executable: genesis/src/nxgenesis
@@ -107,19 +120,21 @@ This generates:
 - figures/fig2_runtime_boxplot.png
 - figures/fig3_headless_error_lines.png
 
-## GPU Attempt Record
-The OpenCL/GPU acceleration attempt, executed commands, and failure causes are
-documented in:
+## Accelerator Enablement Record for Proposed GENESIS 2.5
+The accelerator enablement log, executed commands, and remaining backend scope
+for the proposed GENESIS 2.5 release are documented in:
 
 - paper/gpu_acceleration_attempt.md
 
 Summary:
-- GPU hardware is present and OpenCL runtime library is available.
+- GPU hardware is present and the OpenCL runtime path is available.
 - The bundled `ocl_benchmark.g` script was repaired and now runs in batch mode.
 - OpenCL-enabled `nxgenesis` rebuild now succeeds after regenerating stale
    `hines` generated artifacts and patching the `hines` partial-link rule.
 - Explicit device-level attribution is now captured with a minimal probe and
    combined benchmark log artifact.
+- CUDA should be described as a planned GENESIS 2.5 backend target; no CUDA
+   build or benchmark result is validated in this workspace.
 
 Attribution artifact:
 - Probe source: `paper/opencl_probe.c`
@@ -131,7 +146,7 @@ Attribution artifact:
    - device_vendor: AMD
    - device_type: GPU
 
-## Repaired OpenCL-Benchmark Script (Current Workspace)
+## OpenCL Benchmark Baseline for Proposed GENESIS 2.5
 - Executable: genesis/genesis
 - Model script: genesis/Scripts/benchmark/ocl_benchmark.g
 - Workload: 100 neurons, 50000 steps

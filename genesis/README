@@ -35,6 +35,13 @@ simulation runs. Updates of GENESIS since the 2014 release allow the
 fast "hsolve" solver to be used with new synaptic plasticity models
 and electric field measurements.
 
+Proposed GENESIS 2.5 follow-on work in the current repository extends this
+continued-development branch with accelerator-oriented benchmarking and build
+validation. In this proposal, GENESIS 2.5 means GENESIS 2.4 plus accelerator
+support that preserves the established CPU and MPI workflows. The validated
+accelerator path in the current workspace is OpenCL; CUDA remains planned
+future work rather than a completed backend.
+
 If you would like to run large-scale GENESIS models on supercomputers
 such as those at the Neuroscience Gateway Portal (https://www.nsgportal.org/),
 be sure to read the documentation in the genesis-2.4/pgenesis directory.
