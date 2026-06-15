@@ -20,7 +20,7 @@ PGENESIS CPU Benchmark on Ryzen AI 9 HX 370
 GENESIS, PGENESIS, MPI, CPU benchmarking, computational neuroscience, strong scaling
 
 ## Abstract
-High-performance neural simulation remains essential for large biophysical network models where both accuracy and throughput are required. We present a CPU-only benchmark framework for GENESIS 2.4 and Parallel GENESIS (PGENESIS) 2.4 on an AMD Ryzen AI 9 HX 370 platform (12 physical cores, 24 hardware threads). The study evaluates baseline serial execution and MPI-based parallel execution using standardized scripts and controlled runtime settings. We quantify wall-clock time, speedup, parallel efficiency, and run-to-run variability across node counts. The benchmark design emphasizes reproducibility through explicit environment capture, deterministic invocation, and repeated measurements.
+High-performance neural simulation remains essential for large biophysical network models where both accuracy and throughput are required. We present a CPU-only benchmark framework for GENESIS 2.4 and Parallel GENESIS (PGENESIS) 2.4 on an AMD Ryzen AI 9 HX 370 platform (12 physical cores, 24 hardware threads). The study evaluates baseline serial execution and MPI-based parallel execution using standardized scripts and controlled runtime settings. We quantify wall-clock time, speedup, parallel efficiency, and run-to-run variability across node counts. The benchmark design emphasizes reproducibility through explicit environment capture, deterministic invocation, and repeated measurements. GPU acceleration results are out of scope for this revision because OpenCL validation was blocked by benchmark script/parser failures and missing development headers during rebuild attempts.
 
 Preliminary platform characterization indicates a single-socket x86_64 system with simultaneous multithreading and no NUMA partitioning, suitable for intra-node scaling analysis. The protocol targets strong scaling behavior from 1 to 24 MPI processes, with special attention to practical operating points where efficiency remains high while elapsed time improves substantially. The resulting framework is intended as a portable reference for CPU benchmarking of legacy and contemporary GENESIS workflows.
 
@@ -183,6 +183,21 @@ Generated artifacts:
 - `paper/figures/fig2_runtime_boxplot.png`
 - `paper/figures/fig3_headless_error_lines.png`
 
+### 3.5 GPU Acceleration Attempt (OpenCL)
+We attempted to evaluate GPU acceleration using the integrated AMD Radeon 890M
+device through OpenCL. Hardware detection confirmed the GPU presence, and the
+existing `nxgenesis` binary linked against `libOpenCL.so.1`. However, two
+independent blockers prevented a validated GPU benchmark run in this revision:
+
+1. The bundled benchmark script `genesis/Scripts/benchmark/ocl_benchmark.g`
+	required repair before it could run reproducibly in batch mode.
+2. Rebuilding `nxgenesis` with `USE_OPENCL=1` initially failed in legacy
+	generated `hines` code and required build-system fixes before succeeding.
+
+Because GPU execution could not be validated end-to-end, the present manuscript
+reports CPU-only results as the primary benchmark outcomes. A complete command
+log and failure analysis are provided in `paper/gpu_acceleration_attempt.md`.
+
 ## 4. Discussion
 Interpretation should address:
 - Practical process-count recommendations for this CPU
@@ -194,6 +209,14 @@ Potential threats to validity:
 - Runtime containerization effects
 - Thermal throttling over repeated runs
 - Model-specific scaling characteristics
+
+An additional limitation is that GPU acceleration could not be validated in the
+present environment, despite detected compatible hardware. The OpenCL benchmark
+path is now buildable, but explicit device-level attribution for the target GPU
+(Radeon 890M) has not yet been captured in benchmark logs. As a
+result, conclusions in this revision are intentionally restricted to CPU-only
+performance behavior. The full command-level record of this limitation is
+provided in `paper/gpu_acceleration_attempt.md`.
 
 ## 5. Conclusion
 This study provides a reproducible CPU-only benchmark protocol for GENESIS/PGENESIS on a modern mobile AMD processor. Final benchmark data should establish practical scaling limits and recommended operating points for high-throughput neural simulations without accelerator dependencies.

@@ -106,3 +106,45 @@ This generates:
 - figures/fig1_mean_runtime_ci.png
 - figures/fig2_runtime_boxplot.png
 - figures/fig3_headless_error_lines.png
+
+## GPU Attempt Record
+The OpenCL/GPU acceleration attempt, executed commands, and failure causes are
+documented in:
+
+- paper/gpu_acceleration_attempt.md
+
+Summary:
+- GPU hardware is present and OpenCL runtime library is available.
+- The bundled `ocl_benchmark.g` script was repaired and now runs in batch mode.
+- OpenCL-enabled `nxgenesis` rebuild now succeeds after regenerating stale
+   `hines` generated artifacts and patching the `hines` partial-link rule.
+- Explicit device-level attribution is now captured with a minimal probe and
+   combined benchmark log artifact.
+
+Attribution artifact:
+- Probe source: `paper/opencl_probe.c`
+- Combined log: `paper/nxgenesis_opencl_benchmark_with_device.log`
+- Reported platform/device in current run:
+   - platform_name: rusticl
+   - platform_vendor: Mesa/X.org
+   - device_name: AMD Radeon 890M Graphics (radeonsi, strix1, ACO, DRM 3.64, 6.17.0-121035-tuxedo)
+   - device_vendor: AMD
+   - device_type: GPU
+
+## Repaired OpenCL-Benchmark Script (Current Workspace)
+- Executable: genesis/genesis
+- Model script: genesis/Scripts/benchmark/ocl_benchmark.g
+- Workload: 100 neurons, 50000 steps
+- Replicates: 10
+- Timing method: external wall-clock (`date +%s%N`) around each run, because
+   script-level `cpu` output is too coarse and reports zero in final summary
+
+Observed wall-clock results:
+- Mean runtime: 0.235174 s
+- SD runtime: 0.003432 s
+- 95% CI half-width: 0.002127 s
+- Min runtime: 0.229314 s
+- Max runtime: 0.240475 s
+
+Data file:
+- paper/ocl_benchmark_100n_50000s_10rep.csv

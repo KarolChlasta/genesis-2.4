@@ -106,7 +106,7 @@ CFLAGS 		= 	$(CFLAGS_IN) -D$(MACHINE)
 # Dodaj -DUSE_OPENCL zeby wlaczyc akceleracje GPU
 # Przyklad: make USE_OPENCL=1
 ifdef USE_OPENCL
-CFLAGS		+=	-DUSE_OPENCL -I/usr/include
+CFLAGS		+=	-DUSE_OPENCL -I/usr/include -I/run/host/usr/include -I/opt/rocm-6.3.1/include
 OCL_OBJS	=	opencl/ocl_hsolve.o
 OCL_LIBS	=	-lOpenCL
 else
@@ -193,7 +193,7 @@ $(LIBRARY_NAME)_l@.c : $(LIBRARY_NAME)_g@.c $(LIBRARY_NAME)_d@.c $(OBJECTS)
 SYMBOLTAB = $(LIBRARY_NAME)_d@.o $(LIBRARY_NAME)_g@.o $(LIBRARY_NAME)_l@.o
 
 $(TARGET_OBJ): $(SYMBOLTAB) $(OBJECTS)
-	$(LIBBUILD) $(LIBBUILDFLAGS) $(TARGET_OBJ) $(OBJECTS) $(SYMBOLTAB) $(OCL_LIBS)
+	$(LIBBUILD) $(LIBBUILDFLAGS) $(TARGET_OBJ) $(OBJECTS) $(SYMBOLTAB)
 	$(LIBORDER) $(TARGET_OBJ)
 
 opencl/ocl_hsolve.o: opencl/ocl_hsolve.c opencl/ocl_hsolve.h
