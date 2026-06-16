@@ -221,3 +221,28 @@ Data file:
       speedup over the current CPU binary. Next optimization passes should focus
       on larger workloads, OpenCL kernel/dispatch profiling, and reducing model
       construction overhead relative to stepping cost.
+
+- 2026-06-16: Additional larger-model GPU campaign completed (1 warm-up + 5
+   measured replicates per configuration) using `genesis/src/nxgenesis`, with
+   all runs successful (`mean_error_lines=0`, `fail_count=0`).
+
+   Raw data:
+   - `paper/genesis25_gpu_large_models_5rep.csv`
+
+   Summary statistics:
+   - `paper/genesis25_gpu_large_models_5rep_summary.csv`
+
+   Means (GPU only):
+   - `mesoscale_sparse_benchmark`
+      - `N20000_S20000`: 13.244784 s
+      - `N30000_S20000`: 26.929601 s
+   - `biophysical_cellscale_benchmark`
+      - `N2000_S20000`: 0.391455 s
+      - `N4000_S20000`: 0.777843 s
+   - `region_proxy_microcircuit_benchmark`
+      - `EX120x120_INH60x60_S20000`: 0.274024 s
+      - `EX160x160_INH80x80_S20000`: 0.310092 s
+
+   Figure artifacts for manuscript:
+   - `paper/figures/fig4_gpu_large_runtime_ci.png`
+   - `paper/figures/fig5_gpu_large_scaling_trend.png`

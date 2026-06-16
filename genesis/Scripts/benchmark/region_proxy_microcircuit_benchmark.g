@@ -34,6 +34,22 @@ if ({argc} > 1)
     N_STEPS = {argv 1}
 end
 
+if ({argc} > 2)
+    EX_NX = {argv 2}
+end
+
+if ({argc} > 3)
+    EX_NY = {argv 3}
+end
+
+if ({argc} > 4)
+    INH_NX = {argv 4}
+end
+
+if ({argc} > 5)
+    INH_NY = {argv 5}
+end
+
 function makecompartment(path, l, d, Erest)
     str path
     float l, d
