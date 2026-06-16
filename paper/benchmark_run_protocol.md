@@ -337,3 +337,35 @@ Data file:
    Note:
    - one visible mesoscale outlier at `N=30000` (`max_s=30.779067`) is retained
      in the dataset and reflected in CI to preserve full transparency.
+
+- 2026-06-16: Paired CPU dense 10-replicate campaign completed on the same size
+   grid and step counts as GPU, enabling direct acceleration claims.
+
+   Artifacts:
+   - `paper/genesis25_cpu_scaling_dense_10rep.csv`
+   - `paper/genesis25_cpu_scaling_dense_10rep_summary.csv`
+
+   Integrity:
+   - aggregate `fail_count = 0`
+   - maximum `mean_error_lines = 0.00`
+
+- 2026-06-16: Final comparative figures and speedup table generated from paired
+   CPU/GPU dense datasets.
+
+   Output artifacts:
+   - CPU-only runtime figure:
+      `paper/figures/fig6_cpu_dense_runtime_ci.png`
+   - CPU/GPU speedup figure:
+      `paper/figures/fig7_cpu_gpu_speedup.png`
+   - Pointwise speedup table:
+      `paper/genesis25_cpu_gpu_speedup_dense_10rep.csv`
+
+   Headline speedup summary (`CPU/GPU`, 18 paired points):
+   - min: `0.912547`
+   - median: `1.000189`
+   - max: `1.020287`
+
+   Per-benchmark mean speedup (`CPU/GPU`):
+   - `mesoscale_sparse_benchmark`: `0.988015`
+   - `biophysical_cellscale_benchmark`: `0.982885`
+   - `region_proxy_microcircuit_benchmark`: `1.011199`
