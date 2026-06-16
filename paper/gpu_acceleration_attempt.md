@@ -48,7 +48,7 @@ Interpretation:
   runs the repaired benchmark script successfully.
 - Device-level attribution captured in current workspace log:
   - platform: `rusticl` (Mesa/X.org)
-  - device: `AMD Radeon 890M Graphics (radeonsi, strix1, ACO, DRM 3.64, 6.17.0-121035-tuxedo)`
+  - device: `AMD Radeon 890M Graphics (radeonsi, strix1, ACO)`
   - device type: `GPU`
 
 ## Reproducibility Notes

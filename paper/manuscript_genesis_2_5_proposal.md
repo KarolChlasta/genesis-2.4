@@ -75,9 +75,22 @@ Benchmark host:
 
 ### 2.2 Software Environment
 Recorded environment at preparation time:
-- Kernel: Linux 6.17.0-121035-tuxedo
+- Kernel: Linux 6.17.0
 - Architecture: x86_64
-- Runtime base (containerized shell): Freedesktop SDK 25.08
+- OpenCL platform: rusticl (Mesa/X.org)
+- OpenCL device: AMD Radeon 890M Graphics (GPU)
+
+### 2.2.1 CPU-vs-GPU Comparison Semantics
+To avoid ambiguity in acceleration claims, CPU and GPU runs in this paper are
+paired on the same benchmark scripts and size grid, with the same step count and
+replicate policy.
+
+- CPU baseline in this comparison: serial `genesis` batch execution (single
+	process, no MPI launcher).
+- GPU baseline in this comparison: serial `nxgenesis` batch execution using
+	OpenCL offload on AMD Radeon 890M.
+- MPI (`nxpgenesis`) is treated as a separate scaling dimension and is not
+	combined with OpenCL acceleration claims in the same speedup figure.
 
 Final submission should add:
 - Exact compiler version (gcc --version)

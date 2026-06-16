@@ -1,0 +1,13 @@
+benchmark,mode,size_key,size_value,steps,replicate,real_seconds,error_lines,exit_code
+mesoscale_sparse_benchmark,CPU,neurons,10000,20000,1,4.400110,0,0
+mesoscale_sparse_benchmark,CPU,neurons,10000,20000,2,4.418365,0,0
+mesoscale_sparse_benchmark,CPU,neurons,10000,20000,3,4.272098,0,0
+mesoscale_sparse_benchmark,CPU,neurons,10000,20000,4,4.369326,0,0
+mesoscale_sparse_benchmark,CPU,neurons,10000,20000,5,4.276505,0,0
+mesoscale_sparse_benchmark,CPU,neurons,10000,20000,6,4.265151,0,0
+mesoscale_sparse_benchmark,CPU,neurons,10000,20000,7,4.383592,0,0
+mesoscale_sparse_benchmark,CPU,neurons,10000,20000,8,4.253272,0,0
+mesoscale_sparse_benchmark,CPU,neurons,10000,20000,9,4.286925,0,0
+mesoscale_sparse_benchmark,CPU,neurons,10000,20000,10,4.296980,0,0
+mesoscale_sparse_benchmark,CPU,neurons,12000,20000,1,5.837342,0,0
+mesoscale_sparse_benchmark,CPU,neurons,12000,20000,2,5.841392,0,0

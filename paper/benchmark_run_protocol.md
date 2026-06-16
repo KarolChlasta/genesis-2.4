@@ -32,6 +32,35 @@ release target and compatibility goal, not as a validated result from this host.
    - uname -a
 4. Ensure idle machine state (close heavy apps).
 
+## Recorded Host and Runtime Metadata (Current Benchmark Host)
+- Kernel / architecture:
+   - `Linux kernel 6.17.0`
+   - `x86_64`
+- CPU:
+   - `AMD Ryzen AI 9 HX 370 w/ Radeon 890M`
+   - `12` physical cores, `24` logical CPUs (`2` threads/core)
+   - `nproc --all = 24`, `nproc = 24`
+- GPU (PCI):
+   - `Advanced Micro Devices, Inc. [AMD/ATI] Strix [Radeon 880M / 890M]`
+- OpenCL device attribution used in this project:
+   - platform: `rusticl` (`Mesa/X.org`)
+   - device: `AMD Radeon 890M Graphics (radeonsi, strix1, ACO)`
+   - type: `GPU`
+
+## CPU vs GPU Execution Mode (What "core usage" means here)
+- Current CPU-vs-GPU timing runs are **serial process runs** of GENESIS, invoked
+   as a single binary instance in batch mode (no `mpirun` / no `nxpgenesis` in
+   these acceleration comparisons).
+- Process inspection during active run shows one `nxgenesis` worker process with
+   `NLWP=1`, meaning one runnable user thread for the simulation process.
+- Therefore, for these reported acceleration comparisons:
+   - CPU mode: single-process serial baseline (effectively 1 logical CPU used by
+      the simulation process, with normal OS scheduling/migration allowed)
+   - GPU mode: the same single-process driver (`nxgenesis`) with compute offloaded
+      through OpenCL to AMD Radeon 890M
+- MPI scaling (`nxpgenesis`) remains a separate analysis axis and should not be
+   mixed with these CPU-vs-GPU OpenCL acceleration claims.
+
 ## Suggested Invocation Pattern
 Use a non-graphical script and batch mode where possible. Example shape:
 
@@ -142,7 +171,7 @@ Attribution artifact:
 - Reported platform/device in current run:
    - platform_name: rusticl
    - platform_vendor: Mesa/X.org
-   - device_name: AMD Radeon 890M Graphics (radeonsi, strix1, ACO, DRM 3.64, 6.17.0-121035-tuxedo)
+   - device_name: AMD Radeon 890M Graphics (radeonsi, strix1, ACO)
    - device_vendor: AMD
    - device_type: GPU
 
@@ -267,3 +296,44 @@ Data file:
    and 95% CI bands:
    - `paper/figures/fig4_gpu_large_runtime_ci.png`
    - `paper/figures/fig5_gpu_large_scaling_trend.png`
+
+- 2026-06-16: Paper-core acceleration validation plan formalized as paired
+   `CPU vs GPU` dense campaign on identical size grid (required for speedup
+   claims, not GPU-only timing).
+
+   Reference preservation (legacy artifacts retained, not overwritten):
+   - `paper/reference_legacy/genesis25_gpu_scaling_publication_summary_legacy.csv`
+   - `paper/reference_legacy/genesis25_gpu_scaling_dense_3rep_legacy.csv`
+   - `paper/reference_legacy/fig4_gpu_large_runtime_ci_legacy.png`
+   - `paper/reference_legacy/fig5_gpu_large_scaling_trend_legacy.png`
+
+   New paired-analysis pipeline prepared:
+   - CPU dense runner (same grid, 10 reps):
+      `paper/run_genesis25_cpu_scaling_dense_10rep.sh`
+   - Comparative plotting + speedup table:
+      `paper/plot_genesis25_cpu_gpu_speedup.py`
+
+   In-progress run status:
+   - GPU dense 10-rep campaign currently running to produce:
+      `paper/genesis25_gpu_scaling_dense_10rep.csv`
+      `paper/genesis25_gpu_scaling_dense_10rep_summary.csv`
+   - Immediately after GPU completion, CPU dense run will be executed with the
+      same grid to generate direct `CPU/GPU` speedup figures and tables.
+
+- 2026-06-16: GPU dense 10-replicate campaign completed successfully.
+
+   Artifacts:
+   - `paper/genesis25_gpu_scaling_dense_10rep.csv`
+   - `paper/genesis25_gpu_scaling_dense_10rep_summary.csv`
+
+   Coverage:
+   - 18 size points total (`6` mesoscale + `6` biophysical + `6` region-proxy)
+   - 10 measured replicates per point (after warm-up)
+
+   Integrity:
+   - aggregate `fail_count = 0`
+   - maximum `mean_error_lines = 0.00`
+
+   Note:
+   - one visible mesoscale outlier at `N=30000` (`max_s=30.779067`) is retained
+     in the dataset and reflected in CI to preserve full transparency.
