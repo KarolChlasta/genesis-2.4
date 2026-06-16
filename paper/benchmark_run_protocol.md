@@ -369,3 +369,27 @@ Data file:
    - `mesoscale_sparse_benchmark`: `0.988015`
    - `biophysical_cellscale_benchmark`: `0.982885`
    - `region_proxy_microcircuit_benchmark`: `1.011199`
+
+- 2026-06-16: Long-duration stress validation started for reviewer-facing
+   replication of acceleration claims.
+
+   Scope:
+   - calibrated `~7h` target per mode (`TARGET_SECONDS=25200`)
+   - same benchmark script in both modes:
+      `genesis/Scripts/benchmark/mesoscale_sparse_benchmark.g`
+   - CPU mode: `genesis/genesis`
+   - GPU mode: `genesis/src/nxgenesis`
+
+   Reproduction artifacts:
+   - runner script:
+      `paper/run_genesis25_cpu_gpu_long7h_calibrated.sh`
+   - reviewer guide (step-by-step):
+      `paper/reviewer_reproduction_longrun.md`
+   - run outputs:
+      `paper/genesis25_cpu_gpu_long7h_raw.csv`
+      `paper/genesis25_cpu_gpu_long7h_summary.csv`
+
+   Calibration policy:
+   - warm-up + pilot per mode
+   - mode-specific step calibration from pilot runtime to hit target wall-clock
+   - bounded by `MIN_STEPS` and `MAX_STEPS` safeguards for reproducibility

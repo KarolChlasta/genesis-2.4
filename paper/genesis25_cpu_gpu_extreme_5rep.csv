@@ -1,0 +1,4 @@
+benchmark,size_key,size_value,config,steps,replicate,mode,real_seconds,error_lines,exit_code
+mesoscale_sparse_benchmark,neurons,35000,N35000_S20000,20000,1,CPU,35.076822,0,0
+mesoscale_sparse_benchmark,neurons,35000,N35000_S20000,20000,1,GPU,31.963457,0,0
+mesoscale_sparse_benchmark,neurons,35000,N35000_S20000,20000,2,CPU,36.301571,0,0

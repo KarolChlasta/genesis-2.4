@@ -1,0 +1,7 @@
+mode,phase,neurons,steps,real_seconds,error_lines,exit_code
+CPU,warmup,30000,10000,27.016817,0,0
+GPU,warmup,30000,10000,24.014948,0,0
+CPU,pilot,30000,200000,26.103069,0,0
+GPU,pilot,30000,200000,23.074528,0,0
+CPU,long,30000,60000000,25.812782,0,0
+GPU,long,30000,60000000,23.108183,0,0
