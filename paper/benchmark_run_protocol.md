@@ -191,3 +191,33 @@ Data file:
    - region-proxy: clean start/run (`ERR=0`) for 20000 steps (default grid)
    Note: script-reported `cpu` deltas are still too coarse for publication timing;
    external wall-clock remains the authoritative timing method.
+- 2026-06-16: Full benchmark campaign executed (1 warm-up + 10 measured
+   replicates each) for all three new scripts on both CPU (`genesis/genesis`) and
+   GPU/OpenCL (`genesis/src/nxgenesis`) with zero GENESIS runtime errors in all
+   measured runs (`error_lines=0`, `exit_code=0`).
+
+   Raw data:
+   - `paper/genesis25_three_benchmarks_10rep.csv`
+
+   Summary statistics:
+   - `paper/genesis25_three_benchmarks_summary.csv`
+
+   Mean wall-clock comparison:
+   - `mesoscale_sparse_benchmark` (`N=10000`, `steps=20000`)
+      - CPU: 4.373315 s
+      - GPU: 4.426878 s
+      - speedup (CPU/GPU): 0.987901
+   - `biophysical_cellscale_benchmark` (`N=1000`, `steps=20000`)
+      - CPU: 0.292831 s
+      - GPU: 0.309391 s
+      - speedup (CPU/GPU): 0.946475
+   - `region_proxy_microcircuit_benchmark` (`steps=20000`, default grid)
+      - CPU: 0.240748 s
+      - GPU: 0.242243 s
+      - speedup (CPU/GPU): 0.993829
+
+   Interpretation note:
+   - For these specific parameterizations, OpenCL did not yet deliver wall-clock
+      speedup over the current CPU binary. Next optimization passes should focus
+      on larger workloads, OpenCL kernel/dispatch profiling, and reducing model
+      construction overhead relative to stepping cost.
