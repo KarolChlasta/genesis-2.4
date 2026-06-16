@@ -246,3 +246,24 @@ Data file:
    Figure artifacts for manuscript:
    - `paper/figures/fig4_gpu_large_runtime_ci.png`
    - `paper/figures/fig5_gpu_large_scaling_trend.png`
+
+- 2026-06-16: Publication-grade figure upgrade completed with denser scaling
+   sampling to address low point count in earlier plots.
+
+   Additional dense GPU dataset (all runs successful, no GENESIS errors):
+   - `paper/genesis25_gpu_scaling_dense_3rep.csv`
+
+   Combined publication summary (merging prior 10-rep baseline points, 5-rep
+   large-model points, and new dense 3-rep points):
+   - `paper/genesis25_gpu_scaling_publication_summary.csv`
+
+   Effective point density in final scaling curves:
+   - mesoscale: 6 size points (`N=10000,12000,16000,20000,24000,30000`)
+   - biophysical: 6 size points (`N=1000,1500,2000,3000,4000,5000`)
+   - region-proxy: 6 size points
+      (`cells=8000,12500,18000,24500,32000,40500`)
+
+   Final manuscript figures regenerated with replicate clouds, mean trends,
+   and 95% CI bands:
+   - `paper/figures/fig4_gpu_large_runtime_ci.png`
+   - `paper/figures/fig5_gpu_large_scaling_trend.png`
