@@ -1,0 +1,7 @@
+benchmark,mode,neurons,steps,n,mean_s,sd_s,ci95_s,min_s,max_s
+biophysical_cellscale_benchmark,CPU,1000,20000,10,0.292831,0.012415,0.007695,0.283705,0.318460
+biophysical_cellscale_benchmark,GPU,1000,20000,10,0.309391,0.008998,0.005577,0.298583,0.322696
+mesoscale_sparse_benchmark,CPU,10000,20000,10,4.373315,0.049094,0.030429,4.274846,4.433109
+mesoscale_sparse_benchmark,GPU,10000,20000,10,4.426878,0.038663,0.023964,4.359281,4.474624
+region_proxy_microcircuit_benchmark,CPU,NA,20000,10,0.240748,0.005101,0.003162,0.235385,0.250116
+region_proxy_microcircuit_benchmark,GPU,NA,20000,10,0.242243,0.003018,0.001871,0.234176,0.245013

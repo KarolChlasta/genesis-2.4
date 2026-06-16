@@ -163,3 +163,31 @@ Observed wall-clock results:
 
 Data file:
 - paper/ocl_benchmark_100n_50000s_10rep.csv
+
+## Live Development Log
+- 2026-06-16: OpenCL probe reconfirmed device attribution on this host:
+   platform `rusticl` (Mesa/X.org), device `AMD Radeon 890M Graphics` (GPU).
+- 2026-06-16: Direct benchmark run with `nxgenesis` for 100 neurons and 50,000
+   steps completed with external wall-clock `0.236620 s`.
+- 2026-06-16: Additional 10-replicate OpenCL datasets collected (1 warm-up +
+   10 measured runs each):
+   - `paper/ocl_benchmark_500n_50000s_10rep.csv`: mean 0.320949 s, SD 0.008065 s,
+      95% CI 0.004999 s, min 0.314361 s, max 0.341359 s.
+   - `paper/ocl_benchmark_1000n_50000s_10rep.csv`: mean 0.407377 s,
+      SD 0.009007 s, 95% CI 0.005582 s, min 0.395060 s, max 0.425419 s.
+- 2026-06-16: Larger direct scale checks completed successfully:
+   - 5,000 neurons, 50,000 steps: wall-clock 3.020149 s
+   - 10,000 neurons, 50,000 steps: wall-clock 9.178209 s
+- 2026-06-16: Existing `genesis/Scripts/benchmark/run_benchmark.sh` is still
+   unstable for large sweeps in this environment (segmentation violation seen in
+   one batch run); direct per-size invocations remain the trusted method.
+- 2026-06-16: Three new benchmark scripts prepared for GENESIS 2.5 proposal:
+   - `genesis/Scripts/benchmark/mesoscale_sparse_benchmark.g`
+   - `genesis/Scripts/benchmark/biophysical_cellscale_benchmark.g`
+   - `genesis/Scripts/benchmark/region_proxy_microcircuit_benchmark.g`
+- 2026-06-16: Smoke-test status on `nxgenesis -nosimrc -notty -batch`:
+   - mesoscale: clean start/run (`ERR=0`) for 200 neurons, 2000 steps
+   - biophysical: clean start/run (`ERR=0`) for 64 neurons, 2000 steps
+   - region-proxy: clean start/run (`ERR=0`) for 20000 steps (default grid)
+   Note: script-reported `cpu` deltas are still too coarse for publication timing;
+   external wall-clock remains the authoritative timing method.
