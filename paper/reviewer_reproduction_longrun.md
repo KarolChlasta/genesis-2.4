@@ -1,4 +1,4 @@
-# Reviewer Reproduction Protocol: Long-Run CPU vs GPU (~7h target)
+# Reviewer Reproduction Protocol: Long-Run CPU vs GPU (4 × 2h sessions)
 
 This document describes how to reproduce the long-duration CPU vs GPU validation
 runs used to stress-test the OpenCL acceleration claim.
@@ -8,75 +8,66 @@ Run the same mesoscale benchmark in two modes:
 - CPU serial baseline (`genesis/genesis`)
 - GPU OpenCL mode (`genesis/src/nxgenesis`)
 
-Both runs are calibrated to target about 7 hours each (25200 s) using pilot
-measurements on the same host.
+Each mode runs for 1 hour per session (accumulating repeated benchmark calls),
+with 4 independent sessions, giving ~8 hours of total wall-clock coverage.
 
-## 2. Required Files
+## 2. Why sessions instead of one long run
+Model construction time for N=30,000 neurons dominates each GENESIS invocation
+(~26–37 s per run regardless of simulation step count). Step-count calibration
+cannot reach multi-hour targets. Instead, each session runs the benchmark
+repeatedly until SESSION_TARGET_SECONDS of cumulative wall time is accumulated.
+Splitting into 4 sessions makes any individual session easy to rerun if
+interrupted.
+
+## 3. Required Files
 - Benchmark script: `genesis/Scripts/benchmark/mesoscale_sparse_benchmark.g`
-- Runner: `paper/run_genesis25_cpu_gpu_long7h_calibrated.sh`
+- Runner: `paper/run_genesis25_cpu_gpu_longrun_4x2h.sh`
 
 Output artifacts:
-- Raw log rows: `paper/genesis25_cpu_gpu_long7h_raw.csv`
-- Long-run summary: `paper/genesis25_cpu_gpu_long7h_summary.csv`
+- Raw log rows: `paper/genesis25_cpu_gpu_longrun_raw.csv`
+- Summary (per session, per mode): `paper/genesis25_cpu_gpu_longrun_summary.csv`
 
-## 3. Host Preparation
-1. Ensure idle machine state (close heavy background applications).
-2. Ensure binaries exist and are executable:
-   - `genesis/genesis`
-   - `genesis/src/nxgenesis`
-3. Run from repository root.
-
-## 4. Command (default ~7h target)
+## 4. Command (all 4 sessions)
 ```bash
 cd /path/to/genesis-2.4
-./paper/run_genesis25_cpu_gpu_long7h_calibrated.sh
+./paper/run_genesis25_cpu_gpu_longrun_4x2h.sh
 ```
 
-## 5. Optional Overrides
-The runner supports environment overrides:
-- `TARGET_SECONDS` (default `25200`)
-- `NEURONS` (default `30000`)
-- `PILOT_STEPS` (default `200000`)
-- `MIN_STEPS` (default `1000000`)
-- `MAX_STEPS` (default `60000000`)
-
-Example (5h target, bigger model):
+## 5. Rerunning a single session
 ```bash
 cd /path/to/genesis-2.4
-TARGET_SECONDS=18000 NEURONS=40000 ./paper/run_genesis25_cpu_gpu_long7h_calibrated.sh
+START_SESSION=3 END_SESSION=3 ./paper/run_genesis25_cpu_gpu_longrun_4x2h.sh
 ```
+Rows from the rerun are appended to the raw CSV with the matching session number.
 
-## 6. Calibration Logic
-1. Warm-up in CPU and GPU mode.
-2. Pilot run with `PILOT_STEPS` for CPU and GPU separately.
-3. Compute target steps per mode:
+## 6. Optional Overrides
+| Variable | Default | Meaning |
+|---|---|---|
+| `SESSIONS` | `4` | number of sessions |
+| `SESSION_TARGET_SECONDS` | `3600` | target cumulative seconds per mode per session (1h) |
+| `START_SESSION` | `1` | first session to run |
+| `END_SESSION` | `SESSIONS` | last session to run |
+| `NEURONS` | `30000` | neuron count passed to benchmark |
+| `STEPS` | `20000` | simulation steps per invocation |
+| `MAX_ITER_PER_SESSION` | `2000` | hard cap on iterations per session |
 
-$$
-steps_{target} = round\left(\frac{TARGET\_SECONDS}{pilot\_seconds} \cdot PILOT\_STEPS\right)
-$$
-
-4. Clamp by `[MIN_STEPS, MAX_STEPS]` safeguards.
-5. Execute one long run per mode with calibrated steps.
+Example (run 2 sessions at 30 min each for a quick validation):
+```bash
+cd /path/to/genesis-2.4
+SESSIONS=2 SESSION_TARGET_SECONDS=1800 ./paper/run_genesis25_cpu_gpu_longrun_4x2h.sh
+```
 
 ## 7. Data Integrity Checks
 After completion:
-1. Confirm summary file exists:
-   - `paper/genesis25_cpu_gpu_long7h_summary.csv`
-2. Confirm `exit_code = 0` for both `CPU` and `GPU` rows.
-3. Confirm `error_lines = 0` or explicitly report non-zero values.
-4. Compare achieved target ratio:
-
-$$
-ratio = \frac{real\_seconds}{25200}
-$$
-
-Values close to `1.0` indicate successful 7h targeting.
+1. Confirm summary file exists: `paper/genesis25_cpu_gpu_longrun_summary.csv`
+2. Check `exit_code = 0` and `error_lines = 0` for all measured rows in raw CSV.
+3. Check `achieved_ratio` per session/mode is close to `1.0`.
+4. Verify 4 sessions × 2 modes = 8 rows in summary.
 
 ## 8. Reporting Guidance
 For manuscript text, report:
 - host CPU/GPU identifiers,
-- calibrated steps used for CPU and GPU,
-- realized wall-clock times,
-- whether GPU was faster/slower in this long-run regime.
+- sessions completed, iterations per session, mean per-iteration wall-clock,
+- whether GPU was faster/slower in this sustained-load regime.
 
 Keep raw CSV artifacts unchanged for auditability.

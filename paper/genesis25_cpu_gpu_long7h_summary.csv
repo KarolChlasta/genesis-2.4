@@ -1,3 +1,0 @@
-mode,neurons,steps,real_seconds,error_lines,exit_code,target_seconds,achieved_target_ratio
-CPU,30000,60000000,25.812782,0,0,25200,0.001024
-GPU,30000,60000000,23.108183,0,0,25200,0.000917
