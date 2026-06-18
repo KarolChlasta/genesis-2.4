@@ -27,6 +27,11 @@ typedef struct {
     int    nchips;
     int    nops;
     int    initialized;
+
+    /* profiling accumulators */
+    unsigned long long prof_kernel_ns;  /* total GPU kernel execution time */
+    unsigned long long prof_total_ns;   /* total wall time inside ocl_chip_update */
+    unsigned long       prof_calls;     /* number of steps profiled */
 } OclHsolveState;
 
 /* one global state — one GPU context per GENESIS process */

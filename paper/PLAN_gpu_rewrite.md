@@ -1,5 +1,25 @@
 # PLAN: Proper GPU Parallelization of GENESIS
 
+## SECOND CORRECTION (2026-06-18): the whole benchmark campaign's binaries are confounded
+On top of the OCL-never-triggered finding below, the "CPU" (`genesis/genesis`)
+and "GPU" (`genesis/src/nxgenesis`) binaries used throughout the
+dense_10rep, extreme_5rep, and longrun campaigns differ by more than
+OpenCL: `genesis/genesis` links libX11/libXt (X11/XODUS GUI build),
+`genesis/src/nxgenesis` is headless. This X11-linked binary has a real,
+reproducible per-element-creation overhead (concentrated in kernel/system
+time, scales with element count, not explained by X-server IPC or page
+faults) that swamps total runtime for benchmarks with many cheap elements
+and fast per-step compute (`region_proxy_microcircuit`, hence its
+inflated ~6.7x "speedup") while being negligible for benchmarks with
+expensive per-step compute (`mesoscale_sparse`/`biophysical_cellscale`,
+hence their ~1.0-1.1x). **None of the CPU-vs-GPU numbers in
+`genesis25_cpu_gpu_dense_10rep*.csv`, `genesis25_cpu_gpu_extreme_5rep*.csv`,
+or `genesis25_cpu_gpu_longrun*.csv` can be reported as characterizing GPU
+performance or even GPU absence** — they reflect this binary-choice
+artifact. Full root-cause investigation, including what was ruled out and
+the recommended fix (same binary for both arms, built with/without
+`USE_OPENCL=1`): `paper/x11_binary_confound_investigation.md`.
+
 ## What we have done (as of 2026-06-16)
 
 ### Benchmark campaign completed
@@ -60,14 +80,68 @@ through the OpenCL API but does not restructure the simulation for data parallel
 - **Brian2OpenCL**: Brian2 with OpenCL backend (closest to our stack)
 - **NEST GPU**: spiking network simulator with CUDA backend
 
-### Paper framing (current honest position)
-The current results should be reported as:
-> "The GENESIS 2.4 OpenCL execution path was validated on AMD Radeon 890M via
-> rusticl/Mesa. Observed CPU/GPU wall-clock speedup was ~1.0x (range 0.91–1.02)
-> across all tested configurations, indicating that the current serial dispatch
-> model does not leverage GPU data parallelism. GPU utilization remained at a
-> few percent. Achieving meaningful GPU acceleration requires restructuring the
-> simulation kernel for batched data-parallel execution."
+### CORRECTION (2026-06-17): the ~1.0x finding above was CPU-vs-CPU, not CPU-vs-GPU
+Re-investigation found that **none** of the three production benchmark scripts
+(mesoscale_sparse, biophysical_cellscale, region_proxy_microcircuit) ever created
+an `hsolve` object — they all schedule plain compartments with `useclock`, which
+means `chanmode`/`calcmode` never reach the `ocl_chip_update()` dispatch condition
+(`chanmode∈{4,5} && calcmode==1`). Both the "CPU" and "GPU" binaries in that
+campaign ran the identical pure-CPU `do_chip_hh4_update()` path. The reported
+~1.0x speedup measured CPU against CPU; it says nothing about GPU performance.
+Full investigation log: see memory `project_ocl_profiling_investigation.md`
+and `genesis/Scripts/benchmark/ocl_hh_benchmark.g` (the corrected benchmark
+that actually exercises chanmode=4/calcmode=1 hsolve + OpenCL).
+
+A second, independent bug was found and fixed while building that corrected
+benchmark: GENESIS encodes per-compartment boundaries in the flat `ops[]`
+array using **three** sentinel values — `FCOMPT_OP`(101) opens the first
+compartment, `COMPT_OP`(100) separates every middle compartment, and only the
+truly last compartment is closed by `LCOMPT_OP`(102). Both
+`build_comp_index()` and the `chip_channel_update` OpenCL kernel in
+`genesis/src/hines/opencl/` originally tested only `op != LCOMPT_OP`, so they
+swallowed the 100/101 sentinels as if they were data, merged many
+compartments into one, and eventually walked off the end of the `ops[]`
+buffer — causing a GPU page fault ("Memory access fault ... Page not present")
+on every run with real tabchannel networks. Fixed by switching to a peek-based
+loop (`while (ops[op_i] > LCOMPT_OP)`) matching the CPU interpreter's actual
+semantics in `hines_chip.c`. Verified by dumping the raw `ops[]` array and
+confirming the decoded opcode sequence (NEWVOLT_OP, CHAN_EK_OP, IPOL1V_OP ×2,
+ADD_CURR_OP, ...) repeats with the expected period and that `opstart[]`
+lines up exactly with it.
+
+### Real OCL kernel profiling (2026-06-17, AMD Radeon 890M gfx1150 via rusticl)
+Single hsolve covering N HH neurons (Na: X³Y¹, K: X⁴ tabchannel gates),
+dt=50µs, 5000 steps, `CL_QUEUE_PROFILING_ENABLE` + `clGetEventProfilingInfo`
+for kernel time, `clock_gettime(CLOCK_MONOTONIC)` around the full
+upload→kernel→download sequence (`ocl_chip_update`):
+
+| N neurons | kernel time/step | ocl_chip_update wall/step | GPU active frac | total step time (incl. CPU Hines solve) |
+|---|---|---|---|---|
+| 100  | 4.96 µs  | 49.0 µs  | 10.13% | 61.3 µs |
+| 500  | 6.42 µs  | 79.4 µs  | 8.09%  | 124.2 µs |
+| 1000 | 10.52 µs | 116.9 µs | 9.00%  | 209.9 µs |
+| 2000 | 13.44 µs | 134.5 µs | 9.99%  | 323.1 µs |
+
+Reproduce with:
+```
+genesis/src/nxgenesis -nosimrc -notty -batch genesis/Scripts/benchmark/ocl_hh_benchmark.g <N> 5000
+```
+Raw logs: `paper/profiling_runs/ocl_profile_N{100,500,1000,2000}.txt`
+
+**Interpretation:** the actual GPU kernel (channel/gate update) is genuinely
+cheap — single-digit to low-double-digit microseconds — and scales sub-linearly
+with N for this small range, consistent with the 890M (12 CUs × 64 lanes = 768
+lanes) being far from saturated at N≤2000 compartments. But kernel execution
+is only **~8–10%** of `ocl_chip_update`'s own wall time; the remaining ~90% is
+host-side dispatch/transfer overhead (`clEnqueueWriteBuffer` ×2,
+`clEnqueueNDRangeKernel`, `clEnqueueReadBuffer` ×2, all serialized once per
+step). And `ocl_chip_update` itself is only the channel-update fraction of
+the total step — the Hines tridiagonal solve (forward elimination + back
+substitution) still runs entirely on the CPU. So even a perfectly-saturated
+GPU channel kernel could not by itself yield a large end-to-end speedup,
+confirming the rewrite-roadmap conclusion below: batching transfers/dispatch
+across steps and moving (or skipping) the tridiagonal solve matter more than
+further optimizing the channel kernel alone.
 
 ### Next steps
 - [ ] Profile OpenCL kernel calls with `rocprof` or `clpeak` to measure actual
@@ -76,4 +150,6 @@ The current results should be reported as:
       per step, persistent GPU buffers
 - [ ] Benchmark prototype at N=10k, 30k, 100k vs current serial dispatch
 - [ ] If prototype shows >2x speedup, design full rewrite of the GENESIS step loop
-- [ ] Update paper GPU section with honest framing and rewrite roadmap
+- [ ] Update paper GPU section with honest framing and rewrite roadmap, citing
+      the real OCL kernel profiling numbers above instead of the retracted
+      CPU-vs-CPU ~1.0x figure

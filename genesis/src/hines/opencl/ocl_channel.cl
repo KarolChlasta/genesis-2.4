@@ -13,6 +13,8 @@
  */
 
 /* op-codes — musza byc zgodne z hines_defs.h */
+#define COMPT_OP     100
+#define FCOMPT_OP    101
 #define LCOMPT_OP    102
 #define NEWVOLT_OP   5100
 #define CHAN_OP      3000
@@ -30,6 +32,7 @@ __kernel void chip_channel_update(
     __global const int    *ops,         /* tablica operacji */
     __global const int    *comp_opstart,/* [ncompts] indeks startowy w ops[] */
     __global const int    *comp_chipstart,/* [ncompts] indeks startowy w chip[] */
+    const int   ncompts,
     const int   ncols,
     const int   xdivs,
     const double xmin,
@@ -37,6 +40,7 @@ __kernel void chip_channel_update(
 )
 {
     int gid = get_global_id(0);
+    if (gid >= ncompts) return;
 
     double Vm       = vm[gid];
     int    op_i     = comp_opstart[gid];
@@ -53,8 +57,15 @@ __kernel void chip_channel_update(
     double vipol = 0.0;
     double xlo = -1e20, xhi = 1e20;
 
+    /* comp_opstart[gid] points at this compartment's first real opcode,
+       skipping the entry sentinel (FCOMPT_OP/COMPT_OP) that precedes it.
+       Compartment data ends at the next sentinel (COMPT_OP for any but
+       the last compartment, LCOMPT_OP for the last) -- all real opcodes
+       are > LCOMPT_OP, all sentinels are <= LCOMPT_OP, so a peek (not an
+       equality check against 102 alone) is required to find the boundary. */
     int op;
-    while ((op = ops[op_i++]) != LCOMPT_OP) {
+    while (ops[op_i] > LCOMPT_OP) {
+        op = ops[op_i++];
 
         if (op == NEWVOLT_OP) {
             vipol = (Vm - xmin) * invdx;
