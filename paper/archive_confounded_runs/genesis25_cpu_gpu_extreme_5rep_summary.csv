@@ -1,0 +1,13 @@
+benchmark,size_key,size_value,config,steps,mode,n,mean_s,sd_s,ci95_s,min_s,max_s,mean_error_lines,fail_count
+biophysical_cellscale_benchmark,neurons,10000,N10000_S20000,20000,CPU,5,4.219266,0.064083,0.056171,4.114133,4.264743,0.00,0
+biophysical_cellscale_benchmark,neurons,10000,N10000_S20000,20000,GPU,5,4.944313,1.481294,1.298412,4.249161,7.593864,0.00,0
+biophysical_cellscale_benchmark,neurons,7000,N7000_S20000,20000,CPU,5,2.125212,0.038327,0.033595,2.065893,2.167304,0.00,0
+biophysical_cellscale_benchmark,neurons,7000,N7000_S20000,20000,GPU,5,2.126435,0.035151,0.030812,2.086642,2.171517,0.00,0
+mesoscale_sparse_benchmark,neurons,35000,N35000_S20000,20000,CPU,5,35.052975,0.293896,0.257612,34.573231,35.359030,0.00,0
+mesoscale_sparse_benchmark,neurons,35000,N35000_S20000,20000,GPU,5,32.312771,0.745960,0.653862,31.571731,33.164741,0.00,0
+mesoscale_sparse_benchmark,neurons,45000,N45000_S20000,20000,CPU,5,61.821758,1.359216,1.191406,59.952141,63.008907,0.00,0
+mesoscale_sparse_benchmark,neurons,45000,N45000_S20000,20000,GPU,5,56.030516,0.664746,0.582676,55.364325,56.743656,0.00,0
+region_proxy_microcircuit_benchmark,region_cells,50000,EX200x200_INH100x100_S20000,20000,CPU,5,0.836714,0.025707,0.022533,0.815933,0.881191,0.00,0
+region_proxy_microcircuit_benchmark,region_cells,50000,EX200x200_INH100x100_S20000,20000,GPU,5,0.124428,0.004632,0.004060,0.121544,0.132606,0.00,0
+region_proxy_microcircuit_benchmark,region_cells,72000,EX240x240_INH120x120_S20000,20000,CPU,5,1.180866,0.024608,0.021570,1.151458,1.205544,0.00,0
+region_proxy_microcircuit_benchmark,region_cells,72000,EX240x240_INH120x120_S20000,20000,GPU,5,0.178325,0.010415,0.009129,0.168361,0.194487,0.00,0
