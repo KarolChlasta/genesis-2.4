@@ -62,11 +62,35 @@ Recommended verification after install:
 3. Keep this probe+benchmark combined log path in future runs to preserve
   explicit platform/device attribution.
 
-## Reporting Statement (for manuscript)
-Accelerator enablement now supports an evidence-based GENESIS 2.5 proposal:
+## RETRACTION (2026-06-18)
+The benchmark run described above (`ocl_benchmark.g`, Step 1-2) does not
+demonstrate GPU dispatch. That script builds only passive RC compartments
+with zero ion channels attached to its `chanmode=4` `hsolve` objects; with no
+channel state to solve, the OpenCL channel-update kernel is never invoked,
+regardless of how `nxgenesis` was built. The execution logs cited above
+(`paper/nxgenesis_opencl_benchmark_with_device.log`,
+`paper/nxgenesis_opencl_benchmark_device_log.txt`) confirm this directly: they
+contain no `OCL` initialization or kernel-dispatch output, and report ~25-31
+ms of total CPU time for 50,000 steps, consistent with trivial passive-compartment
+arithmetic. The device-attribution log was produced by a separate OpenCL probe
+program, disconnected from the benchmark run, and its presence does not imply
+the benchmark itself used the GPU. "The binary contains OpenCL symbols and the
+script ran without error" is not sufficient evidence of GPU dispatch.
+
+A corrected benchmark, `genesis/Scripts/benchmark/ocl_hh_benchmark.g`, builds a
+single `hsolve` with real `tabchannel` Hodgkin-Huxley channels (the minimum
+configuration under which `hsolve` actually dispatches to the OpenCL kernel),
+and confirms dispatch directly via `CL_QUEUE_PROFILING_ENABLE` and an `OCL
+PROFILING SUMMARY` printed at exit. Results: `paper/profiling_runs/ocl_profile_N{100,500,1000,2000}.txt`,
+discussed in `paper/manuscript_genesis_2_5_proposal.md` Section 3.5 and
+`paper/PLAN_gpu_rewrite.md`. The kernel is confirmed fast and correct but is a
+small fraction of total step time; no end-to-end speedup is claimed.
+
+## Reporting Statement (for manuscript) -- SUPERSEDED, see retraction above
+~~Accelerator enablement now supports an evidence-based GENESIS 2.5 proposal:
 `nxgenesis USE_OPENCL=1` compiles and runs the repaired benchmark script with
 OpenCL-linked symbols present in the executable. Explicit platform/device
 attribution was captured via probe+benchmark logging, identifying a GPU device
-named `AMD Radeon 890M Graphics` on platform `rusticl`. CUDA remains future
+named `AMD Radeon 890M Graphics` on platform `rusticl`.~~ CUDA remains future
 work within the proposed GENESIS 2.5 scope and should not be reported as a
 validated backend from the current workspace.
