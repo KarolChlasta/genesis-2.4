@@ -19,10 +19,44 @@ network size and is unrelated to GPU acceleration. Full investigation:
 | Item | Value |
 |------|-------|
 | Host | AMD Ryzen AI 9 HX 370, 12 cores / 24 threads |
-| GPU  | Radeon 890M (integrated), OpenCL via Mesa `rusticl` |
+| GPU  | Radeon 890M (gfx1150 / RDNA 3.5 integrated) |
 | OS   | Linux 6.17 (Tuxedo) |
 | Compiler | GCC 15.2.0 |
 | Date | 2026-06-24 |
+
+### OpenCL environment note
+
+Two OpenCL runtimes are present on the host:
+
+| Runtime | Library | fp64 | Device name reported |
+|---------|---------|------|----------------------|
+| ROCm 6.3.1 (host) | `/opt/rocm-6.3.1/lib/libamdocl64.so` | YES | `gfx1150` |
+| Mesa rusticl (container) | `libRusticlOpenCL.so.1` | NO | `AMD Radeon 890M Graphics (radeonsi, ...)` |
+
+The `ocl_channel.cl` kernel uses `double` throughout and requires `cl_khr_fp64`.
+Mesa rusticl on this GPU reports `CL_DEVICE_DOUBLE_FP_CONFIG=0` and does not
+expose `cl_khr_fp64`, so the kernel fails to compile under rusticl and
+`ocl_chip_update` falls back to CPU for the entire run. The one-time startup
+diagnostic `"OCL: urzadzenie nie wspiera fp64, wylaczam GPU"` confirms this.
+
+**To run the OCL profiling benchmark** (Table 2 data in the manuscript),
+run `nxgenesis` outside the container with the ROCm ICD active:
+
+```bash
+LD_LIBRARY_PATH=/opt/rocm-6.3.1/lib \
+OCL_ICD_VENDORS=/run/host/etc/OpenCL/vendors \
+genesis/src/nxgenesis -nosimrc -notty -batch \
+    genesis/Scripts/benchmark/ocl_hh_benchmark.g 1000 5000 2>&1
+```
+
+Look for `OCL: urzadzenie: gfx1150` (ROCm device name) in the output to confirm
+genuine GPU dispatch. The `OCL PROFILING SUMMARY` printed at exit is the Table 2
+source.
+
+**The end-to-end CPU vs GPU benchmark campaign** (`run_genesis25_cpu_gpu_extreme_5rep.sh`)
+ran inside the container and used Mesa rusticl (no fp64), so both arms ran CPU
+code. The speedup ratio of ~1.0 reflects a CPU-vs-CPU comparison with matched
+headless binaries.
 
 ---
 
@@ -149,10 +183,10 @@ Output: `paper/genesis25_cpu_gpu_longrun_raw.csv`,
 
 ## Binary checksums
 
-Recorded 2026-06-24:
+Recorded 2026-06-24 (v2: fp64 check + disabled flag added to OCL init):
 
 ```
-764ad80379bf94a6d77e5168701c65d54a52cb530f30d70cb6c5fe85a51ddc4f  genesis/src/nxgenesis
+be8e5b6e4db388f1d9f1f6a0afc9b7617b570c6a7e08b036857163f554eb0d67  genesis/src/nxgenesis
 7bc0bf0d2276c18a3d5366e460d2170c453d0e94c17ef0ee0d8f11401653e5fb  genesis/src/nxgenesis_nocl
 ```
 
@@ -167,3 +201,4 @@ Recorded 2026-06-24:
 | `sizeof(#)` in `hines_d@.c` | Code generator emits invalid C for anonymous struct fields | Three lines commented out in-tree (Step 2) |
 | `USE_OPENCL` not propagated | Top-level Makefile doesn't forward it to subdirs | Build hines directly with `USE_OPENCL=1` (Step 3) |
 | `ncdump` link failure | `yylex` undefined from `libfl` | Irrelevant — only `libsrc/libnetcdf.a` is needed, not ncdump |
+| "GPU" arm not slower despite OCL enabled | Radeon 890M iGPU has no fp64 OpenCL support (`CL_DEVICE_DOUBLE_FP_CONFIG=0`, `cl_khr_fp64` absent) — kernel compile fails, silent CPU fallback every step | By design — code now detects this once at startup, prints diagnostic, and disables OCL for the run |

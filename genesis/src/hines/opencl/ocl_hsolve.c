@@ -132,6 +132,19 @@ int ocl_init(Hsolve *hsolve)
                     sizeof(devname), devname, NULL);
     printf("OCL: urzadzenie: %s\n", devname);
 
+    /* Kernel uses double precision — check before allocating any resources. */
+    {
+        cl_device_fp_config fp64 = 0;
+        clGetDeviceInfo(ocl_state.device, CL_DEVICE_DOUBLE_FP_CONFIG,
+                        sizeof(fp64), &fp64, NULL);
+        if (!fp64) {
+            fprintf(stderr,
+                "OCL: urzadzenie nie wspiera fp64 (cl_khr_fp64 brak), "
+                "wylaczam GPU — fallback na CPU\n");
+            return -1;
+        }
+    }
+
     ocl_state.context = clCreateContext(NULL, 1, &ocl_state.device,
                                         NULL, NULL, &err);
     if (err != CL_SUCCESS) {
@@ -290,31 +303,45 @@ int ocl_init(Hsolve *hsolve)
 /*
  * ocl_chip_update — wywolywana co krok zamiast do_chip_hh4_update
  *
- * Sekwencja:
- *   1. upload vm[] i chip[] na GPU (asynchronicznie)
- *   2. uruchomienie kernela: N work-items = N kompartmentow rownoleglie
- *   3. download chip[] (zaktualizowane stany bramek) i results[]
- *      ostatni read jest synchroniczny (CL_TRUE) — czekamy az GPU skonczy
+ * Per-step transfers (persistent chip optimisation):
+ *   Step 0:  WriteBuffer(vm) + WriteBuffer(chip) + Kernel + ReadBuffer(results)
+ *   Step 1+: WriteBuffer(vm)                     + Kernel + ReadBuffer(results)
+ *
+ * chip[] is owned by the GPU after the first successful kernel run.
+ * The CPU copy (hsolve->chip) is stale until ocl_sync_chip() is called.
+ * Call ocl_sync_chip() before any GENESIS script that reads gate-variable
+ * fields from the hsolve element (findsolvefield, HGET, etc.).
  *
  * Jesli OpenCL nie dziala — automatyczny fallback na CPU.
  */
 int ocl_chip_update(Hsolve *hsolve)
 {
     if (!ocl_state.initialized) {
-        if (ocl_init(hsolve) != 0)
+        if (ocl_state.disabled)
             return do_chip_hh4_update(hsolve);
+        if (ocl_init(hsolve) != 0) {
+            ocl_state.disabled = 1;
+            return do_chip_hh4_update(hsolve);
+        }
     }
 
     int n  = hsolve->ncompts;
     int nc = hsolve->nchips;
 
-    struct timespec t0, t1;
+    struct timespec t0, t1, ttransfer;
     clock_gettime(CLOCK_MONOTONIC, &t0);
 
+    /* Always upload current vm[] (written by CPU Hines solver each step). */
     clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_vm, CL_FALSE,
                          0, n*sizeof(double), hsolve->vm, 0, NULL, NULL);
-    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_chip, CL_FALSE,
-                         0, nc*sizeof(double), hsolve->chip, 0, NULL, NULL);
+
+    /* Upload chip[] only on the first call — after that the GPU owns it. */
+    if (!ocl_state.chip_on_gpu) {
+        clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_chip, CL_FALSE,
+                             0, nc*sizeof(double), hsolve->chip, 0, NULL, NULL);
+    }
+
+    clock_gettime(CLOCK_MONOTONIC, &ttransfer);
 
     /* zaokraglamy global_size do wielokrotnosci 64 (optymalny rozmiar dla AMD) */
     size_t local_size  = 64;
@@ -329,8 +356,9 @@ int ocl_chip_update(Hsolve *hsolve)
         return do_chip_hh4_update(hsolve);
     }
 
-    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_chip, CL_FALSE,
-                        0, nc*sizeof(double), hsolve->chip, 0, NULL, NULL);
+    /* chip[] now lives on the GPU; CPU copy is stale. */
+    ocl_state.chip_on_gpu = 1;
+
     /* CL_TRUE = bariera synchronizacji — czekamy na zakonczenie GPU */
     clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_results, CL_TRUE,
                         0, n*2*sizeof(double), hsolve->results, 0, NULL, NULL);
@@ -345,12 +373,35 @@ int ocl_chip_update(Hsolve *hsolve)
         ocl_state.prof_kernel_ns += (kend - kstart);
     }
     clReleaseEvent(kern_event);
-    ocl_state.prof_total_ns +=
-        (unsigned long long)(t1.tv_sec - t0.tv_sec) * 1000000000ULL +
-        (t1.tv_nsec - t0.tv_nsec);
-    ocl_state.prof_calls++;
+    {
+        unsigned long long dt_total =
+            (unsigned long long)(t1.tv_sec - t0.tv_sec) * 1000000000ULL +
+            (t1.tv_nsec - t0.tv_nsec);
+        unsigned long long dt_transfer =
+            (unsigned long long)(ttransfer.tv_sec - t0.tv_sec) * 1000000000ULL +
+            (ttransfer.tv_nsec - t0.tv_nsec);
+        ocl_state.prof_total_ns    += dt_total;
+        ocl_state.prof_transfer_ns += dt_transfer;
+        ocl_state.prof_calls++;
+    }
 
     return 0;
+}
+
+/*
+ * ocl_sync_chip — synchronizuje chip[] z GPU do CPU
+ *
+ * Wywolaj przed odczytem pol stanu bramek hsolve z poziomu skryptow GENESIS
+ * (findsolvefield, HGET itp.). Nie musisz wywolywac po kazdym kroku —
+ * wystarczy przed momentem, gdy CPU potrzebuje aktualnych wartosci.
+ */
+void ocl_sync_chip(Hsolve *hsolve)
+{
+    if (!ocl_state.initialized || !ocl_state.chip_on_gpu) return;
+    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_chip, CL_TRUE,
+                        0, ocl_state.nchips * sizeof(double),
+                        hsolve->chip, 0, NULL, NULL);
+    ocl_state.chip_on_gpu = 0;
 }
 
 /*
@@ -360,6 +411,9 @@ int ocl_chip_update(Hsolve *hsolve)
 void ocl_cleanup(void)
 {
     if (!ocl_state.initialized) return;
+    /* chip[] may be stale on CPU — nothing to sync here since hsolve may
+       already be freed; callers who need final gate state should call
+       ocl_sync_chip() before teardown. */
     clReleaseMemObject(ocl_state.buf_vm);
     clReleaseMemObject(ocl_state.buf_chip);
     clReleaseMemObject(ocl_state.buf_results);
@@ -374,18 +428,22 @@ void ocl_cleanup(void)
     ocl_state.initialized = 0;
 
     if (ocl_state.prof_calls > 0) {
-        double kern_ms  = ocl_state.prof_kernel_ns / 1e6;
-        double total_ms = ocl_state.prof_total_ns  / 1e6;
+        double kern_ms     = ocl_state.prof_kernel_ns   / 1e6;
+        double total_ms    = ocl_state.prof_total_ns    / 1e6;
+        double transfer_ms = ocl_state.prof_transfer_ns / 1e6;
         double per_call_us = ocl_state.prof_kernel_ns / (double)ocl_state.prof_calls / 1e3;
         double gpu_fraction = (total_ms > 0.0)
                               ? 100.0 * kern_ms / total_ms : 0.0;
         printf("OCL PROFILING SUMMARY\n");
-        printf("  steps profiled  : %lu\n",  ocl_state.prof_calls);
-        printf("  kernel total    : %.3f ms  (%.2f us/step)\n",
+        printf("  steps profiled    : %lu\n",  ocl_state.prof_calls);
+        printf("  kernel total      : %.3f ms  (%.2f us/step)\n",
                kern_ms, per_call_us);
-        printf("  ocl_chip_update : %.3f ms  (wall incl. transfers)\n", total_ms);
-        printf("  GPU active frac : %.2f%%  (kernel / ocl_chip_update wall)\n",
+        printf("  vm upload (wall)  : %.3f ms  (%.2f us/step, step-0 also had chip)\n",
+               transfer_ms, transfer_ms * 1e3 / ocl_state.prof_calls);
+        printf("  ocl_chip_update   : %.3f ms  (wall incl. transfers)\n", total_ms);
+        printf("  GPU active frac   : %.2f%%  (kernel / ocl_chip_update wall)\n",
                gpu_fraction);
+        printf("  chip[] transfers  : skipped (persistent GPU buffer after step 0)\n");
         printf("  NOTE: ocl_chip_update is only the channel-update fraction\n");
         printf("        of total step time. Hines solver runs on CPU.\n");
     }

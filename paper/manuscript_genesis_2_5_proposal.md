@@ -340,6 +340,39 @@ dispatch and buffer transfers across multiple steps and/or moving the
 tridiagonal solve itself onto the accelerator, as discussed in
 `paper/PLAN_gpu_rewrite.md`.
 
+**Hardware fp64 limitation (third confound, identified post-profiling).** After
+the profiling runs were obtained (on the host system with the ROCm OpenCL
+runtime, `libamdocl64.so`, which reports the device as "gfx1150"), the container
+environment was found to expose only the Mesa `rusticl` runtime. Mesa's rusticl
+implementation on this GPU reports `CL_DEVICE_DOUBLE_FP_CONFIG=0` and does not
+advertise `cl_khr_fp64`, so the double-precision channel kernel fails to compile
+under rusticl, and `ocl_chip_update` silently falls back to the CPU code path
+for the entire run. This is a third confound that must be documented alongside
+the X11 binary difference (first confound) and the passive-compartment
+non-dispatch (second confound):
+
+| Confound | Effect | Status |
+|----------|--------|--------|
+| X11 binary difference | GPU arm had construction overhead from GUI toolkit | Fixed: both arms now use `nxgenesis_nocl` / `nxgenesis` |
+| Passive compartment | No ion channels → `ocl_chip_update` never called | Fixed: `ocl_hh_benchmark.g` uses real HH channels |
+| Mesa rusticl no fp64 | Kernel build fails → CPU fallback on every step | Mitigated: code now detects at startup, disables OCL with one diagnostic message |
+
+In the container environment used for the end-to-end CPU vs GPU benchmark
+campaign (`run_genesis25_cpu_gpu_extreme_5rep.sh`), the "GPU arm" (`nxgenesis`)
+was effectively CPU-only, differing from the "CPU arm" (`nxgenesis_nocl`) only
+by the wasted `ocl_init` attempt at startup. After the one-time-disable fix
+committed alongside this section, the overhead is negligible (single context
+probe + print at the first step, then identical to the CPU path thereafter).
+The benchmark results in `paper/genesis25_cpu_gpu_extreme_5rep.csv` therefore
+represent a CPU-vs-CPU comparison with matched headless binaries, and the
+speedup ratio of ~1.0 across all network sizes is expected.
+
+The profiling results in Table 2 were obtained on the host system (outside the
+container) with the ROCm OpenCL runtime, where the kernel compiled and executed
+correctly. Those numbers are genuine device-side timings, but they are not
+reproducible inside the current containerized development environment without
+additional ROCm library setup (see `paper/REPLICATION.md`).
+
 CUDA support should be presented as planned future work within the GENESIS 2.5
 release concept. No CUDA build, kernel path, or benchmark result is validated
 in the current workspace, so the accelerator results reported here are limited
@@ -364,20 +397,20 @@ equivalence across accelerator backends, or any CUDA implementation status.
 
 More importantly, the single workflow validated here demonstrates only that
 the OpenCL channel-update kernel dispatches and executes correctly -- not an
-end-to-end wall-clock speedup over CPU execution. An earlier version of this
-workflow's result (Section 3.5) was itself a CPU-only artifact mistaken for a
-GPU measurement, because a clean build and a non-crashing run were treated as
-sufficient evidence of GPU dispatch; that error was caught only by inspecting
-the run's own logs for explicit kernel-initialization output, and it
-motivated the verification requirement introduced in Section 2.2.1. Given the
-profiled kernel time is a small fraction of total step time (Section 3.5),
-and that the campaign comparing `genesis` against `nxgenesis` directly was
-separately found to be confounded by an unrelated build difference (X11
-linkage; see `paper/x11_binary_confound_investigation.md`), readers should not
-infer any GPU-vs-CPU speedup from this manuscript -- only that a GPU
-execution path exists, is now correctly verifiable, and is currently
-dispatch-overhead-bound rather than compute-bound. The full command-level
-record and remaining scope are provided in `paper/gpu_acceleration_attempt.md`.
+end-to-end wall-clock speedup over CPU execution. The development and
+benchmark campaign encountered three successive confounds, each of which
+prevented genuine GPU dispatch in a different way: (1) using the X11-linked
+binary as the "CPU arm" introduced GUI toolkit overhead unrelated to
+computation; (2) the original benchmark used passive compartments that never
+triggered channel-update dispatch; and (3) the benchmark container's Mesa
+rusticl runtime lacks fp64 support, so the double-precision channel kernel
+silently falls back to CPU in that environment (Section 3.5). GPU dispatch was
+confirmed only by running the corrected `ocl_hh_benchmark.g` outside the
+container under the ROCm OpenCL runtime (Section 3.5, Table 2). Readers should
+not infer any GPU-vs-CPU speedup from the end-to-end benchmark results in
+`paper/genesis25_cpu_gpu_extreme_5rep.csv` -- those represent a matched CPU
+vs CPU comparison by the time all three confounds are accounted for. The full
+command-level record is in `paper/gpu_acceleration_attempt.md`.
 
 ## 5. Conclusion
 This study provides a reproducible benchmark and release proposal for GENESIS

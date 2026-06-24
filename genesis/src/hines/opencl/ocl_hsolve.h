@@ -27,10 +27,16 @@ typedef struct {
     int    nchips;
     int    nops;
     int    initialized;
+    /* Set on any init failure so subsequent steps skip OCL without retrying. */
+    int    disabled;
+    /* After the first successful kernel run chip[] lives on the GPU.
+       CPU copy (hsolve->chip) is stale until ocl_sync_chip() is called. */
+    int    chip_on_gpu;
 
     /* profiling accumulators */
     unsigned long long prof_kernel_ns;  /* total GPU kernel execution time */
     unsigned long long prof_total_ns;   /* total wall time inside ocl_chip_update */
+    unsigned long long prof_transfer_ns;/* wall time of buffer transfers only */
     unsigned long       prof_calls;     /* number of steps profiled */
 } OclHsolveState;
 
@@ -39,6 +45,7 @@ extern OclHsolveState ocl_state;
 
 int  ocl_init(Hsolve *hsolve);
 int  ocl_chip_update(Hsolve *hsolve);
+void ocl_sync_chip(Hsolve *hsolve); /* download chip[] to CPU on demand */
 void ocl_cleanup(void);
 
 #endif /* USE_OPENCL */
