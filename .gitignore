@@ -1,6 +1,8 @@
 # Pliki binarne z kompilacji GENESIS
 genesis/src/**/*.o
 genesis/src/**/*@.c
+# hines_d@.c committed with anonymous-field patch (sizeof(#) invalid on GCC 15)
+!genesis/src/hines/hines_d@.c
 genesis/src/**/*@.h
 genesis/src/**/lex.yy.c
 genesis/src/**/y.tab.c
@@ -31,7 +33,8 @@ genesis/src/genesis
 genesis/nxgenesis
 genesis/genesis
 genesis/src/diskio/interface/netcdf/netcdf-3.4/src/confdefs.h
-genesis/src/diskio/interface/netcdf/netcdf-3.4/src/libsrc/ncconfig.h
+# ncconfig.h committed as pre-filled platform config (configure cross-compile false positive)
+!genesis/src/diskio/interface/netcdf/netcdf-3.4/src/libsrc/ncconfig.h
 genesis/bin/
 genesis/lib/
 genesis/include/

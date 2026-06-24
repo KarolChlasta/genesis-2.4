@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-CPU=genesis/genesis
+CPU=genesis/src/nxgenesis_nocl
 GPU=genesis/src/nxgenesis
 OUT=paper/genesis25_cpu_gpu_extreme_5rep.csv
 SUMMARY=paper/genesis25_cpu_gpu_extreme_5rep_summary.csv
