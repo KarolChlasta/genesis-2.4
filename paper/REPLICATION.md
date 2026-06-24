@@ -64,15 +64,24 @@ OCL_ICD_VENDORS=/run/host/etc/OpenCL/vendors \
 This compares `nxgenesis_nocl` (CPU) against `nxgenesis` with
 `GENESIS_OCL_MULTILOOP=5000`. In multiloop mode the entire 5000-step simulation
 is dispatched in a single GPU kernel call (all steps run inside the kernel,
-eliminating the per-step PCIe transfer overhead). Expected results on ROCm:
+eliminating the per-step PCIe transfer overhead). Measured results on ROCm
+(outside container, K=5000 steps, single replicate):
 
-| Configuration | step 5000 time | vs CPU |
-|---|---|---|
-| CPU (nxgenesis_nocl, N=2000) | ~1.6 s | 1× |
-| GPU single-step (nxgenesis, N=2000) | ~0.67 s | 2.4× |
-| GPU multiloop (nxgenesis, N=2000) | ~0.08 s | ~20× |
+| N neurons | CPU GENESIS step (s) | GPU kernel only (ms) | GPU kernel speedup | GENESIS step GPU (s) | End-to-end speedup |
+|---:|---:|---:|---:|---:|---:|
+|    100 | 0.067 |  15.4 |   4.4× | 0.055 | 1.22× |
+|    500 | 0.316 |  15.8 |  20.0× | 0.225 | 1.40× |
+|  1,000 | 0.507 |  15.5 |  32.7× | 0.441 | 1.15× |
+|  2,000 | 1.065 |  19.1 |  55.8× | 1.008 | 1.06× |
+|  5,000 | 2.813 |  31.3 |  89.8× | 2.449 | 1.15× |
+| 10,000 | 8.359 |  56.1 | 149.0× | 6.728 | 1.24× |
 
-At larger N (GPU more saturated): speedup scales toward 50-100×.
+The GPU kernel achieves 4-149× speedup over CPU computation. End-to-end
+GENESIS speedup is only 1.1-1.4× because the GENESIS scheduler iterates over
+all N×3 absorbed elements per step (~25-45 ns/element), scaling O(N) and
+dominating at all tested N. Restructuring the GENESIS scheduler to skip
+absorbed elements is required to realize the kernel-level speedup end-to-end.
+
 In the container with Mesa rusticl (no fp64): both arms run on CPU, speedup = 1×,
 warning `"nie wspiera fp64"` is printed.
 

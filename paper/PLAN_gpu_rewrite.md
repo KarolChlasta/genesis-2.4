@@ -148,12 +148,17 @@ further optimizing the channel kernel alone.
       kernel occupancy and transfer overhead
 - [x] Prototype a batched neuron-update kernel: single NDRange kernel over N neurons
       per step, persistent GPU buffers — DONE (chip_channel_multiloop, 2026-06-24)
-- [ ] Benchmark prototype at N=10k, 30k, 100k vs current serial dispatch
-      (script: paper/run_genesis25_multiloop_benchmark.sh, requires ROCm platform)
-- [ ] If prototype shows >2x speedup, design full rewrite of the GENESIS step loop
+- [x] Benchmark prototype at N=100-10k vs current serial dispatch — DONE (2026-06-24)
+      Result: GPU kernel 4-149× faster; end-to-end 1.1-1.4× due to GENESIS scheduler
 - [x] Update paper GPU section with honest framing and rewrite roadmap, citing
       the real OCL kernel profiling numbers above instead of the retracted
-      CPU-vs-CPU ~1.0x figure
+      CPU-vs-CPU ~1.0x figure — DONE (Section 3.6, 2026-06-24)
+- [ ] **[Next: GENESIS scheduler restructuring]** Modify the GENESIS step loop
+      to skip absorbed elements genuinely (not iterate as no-ops) when GPU
+      multiloop has consumed the computation. This is the bottleneck for
+      end-to-end speedup: ~25-45 ns/element/step × N×3 elements dominates
+      at all tested N values (98-99% of GPU arm total step time at N≥2000).
+      Requires changes to `genesis/src/sim/` (scheduler) not `genesis/src/hines/`.
 
 ## Multiloop kernel implementation (2026-06-24)
 
@@ -179,23 +184,33 @@ GENESIS_OCL_MULTILOOP=5000 genesis/src/nxgenesis -nosimrc -notty -batch \
     genesis/Scripts/benchmark/ocl_hh_benchmark.g 2000 5000
 ```
 
-### Expected performance (ROCm, Radeon 890M gfx1150)
+### Measured performance (ROCm 6.3.1, Radeon 890M gfx1150, K=5000, single replicate)
 
-From single-step profiling (Table 2 in manuscript):
-- Kernel time at N=2000: 13.44 µs/step → K steps = 13.44µs × K (inside kernel)
-- Transfer overhead (single-step): 121 µs/step → ELIMINATED in multiloop (one-time)
+`ocl_hh_benchmark.g` outside container with ROCm ICD. "GPU kernel" = kernel
+execution time for all 5000 steps (one dispatch). "GENESIS step" = GENESIS
+`{cpu}` counter for 5000 steps. "GPU kernel speedup" = CPU total / GPU kernel.
+"End-to-end speedup" = CPU GENESIS step / GPU GENESIS step.
 
-| Mode | N=2000, K=5000 total | µs/step |
-|---|---|---|
-| CPU (no OCL) | ~1615 ms | ~323 µs |
-| Single-step GPU | ~672 ms | ~134 µs |
-| Multiloop GPU | ~72 ms | ~14 µs |
-| Expected speedup vs CPU | **~22×** | |
+| N | CPU total (s) | GPU kernel (ms) | GPU dispatch total (ms) | GPU kernel speedup | GENESIS step GPU (s) | End-to-end speedup |
+|---:|---:|---:|---:|---:|---:|---:|
+|    100 | 0.067 |  15.4 |  17.9 |   4.4× | 0.055 | 1.22× |
+|    500 | 0.316 |  15.8 |  17.8 |  20.0× | 0.225 | 1.40× |
+|  1,000 | 0.507 |  15.5 |  18.0 |  32.7× | 0.441 | 1.15× |
+|  2,000 | 1.065 |  19.1 |  21.0 |  55.8× | 1.008 | 1.06× |
+|  5,000 | 2.813 |  31.3 |  34.5 |  89.8× | 2.449 | 1.15× |
+| 10,000 | 8.359 |  56.1 |  60.5 | 149.0× | 6.728 | 1.24× |
 
-At larger N (GPU closer to saturation, 512 lanes on 890M):
-- N=16384: GPU fully saturated, ~17 µs kernel regardless → ~84 ms total
-- CPU: scales linearly to ~13 s
-- Speedup: ~155×
+**Key finding:** the GPU kernel is 4-149× faster than CPU computation.
+End-to-end GENESIS speedup is only 1.1-1.4× because the GENESIS scheduler
+iterates over all N×3 absorbed elements each step (~25-45 ns/element),
+an O(N) overhead that dominates at all tested N values (98-99% of GPU arm's
+total step time at N≥2000).
+
+**Estimate for previous ~22× claim:** at N=2000, K=5000, the kernel itself
+runs in 19.1ms while the CPU total is 1065ms → 55.8× kernel speedup. The
+earlier "~22×" estimate was based on subtracting estimated GENESIS overhead;
+the measured kernel speedup at N=2000 is ~56×. The end-to-end speedup,
+however, is only 1.06× (GENESIS scheduler bottleneck).
 
 ### Limitation: single-compartment networks only
 

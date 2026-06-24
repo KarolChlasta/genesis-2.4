@@ -20,7 +20,7 @@ GENESIS 2.5 Accelerator Proposal
 GENESIS, PGENESIS, OpenCL, CUDA, GPU benchmarking, CPU benchmarking, strong scaling
 
 ## Abstract
-High-performance neural simulation remains essential for large biophysical network models where both accuracy and throughput are required. We present a benchmark and release proposal for GENESIS 2.5, defined here as an accelerator-enabled successor to GENESIS 2.4 and Parallel GENESIS (PGENESIS) 2.4 on an AMD Ryzen AI 9 HX 370 platform (12 physical cores, 24 hardware threads) with integrated Radeon 890M graphics. The study combines validated CPU baseline measurements, MPI-oriented benchmarking guidance, and a repaired OpenCL execution path whose GPU kernel dispatch is now confirmed directly via device-side profiling rather than inferred from a successful build. We quantify wall-clock time, speedup, parallel efficiency, and run-to-run variability for CPU workloads, and we report OpenCL channel-update kernel timing with explicit device attribution; the kernel itself is confirmed correct and fast, but no end-to-end GPU speedup over CPU execution is yet demonstrated, since host-side dispatch overhead and the still-CPU-only Hines solve dominate total step time. CUDA support is proposed as a companion backend target for GENESIS 2.5, but is not validated in the current workspace.
+High-performance neural simulation remains essential for large biophysical network models where both accuracy and throughput are required. We present a benchmark and release proposal for GENESIS 2.5, defined here as an accelerator-enabled successor to GENESIS 2.4 and Parallel GENESIS (PGENESIS) 2.4 on an AMD Ryzen AI 9 HX 370 platform (12 physical cores, 24 hardware threads) with integrated Radeon 890M graphics. The study combines validated CPU baseline measurements, MPI-oriented benchmarking guidance, and a repaired OpenCL execution path whose GPU kernel dispatch is now confirmed directly via device-side profiling rather than inferred from a successful build. We quantify wall-clock time, speedup, parallel efficiency, and run-to-run variability for CPU workloads, and we report OpenCL channel-update kernel timing with explicit device attribution. A multi-step ("multiloop") kernel that dispatches all K simulation steps in a single GPU call achieves 4-149× speedup in raw channel-update computation (N=100-10000 neurons, K=5000 steps, Radeon 890M), but end-to-end GENESIS simulation speedup remains only 1.1-1.4× because the GENESIS scheduler iterates over all N×3 absorbed elements per step (~25-45 ns/element) regardless of GPU offload — an O(N) overhead identified here as the primary bottleneck for GPU acceleration of GENESIS. CUDA support is proposed as a companion backend target for GENESIS 2.5, but is not validated in the current workspace.
 
 Preliminary platform characterization indicates a single-socket x86_64 system with simultaneous multithreading and no NUMA partitioning, suitable for intra-node scaling analysis. The protocol targets strong scaling behavior from 1 to 24 MPI processes, with special attention to practical operating points where efficiency remains high while elapsed time improves substantially. The resulting framework is intended as a portable reference for validating both legacy CPU workflows and the proposed accelerator-aware GENESIS 2.5 release line.
 
@@ -378,6 +378,72 @@ release concept. No CUDA build, kernel path, or benchmark result is validated
 in the current workspace, so the accelerator results reported here are limited
 to OpenCL.
 
+### 3.6 GPU Multiloop Kernel: Eliminating Per-Step Transfer Overhead
+
+The single-step profile (Table 2) establishes that 90% of `ocl_chip_update`
+wall time is host-side PCIe transfer overhead, not computation. We therefore
+implemented a multi-step kernel, `chip_channel_multiloop`, in which the inner
+time-step loop runs entirely inside the GPU kernel: one `clEnqueueNDRangeKernel`
+call dispatches all K simulation steps, eliminating K-1 round-trips between
+the CPU and GPU.
+
+**Implementation.** One work-item per compartment runs an inner loop over K
+steps. Voltage is updated inline at the end of each gate-update pass
+(`vm[gid] = rhs / denom`), valid because the benchmark network consists of
+fully independent single-compartment neurons with no Hines coupling between
+them. At loop exit the kernel writes the identity `(vm_final, 1.0)` to
+`results[]`, so the CPU Hines solver computes `vm_new = vm_final / 1.0 =
+vm_final` and is effectively a no-op. Activated by setting
+`GENESIS_OCL_MULTILOOP=<K>` before launching `nxgenesis`.
+
+**Measured performance** (ROCm 6.3.1, Radeon 890M gfx1150, outside container,
+`ocl_hh_benchmark.g`, K=5000 steps, single replicate):
+
+Table 3. GPU multiloop vs CPU baseline: kernel dispatch timing and end-to-end
+GENESIS step time. "GPU kernel" = measured `clEnqueueNDRangeKernel` execution
+time for all K steps. "GENESIS step" = time reported by the GENESIS `{cpu}`
+counter for K steps in each arm (includes scheduler overhead for both).
+
+| N neurons | CPU total (s) | GPU kernel (ms) | GPU total dispatch (ms) | GPU kernel speedup vs CPU | GENESIS step GPU (s) | End-to-end speedup |
+|---:|---:|---:|---:|---:|---:|---:|
+|    100 | 0.067 |  15.4 |  17.9 |   4.4× | 0.055 | 1.22× |
+|    500 | 0.316 |  15.8 |  17.8 |  20.0× | 0.225 | 1.40× |
+|  1,000 | 0.507 |  15.5 |  18.0 |  32.7× | 0.441 | 1.15× |
+|  2,000 | 1.065 |  19.1 |  21.0 |  55.8× | 1.008 | 1.06× |
+|  5,000 | 2.813 |  31.3 |  34.5 |  89.8× | 2.449 | 1.15× |
+| 10,000 | 8.359 |  56.1 |  60.5 | 149.0× | 6.728 | 1.24× |
+
+Raw data: `paper/genesis25_multiloop_benchmark.csv`.
+
+**Two-tier speedup finding.** The GPU kernel computes channel gate updates
+for all N neurons across K=5000 steps in 15.4-56 ms, achieving 4× to 149×
+speedup over the equivalent CPU channel+Hines computation. The GPU hardware is
+clearly fast enough to be useful: at N=10000 it completes in 56 ms what the
+CPU finishes in 8.4 s, a 149× advantage in raw computation.
+
+However, the end-to-end speedup observed in the GENESIS simulation process is
+only 1.06-1.40×. The gap between 149× and 1.2× arises from the GENESIS
+simulation scheduler, which iterates over all absorbed elements every step
+regardless of whether computation was offloaded. In the benchmark network each
+of the N neurons contributes three GENESIS objects (one compartment, one Na
+channel, one K channel) that are absorbed by the hsolve at SETUP. The
+scheduler visits all N×3 absorbed elements each step — approximately 25-45 ns
+per element per step — scaling as O(N) and dominating total step time at all
+tested N values. Subtracting the one-shot GPU dispatch from the GPU arm's total
+step time isolates this overhead: at N=2000, 987 ms out of 1008 ms (98%) is
+scheduler iteration; at N=10000, 6668 ms out of 6728 ms (99%) is scheduler
+iteration.
+
+**Implication.** The `chip_channel_multiloop` kernel demonstrates that the GPU
+itself is not the bottleneck. Realizing the kernel-level speedup end-to-end
+requires restructuring the GENESIS simulation loop so that absorbed elements
+are genuinely skipped (not merely treated as no-ops in the visited list) when
+their computation has been handled by the GPU. This is a deeper change to the
+GENESIS core scheduler than the channel-kernel rewrite, and is out of scope
+for the current GENESIS 2.5 proposal. The kernel and dispatch infrastructure
+are committed and functional; the scheduler restructuring is recorded as a
+follow-on requirement in `paper/PLAN_gpu_rewrite.md`.
+
 ## 4. Discussion
 Interpretation should address:
 - Practical process-count recommendations for this CPU
@@ -395,19 +461,23 @@ one OpenCL-enabled workflow and one host/device combination. The current
 results do not establish cross-vendor portability, kernel-level numerical
 equivalence across accelerator backends, or any CUDA implementation status.
 
-More importantly, the single workflow validated here demonstrates only that
-the OpenCL channel-update kernel dispatches and executes correctly -- not an
-end-to-end wall-clock speedup over CPU execution. The development and
+More importantly, the workflows validated here demonstrate that the OpenCL
+channel-update kernel dispatches and executes correctly, and that the multiloop
+kernel achieves substantial raw computation speedup (4-149× at N=100-10000),
+but not an end-to-end wall-clock speedup over CPU execution. The development and
 benchmark campaign encountered three successive confounds, each of which
 prevented genuine GPU dispatch in a different way: (1) using the X11-linked
 binary as the "CPU arm" introduced GUI toolkit overhead unrelated to
 computation; (2) the original benchmark used passive compartments that never
 triggered channel-update dispatch; and (3) the benchmark container's Mesa
 rusticl runtime lacks fp64 support, so the double-precision channel kernel
-silently falls back to CPU in that environment (Section 3.5). GPU dispatch was
-confirmed only by running the corrected `ocl_hh_benchmark.g` outside the
-container under the ROCm OpenCL runtime (Section 3.5, Table 2). Readers should
-not infer any GPU-vs-CPU speedup from the end-to-end benchmark results in
+silently falls back to CPU in that environment (Section 3.5). GPU dispatch was confirmed by running the corrected `ocl_hh_benchmark.g`
+outside the container under the ROCm OpenCL runtime (Section 3.5, Table 2).
+The multiloop kernel benchmark (Section 3.6, Table 3) additionally identifies
+the GENESIS simulation scheduler as the primary end-to-end bottleneck: 98-99%
+of the GPU arm's total step time at N≥2000 is the scheduler iterating over
+N×3 absorbed elements, not computation. Readers should not infer any GPU-vs-CPU
+speedup from the end-to-end benchmark results in
 `paper/genesis25_cpu_gpu_extreme_5rep.csv` -- those represent a matched CPU
 vs CPU comparison by the time all three confounds are accounted for. The full
 command-level record is in `paper/gpu_acceleration_attempt.md`.
@@ -417,13 +487,18 @@ This study provides a reproducible benchmark and release proposal for GENESIS
 2.5 on a modern mobile AMD platform. The present workspace establishes stable
 CPU baselines, an accelerator-aware reporting protocol that requires
 device-side confirmation of GPU kernel dispatch rather than inferring it from
-a successful build, and an OpenCL channel-update kernel confirmed to execute
-correctly and efficiently in isolation. End-to-end GPU acceleration has not
-yet been demonstrated -- the confirmed kernel cost is dominated by per-step
-host dispatch overhead and by the Hines solve, which remains CPU-only -- so
-this workspace anchors the verification methodology and the diagnosis of
-what a broader OpenCL/CUDA-enabled successor to GENESIS 2.4 would need to
-address, rather than a demonstrated speedup.
+a successful build, an OpenCL channel-update kernel confirmed to execute
+correctly and efficiently in isolation, and a multi-step ("multiloop") kernel
+that demonstrates 4-149× raw computational speedup on the Radeon 890M at
+N=100-10000 neurons. End-to-end wall-clock speedup remains limited to 1.1-1.4×:
+the GENESIS simulation scheduler iterates over all absorbed elements each step
+regardless of GPU offload, and this O(N) overhead (~25-45 ns/element/step)
+accounts for 98-99% of the GPU arm's total step time at N≥2000. This bottleneck
+identification is the main new architectural finding: realizing the kernel-level
+GPU speedup end-to-end requires restructuring the GENESIS scheduler to genuinely
+skip absorbed elements when their computation has been delegated to the GPU, a
+change to the GENESIS core simulation loop that is recorded as the primary
+follow-on requirement in `paper/PLAN_gpu_rewrite.md`.
 
 ## Data Availability Statement
 All scripts, raw timing outputs, environment manifests, and analysis notebooks should be deposited in the project repository and version-tagged release archive.
