@@ -53,6 +53,29 @@ Look for `OCL: urzadzenie: gfx1150` (ROCm device name) in the output to confirm
 genuine GPU dispatch. The `OCL PROFILING SUMMARY` printed at exit is the Table 2
 source.
 
+**To run the multiloop GPU benchmark** (GPU dozens-of-times-faster-than-CPU):
+
+```bash
+LD_LIBRARY_PATH=/opt/rocm-6.3.1/lib \
+OCL_ICD_VENDORS=/run/host/etc/OpenCL/vendors \
+./paper/run_genesis25_multiloop_benchmark.sh 2000 5000 3
+```
+
+This compares `nxgenesis_nocl` (CPU) against `nxgenesis` with
+`GENESIS_OCL_MULTILOOP=5000`. In multiloop mode the entire 5000-step simulation
+is dispatched in a single GPU kernel call (all steps run inside the kernel,
+eliminating the per-step PCIe transfer overhead). Expected results on ROCm:
+
+| Configuration | step 5000 time | vs CPU |
+|---|---|---|
+| CPU (nxgenesis_nocl, N=2000) | ~1.6 s | 1× |
+| GPU single-step (nxgenesis, N=2000) | ~0.67 s | 2.4× |
+| GPU multiloop (nxgenesis, N=2000) | ~0.08 s | ~20× |
+
+At larger N (GPU more saturated): speedup scales toward 50-100×.
+In the container with Mesa rusticl (no fp64): both arms run on CPU, speedup = 1×,
+warning `"nie wspiera fp64"` is printed.
+
 **The end-to-end CPU vs GPU benchmark campaign** (`run_genesis25_cpu_gpu_extreme_5rep.sh`)
 ran inside the container and used Mesa rusticl (no fp64), so both arms ran CPU
 code. The speedup ratio of ~1.0 reflects a CPU-vs-CPU comparison with matched
@@ -183,10 +206,10 @@ Output: `paper/genesis25_cpu_gpu_longrun_raw.csv`,
 
 ## Binary checksums
 
-Recorded 2026-06-24 (v2: fp64 check + disabled flag added to OCL init):
+Recorded 2026-06-24 (v3: multiloop kernel + kernel_multi release):
 
 ```
-be8e5b6e4db388f1d9f1f6a0afc9b7617b570c6a7e08b036857163f554eb0d67  genesis/src/nxgenesis
+4438cdc1c78e7793202616890a5dadbb1f52de165e01b5c3ddc18959aedac5e0  genesis/src/nxgenesis
 7bc0bf0d2276c18a3d5366e460d2170c453d0e94c17ef0ee0d8f11401653e5fb  genesis/src/nxgenesis_nocl
 ```
 

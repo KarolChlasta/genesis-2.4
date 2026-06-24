@@ -233,8 +233,10 @@ int ocl_init(Hsolve *hsolve)
         return -1;
     }
 
+    /* buf_vm is READ_WRITE: chip_channel_update reads it, chip_channel_multiloop
+       reads AND writes it (voltage update inline each step). */
     ocl_state.buf_vm      = clCreateBuffer(ocl_state.context,
-                                CL_MEM_READ_ONLY,  n*sizeof(double),  NULL, &err);
+                                CL_MEM_READ_WRITE, n*sizeof(double),  NULL, &err);
     ocl_state.buf_chip    = clCreateBuffer(ocl_state.context,
                                 CL_MEM_READ_WRITE, nc*sizeof(double), NULL, &err);
     ocl_state.buf_results = clCreateBuffer(ocl_state.context,
@@ -290,6 +292,43 @@ int ocl_init(Hsolve *hsolve)
     clSetKernelArg(ocl_state.kernel, 11, sizeof(double), &xmin);
     clSetKernelArg(ocl_state.kernel, 12, sizeof(double), &invdx);
 
+    /* --- multiloop kernel --- */
+    ocl_state.kernel_multi = clCreateKernel(ocl_state.program,
+                                            "chip_channel_multiloop", &err);
+    if (err != CL_SUCCESS) {
+        fprintf(stderr, "OCL: clCreateKernel multiloop (%d)\n", err);
+        return -1;
+    }
+    {
+    /* args 0-12 identical to chip_channel_update, arg 13 = nsteps (set per-call) */
+    int zero = 0;
+    clSetKernelArg(ocl_state.kernel_multi,  0, sizeof(cl_mem), &ocl_state.buf_vm);
+    clSetKernelArg(ocl_state.kernel_multi,  1, sizeof(cl_mem), &ocl_state.buf_chip);
+    clSetKernelArg(ocl_state.kernel_multi,  2, sizeof(cl_mem), &ocl_state.buf_results);
+    clSetKernelArg(ocl_state.kernel_multi,  3, sizeof(cl_mem), &ocl_state.buf_tablist);
+    clSetKernelArg(ocl_state.kernel_multi,  4, sizeof(cl_mem), &ocl_state.buf_xvals);
+    clSetKernelArg(ocl_state.kernel_multi,  5, sizeof(cl_mem), &ocl_state.buf_ops);
+    clSetKernelArg(ocl_state.kernel_multi,  6, sizeof(cl_mem), &buf_opstart);
+    clSetKernelArg(ocl_state.kernel_multi,  7, sizeof(cl_mem), &buf_chipstart);
+    clSetKernelArg(ocl_state.kernel_multi,  8, sizeof(int),    &n);
+    clSetKernelArg(ocl_state.kernel_multi,  9, sizeof(int),    &ncols);
+    clSetKernelArg(ocl_state.kernel_multi, 10, sizeof(int),    &xdivs);
+    clSetKernelArg(ocl_state.kernel_multi, 11, sizeof(double), &xmin);
+    clSetKernelArg(ocl_state.kernel_multi, 12, sizeof(double), &invdx);
+    clSetKernelArg(ocl_state.kernel_multi, 13, sizeof(int),    &zero); /* nsteps placeholder */
+    }
+
+    /* Multiloop mode: GENESIS_OCL_MULTILOOP=<nsteps> enables batching */
+    {
+        const char *env = getenv("GENESIS_OCL_MULTILOOP");
+        if (env) {
+            ocl_state.multiloop_total = atoi(env);
+            if (ocl_state.multiloop_total > 0)
+                printf("OCL: tryb multiloop — %d krokow w jednym dispatchu\n",
+                       ocl_state.multiloop_total);
+        }
+    }
+
     ocl_state.ncompts     = n;
     ocl_state.nchips      = nc;
     ocl_state.nops        = no;
@@ -301,16 +340,102 @@ int ocl_init(Hsolve *hsolve)
 }
 
 /*
+ * ocl_multiloop_dispatch — uruchamia chip_channel_multiloop dla nsteps krokow
+ *
+ * Jeden upload vm+chip, jeden dispatch kernela (petla wewnetrzna), jeden download.
+ * Eliminuje roundtrip CPU/GPU na kazdy krok: zamiast N*3 transferow jest 3 transfery.
+ *
+ * Po powrocie:
+ *   hsolve->vm[]      = napięcia po nsteps krokach
+ *   hsolve->chip[]    = stan bramek po nsteps krokach
+ *   hsolve->results[] = tożsame (vm_final, 1.0) — CPU Hines => vm_new = vm_final
+ */
+static int ocl_multiloop_dispatch(Hsolve *hsolve, int nsteps)
+{
+    int n  = hsolve->ncompts;
+    int nc = hsolve->nchips;
+    cl_int err;
+
+    struct timespec t0, t1;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
+
+    /* upload vm[] i chip[] (pelny stan startowy) */
+    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_vm, CL_FALSE,
+                         0, n*sizeof(double), hsolve->vm, 0, NULL, NULL);
+    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_chip, CL_FALSE,
+                         0, nc*sizeof(double), hsolve->chip, 0, NULL, NULL);
+
+    /* ustaw nsteps w argumencie 13 kernela multiloop */
+    clSetKernelArg(ocl_state.kernel_multi, 13, sizeof(int), &nsteps);
+
+    /* dispatch: jeden work-item na kompartment, wszystkie nsteps krokow wewnatrz */
+    {
+    size_t local_size  = 64;
+    size_t global_size = ((n + local_size - 1) / local_size) * local_size;
+    cl_event ev;
+    err = clEnqueueNDRangeKernel(ocl_state.queue, ocl_state.kernel_multi,
+                                  1, NULL, &global_size, &local_size,
+                                  0, NULL, &ev);
+    if (err != CL_SUCCESS) {
+        fprintf(stderr, "OCL multiloop: kernel error (%d), fallback CPU\n", err);
+        return do_chip_hh4_update(hsolve);
+    }
+
+    /* download vm[] (napięcia po wszystkich krokach) i results[] (tożsame) i chip[] */
+    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_vm, CL_FALSE,
+                        0, n*sizeof(double), hsolve->vm, 0, NULL, NULL);
+    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_results, CL_FALSE,
+                        0, n*2*sizeof(double), hsolve->results, 0, NULL, NULL);
+    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_chip, CL_TRUE,
+                        0, nc*sizeof(double), hsolve->chip, 0, NULL, NULL);
+
+    /* chip[] is now correct on CPU; GPU copy matches */
+    ocl_state.chip_on_gpu = 0;
+
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+
+    /* --- profiling i raport --- */
+    {
+    cl_ulong kstart, kend;
+    unsigned long long kern_ns = 0;
+    if (clGetEventProfilingInfo(ev, CL_PROFILING_COMMAND_START,
+                                sizeof(kstart), &kstart, NULL) == CL_SUCCESS &&
+        clGetEventProfilingInfo(ev, CL_PROFILING_COMMAND_END,
+                                sizeof(kend), &kend, NULL) == CL_SUCCESS) {
+        kern_ns = kend - kstart;
+    }
+    clReleaseEvent(ev);
+
+    unsigned long long total_ns =
+        (unsigned long long)(t1.tv_sec - t0.tv_sec) * 1000000000ULL +
+        (t1.tv_nsec - t0.tv_nsec);
+
+    printf("OCL MULTILOOP: %d krokow | kernel %.1f ms | "
+           "total %.1f ms | %.3f us/krok\n",
+           nsteps,
+           kern_ns  / 1e6,
+           total_ns / 1e6,
+           total_ns / 1e3 / nsteps);
+    }
+    } /* end dispatch block */
+
+    ocl_state.multiloop_called = 1;
+    return 0;
+}
+
+/*
  * ocl_chip_update — wywolywana co krok zamiast do_chip_hh4_update
  *
- * Per-step transfers (persistent chip optimisation):
- *   Step 0:  WriteBuffer(vm) + WriteBuffer(chip) + Kernel + ReadBuffer(results)
- *   Step 1+: WriteBuffer(vm)                     + Kernel + ReadBuffer(results)
+ * Tryb normalny (persistent chip):
+ *   Krok 0:  WriteBuffer(vm) + WriteBuffer(chip) + Kernel + ReadBuffer(results)
+ *   Krok 1+: WriteBuffer(vm)                     + Kernel + ReadBuffer(results)
  *
- * chip[] is owned by the GPU after the first successful kernel run.
- * The CPU copy (hsolve->chip) is stale until ocl_sync_chip() is called.
- * Call ocl_sync_chip() before any GENESIS script that reads gate-variable
- * fields from the hsolve element (findsolvefield, HGET, etc.).
+ * Tryb multiloop (GENESIS_OCL_MULTILOOP=<nsteps>):
+ *   Pierwsze wywolanie: jeden dispatch K krokow, download vm+chip+results.
+ *   Kolejne wywolania (w obrebie tego samego K-krokowego batcha): no-op.
+ *   results[] zawiera wartosci tożsame (vm_final, 1.0) — CPU Hines => vm = vm_final.
+ *
+ *   Tylko dla sieci jednokompartmentowych (brak solwera trojdiagonalnego).
  *
  * Jesli OpenCL nie dziala — automatyczny fallback na CPU.
  */
@@ -323,6 +448,19 @@ int ocl_chip_update(Hsolve *hsolve)
             ocl_state.disabled = 1;
             return do_chip_hh4_update(hsolve);
         }
+    }
+
+    /* --- tryb multiloop --- */
+    if (ocl_state.multiloop_total > 0) {
+        if (ocl_state.multiloop_called > 0) {
+            /* GPU juz wykonal wszystkie kroki. results[] ma wartosci tozsamosciowe
+               (vm_final, 1.0) z ostatniego dispatcha. CPU Hines liczy vm = vm/1 = vm.
+               Tylko inkrementuj licznik — nie rob nic wiecej. */
+            ocl_state.multiloop_called++;
+            return 0;
+        }
+        /* Pierwsze wywolanie: odpal caly batch na GPU */
+        return ocl_multiloop_dispatch(hsolve, ocl_state.multiloop_total);
     }
 
     int n  = hsolve->ncompts;
@@ -422,11 +560,20 @@ void ocl_cleanup(void)
     clReleaseMemObject(ocl_state.buf_ops);
     if (ocl_state.buf_stablist) clReleaseMemObject(ocl_state.buf_stablist);
     clReleaseKernel(ocl_state.kernel);
+    if (ocl_state.kernel_multi) clReleaseKernel(ocl_state.kernel_multi);
     clReleaseProgram(ocl_state.program);
     clReleaseCommandQueue(ocl_state.queue);
     clReleaseContext(ocl_state.context);
     ocl_state.initialized = 0;
 
+    if (ocl_state.multiloop_called > 0) {
+        printf("OCL MULTILOOP SUMMARY\n");
+        printf("  batch dispatched : 1 kernel call covering %d steps\n",
+               ocl_state.multiloop_total);
+        printf("  no-op steps      : %d (CPU Hines identity pass-through)\n",
+               ocl_state.multiloop_called - 1);
+        printf("  (timing per-dispatch printed at dispatch time above)\n");
+    }
     if (ocl_state.prof_calls > 0) {
         double kern_ms     = ocl_state.prof_kernel_ns   / 1e6;
         double total_ms    = ocl_state.prof_total_ns    / 1e6;

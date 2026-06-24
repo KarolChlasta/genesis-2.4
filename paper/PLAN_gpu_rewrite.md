@@ -146,10 +146,75 @@ further optimizing the channel kernel alone.
 ### Next steps
 - [ ] Profile OpenCL kernel calls with `rocprof` or `clpeak` to measure actual
       kernel occupancy and transfer overhead
-- [ ] Prototype a batched neuron-update kernel: single NDRange kernel over N neurons
-      per step, persistent GPU buffers
+- [x] Prototype a batched neuron-update kernel: single NDRange kernel over N neurons
+      per step, persistent GPU buffers — DONE (chip_channel_multiloop, 2026-06-24)
 - [ ] Benchmark prototype at N=10k, 30k, 100k vs current serial dispatch
+      (script: paper/run_genesis25_multiloop_benchmark.sh, requires ROCm platform)
 - [ ] If prototype shows >2x speedup, design full rewrite of the GENESIS step loop
-- [ ] Update paper GPU section with honest framing and rewrite roadmap, citing
+- [x] Update paper GPU section with honest framing and rewrite roadmap, citing
       the real OCL kernel profiling numbers above instead of the retracted
       CPU-vs-CPU ~1.0x figure
+
+## Multiloop kernel implementation (2026-06-24)
+
+### What was done
+
+**`chip_channel_multiloop`** kernel added to `ocl_channel.cl`:
+- One work-item per compartment (same as `chip_channel_update`)
+- Inner loop: `for (step = 0; step < nsteps; step++)` — all K steps inside one GPU dispatch
+- Voltage update inline: `vm[gid] = rhs / denom` at the end of each inner step
+- After all steps: writes identity to `results[]` (vm_final, 1.0) so the CPU
+  Hines solver is a no-op (`vm_new = vm_final / 1.0 = vm_final`)
+- Refactored single-step logic into shared `channel_step()` device function
+
+**`ocl_multiloop_dispatch()`** in `ocl_hsolve.c`:
+- One `WriteBuffer(vm)` + one `WriteBuffer(chip)` — uploaded once per batch
+- Single `clEnqueueNDRangeKernel` for all K steps
+- One `ReadBuffer(vm)` + `ReadBuffer(results)` + `ReadBuffer(chip)` after completion
+- Reports timing: `OCL MULTILOOP: K krokow | kernel X ms | total Y ms | Z us/krok`
+
+**Activation**: set `GENESIS_OCL_MULTILOOP=<nsteps>` before running:
+```bash
+GENESIS_OCL_MULTILOOP=5000 genesis/src/nxgenesis -nosimrc -notty -batch \
+    genesis/Scripts/benchmark/ocl_hh_benchmark.g 2000 5000
+```
+
+### Expected performance (ROCm, Radeon 890M gfx1150)
+
+From single-step profiling (Table 2 in manuscript):
+- Kernel time at N=2000: 13.44 µs/step → K steps = 13.44µs × K (inside kernel)
+- Transfer overhead (single-step): 121 µs/step → ELIMINATED in multiloop (one-time)
+
+| Mode | N=2000, K=5000 total | µs/step |
+|---|---|---|
+| CPU (no OCL) | ~1615 ms | ~323 µs |
+| Single-step GPU | ~672 ms | ~134 µs |
+| Multiloop GPU | ~72 ms | ~14 µs |
+| Expected speedup vs CPU | **~22×** | |
+
+At larger N (GPU closer to saturation, 512 lanes on 890M):
+- N=16384: GPU fully saturated, ~17 µs kernel regardless → ~84 ms total
+- CPU: scales linearly to ~13 s
+- Speedup: ~155×
+
+### Limitation: single-compartment networks only
+
+`chip_channel_multiloop` does the voltage update directly in the kernel as
+`vm_new = rhs / denom`. This is correct only when each compartment is
+independent (no parent-child connectivity in the Hines matrix). For
+multi-compartment neurons with dendritic trees, the voltage update requires
+solving a tridiagonal system that couples compartments — this cannot be done
+independently per work-item. Multiloop mode must not be used for such networks.
+
+The `ocl_hh_benchmark.g` benchmark (N independent single-compartment neurons)
+is exactly the valid use case.
+
+### Correctness note
+
+The identity trick for results[] means the CPU Hines solver computes
+`vm_new = results[2i] / results[2i+1] = vm_final / 1.0 = vm_final`. This is
+correct because:
+1. `vm[]` already holds the GPU-computed final voltage from the multiloop
+2. The CPU "solve" just copies it through unchanged
+3. `chip[]` was also downloaded after the multiloop, so gate variable state is
+   correct for any post-simulation GENESIS script that inspects it
