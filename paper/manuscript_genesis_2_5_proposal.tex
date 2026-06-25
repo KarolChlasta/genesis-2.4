@@ -45,11 +45,11 @@
 \title{\textbf{Toward GENESIS 2.5: Extending GENESIS 2.4 with OpenCL/CUDA\\
 Accelerator Support on AMD Ryzen AI 9 HX 370}}
 
-\author{First Author Name\textsuperscript{1} \and Second Author Name\textsuperscript{2}\\[6pt]
-\small\textsuperscript{1}Affiliation One \quad \textsuperscript{2}Affiliation Two\\[4pt]
-\small Corresponding author: Name, email, address}
+\author{Karol Chlasta\textsuperscript{1}\\[6pt]
+\small\textsuperscript{1}[PENDING: institutional affiliation]\\[4pt]
+\small Corresponding author: Karol Chlasta, karol.chlasta@wyden.io}
 
-\date{Manuscript prepared 2026-06-24}
+\date{Manuscript prepared 2026-06-25}
 
 \begin{document}
 
@@ -207,6 +207,61 @@ Cal7difshell.g  & 30 & 0.6685 & 0.0070 & 1.04 & 0.0025 & 0.6599 & 0.6803 \\
 
 Both workloads show low relative variance (CV $\approx$ 1\%), indicating stable CPU timing.
 
+\subsection{PGENESIS Strong-Scaling (MPI)}
+\label{sec:mpi}
+
+\subsubsection*{Design}
+
+A strong-scaling experiment holds the problem size fixed and varies the number of MPI ranks.
+The expected speedup on $P$ ranks over a single-rank baseline is $S_P = T_1 / T_P$, and
+parallel efficiency is $E_P = S_P / P$.
+Ideal (linear) scaling gives $S_P = P$ and $E_P = 1$.
+In practice, communication overhead, load imbalance, and MPI synchronisation cause $E_P < 1$,
+with degradation typically visible once process count approaches the hardware thread count.
+
+For this platform (12 physical cores, 24 hardware threads), the planned sweep is
+$P \in \{1, 2, 4, 6, 8, 12, 16, 20, 24\}$ with $\geq 10$ replicates per point
+(first replicate excluded as warm-up).
+The fixed workload is the same Hodgkin-Huxley network used for the CPU baseline above;
+neurons are distributed across MPI ranks by PGENESIS's default block partitioning.
+
+\subsubsection*{Results}
+
+\textbf{[PENDING: run PGENESIS strong-scaling campaign and insert Table here.]}
+
+The table below is a placeholder showing the required columns; all numerical cells are
+to be filled from the benchmark run script \texttt{run\_genesis25\_cpu\_scaling\_dense\_10rep.sh}
+(or a PGENESIS-adapted equivalent).
+
+\begin{table}[H]
+\centering
+\caption{PGENESIS strong-scaling results (placeholder---data not yet collected).
+$T_P$ = mean wall-clock time over $\geq$9 valid replicates;
+$S_P$ = $T_1/T_P$; $E_P$ = $S_P/P$; CV = coefficient of variation.}
+\label{tab:mpi_scaling}
+\begin{tabular}{rrrrrr}
+\toprule
+$P$ (ranks) & $T_P$ (s) & SD (s) & CV (\%) & $S_P$ & $E_P$ \\
+\midrule
+1  & [PENDING] & [PENDING] & [PENDING] & 1.00 & 1.00 \\
+2  & [PENDING] & [PENDING] & [PENDING] & [PENDING] & [PENDING] \\
+4  & [PENDING] & [PENDING] & [PENDING] & [PENDING] & [PENDING] \\
+6  & [PENDING] & [PENDING] & [PENDING] & [PENDING] & [PENDING] \\
+8  & [PENDING] & [PENDING] & [PENDING] & [PENDING] & [PENDING] \\
+12 & [PENDING] & [PENDING] & [PENDING] & [PENDING] & [PENDING] \\
+16 & [PENDING] & [PENDING] & [PENDING] & [PENDING] & [PENDING] \\
+20 & [PENDING] & [PENDING] & [PENDING] & [PENDING] & [PENDING] \\
+24 & [PENDING] & [PENDING] & [PENDING] & [PENDING] & [PENDING] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Key quantities to extract from the data once collected:
+(1) the rank count at which $E_P$ drops below 0.80, marking the practical scaling knee;
+(2) whether the knee coincides with SMT boundary (12 $\to$ 13 ranks), indicating that
+hyperthreading degrades floating-point throughput;
+(3) run-to-run CV, expected to remain $<5\%$ given the CV $\approx 1\%$ seen in the serial baseline.
+
 \subsection{Accelerator Enablement for Proposed GENESIS 2.5}
 \label{sec:ocl}
 
@@ -299,12 +354,31 @@ However, the \textbf{end-to-end speedup is only 1.06--1.40$\times$}. The gap ari
 
 \textbf{Implication.} The \texttt{chip\_channel\_multiloop} kernel demonstrates that the GPU itself is not the bottleneck. Realizing the kernel-level speedup end-to-end requires restructuring the GENESIS simulation loop to genuinely skip absorbed elements when their computation has been delegated to the GPU. This is a deeper change to the GENESIS core scheduler and is recorded as the primary follow-on requirement in \texttt{paper/PLAN\_gpu\_rewrite.md}.
 
+\subsubsection*{Scheduler fix (2026-06-25)}
+
+A separate, related bug in \texttt{hines\_init.c} was identified and fixed on 2026-06-25
+(commit~\texttt{1296a39}).
+The Hines numbering loop exited after the first compartment tree root via an erroneous
+\texttt{break}, so \texttt{elmnum[]} was never populated for neurons 2\ldots$N$.
+\texttt{do\_hget\_children} consequently visited neuron~0's channels $N$ times and never
+set \texttt{IsHsolved=1} for neurons 1\ldots$N-1$, leaving their \texttt{Na\_chan}/\texttt{K\_chan}
+in the working schedule.
+The result was two spurious $O(N)$ tasks per step, contributing to the scheduler overhead
+quantified in the multiloop profiling above.
+The fix moves \texttt{hnumcount} initialisation before the loop and removes the
+\texttt{break}, so every disconnected tree is correctly numbered.
+Additionally, \texttt{hines.c} now gates \texttt{do\_euler\_hsolve} on the
+\texttt{ocl\_vm\_ready} flag returned by \texttt{ocl\_chip\_update()}, so the CPU Hines
+solve is skipped when the GPU multiloop kernel has already computed all timesteps.
+These fixes were confirmed with the corrected \texttt{ocl\_hh\_benchmark.g} and are part
+of the GENESIS 2.5 patch set.
+
 % ---------------------------------------------------------------
 \section{Discussion}
 
 \subsection{Practical Recommendations}
 
-The CPU baseline measurements confirm stable timing (CV $\approx$ 1\%) on the Ryzen AI 9 HX 370 platform. Practical MPI process-count recommendations, SMT effects, and thermal throttling analysis await the full strong-scaling campaign.
+The CPU baseline measurements confirm stable timing (CV $\approx$ 1\%) on the Ryzen AI 9 HX 370 platform. Practical MPI process-count recommendations, SMT effects, and thermal throttling analysis await the full PGENESIS strong-scaling campaign (Table~\ref{tab:mpi_scaling}, Section~\ref{sec:mpi}).
 
 \subsection{Confound History and Lessons}
 
@@ -320,7 +394,7 @@ GPU dispatch was confirmed only by running the corrected \texttt{ocl\_hh\_benchm
   \item Accelerator validation is limited to one OpenCL workflow and one host/device combination.
   \item No cross-vendor portability or CUDA implementation is validated.
   \item The multiloop kernel is valid only for independent single-compartment networks; multi-compartment neurons with Hines coupling require a tridiagonal solve that cannot be parallelized per work-item.
-  \item Full PGENESIS strong-scaling results are pending.
+  \item Full PGENESIS strong-scaling results are pending (Table~\ref{tab:mpi_scaling}, Section~\ref{sec:mpi}).
 \end{itemize}
 
 % ---------------------------------------------------------------
@@ -345,11 +419,11 @@ The authors declare no competing interests.
 
 \section*{Funding}
 
-[Add funding sources]
+[PENDING: add funding sources, or state ``This research received no external funding'' if self-funded.]
 
 \section*{Acknowledgments}
 
-[Add acknowledgments]
+[PENDING: add acknowledgments, e.g.\ colleagues, computing resources, software contributors.]
 
 % ---------------------------------------------------------------
 \begin{thebibliography}{9}
