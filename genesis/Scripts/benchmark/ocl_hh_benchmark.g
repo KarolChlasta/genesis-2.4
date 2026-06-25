@@ -77,6 +77,7 @@ setupalpha K_chan X \
     500 0.0 0.0 {-1.0 * (0.010 + EREST_ACT)} 0.04
 
 pope
+disable /library
 
 // ---- network (flat /net tree for single hsolve) ----
 create neutral /net

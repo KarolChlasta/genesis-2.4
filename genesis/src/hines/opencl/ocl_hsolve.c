@@ -167,6 +167,7 @@ int ocl_init(Hsolve *hsolve)
     const char *cl_paths[] = {
         "opencl/ocl_channel.cl",
         "genesis/src/hines/opencl/ocl_channel.cl",
+        "/datadisk/od-kchlasta/5.Dev/GitHub/genesis-2.4/genesis/src/hines/opencl/ocl_channel.cl",
         NULL
     };
     int i;
@@ -453,14 +454,18 @@ int ocl_chip_update(Hsolve *hsolve)
     /* --- tryb multiloop --- */
     if (ocl_state.multiloop_total > 0) {
         if (ocl_state.multiloop_called > 0) {
-            /* GPU juz wykonal wszystkie kroki. results[] ma wartosci tozsamosciowe
-               (vm_final, 1.0) z ostatniego dispatcha. CPU Hines liczy vm = vm/1 = vm.
-               Tylko inkrementuj licznik — nie rob nic wiecej. */
+            /* GPU juz wykonal wszystkie kroki; hsolve->vm[] zawiera napięcia finalne.
+               Zwroc 1 = sygnał dla hines.c żeby pominął do_euler_hsolve(). */
             ocl_state.multiloop_called++;
-            return 0;
+            return 1;
         }
-        /* Pierwsze wywolanie: odpal caly batch na GPU */
-        return ocl_multiloop_dispatch(hsolve, ocl_state.multiloop_total);
+        /* Pierwsze wywolanie: odpal caly batch na GPU.
+           Po powrocie hsolve->vm[] = napięcia po nsteps krokach GPU.
+           Zwroc 1 — Hines solve nie jest potrzebny (vm[] juz aktualny). */
+        if (ocl_multiloop_dispatch(hsolve, ocl_state.multiloop_total) == 0)
+            return 1;
+        /* Dispatch nieudany — fallback do CPU, solve potrzebny (return 0) */
+        return 0;
     }
 
     int n  = hsolve->ncompts;

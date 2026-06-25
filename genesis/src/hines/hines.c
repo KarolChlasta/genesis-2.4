@@ -189,23 +189,41 @@ Action	*action;
 			case 4:
 			case 5:
 			    if (hsolve->ininfo) h_in_msgs(hsolve);
-			    if (hsolve->calcmode) {
 #ifdef USE_OPENCL
-				ocl_chip_update(hsolve);
-#else
-				do_chip_hh4_update(hsolve);
-#endif
+			    /* ocl_chip_update returns 1 in multiloop mode:
+			       vm[] already has GPU-computed final voltages,
+			       skip the Hines solve entirely for that batch. */
+			    {
+			    int ocl_vm_ready = 0;
+			    if (hsolve->calcmode) {
+				ocl_vm_ready = ocl_chip_update(hsolve);
 			    } else {
 				do_chip_hh4ni_update(hsolve);
 			    }
-			    if (hsolve->nconcchips) 
-					do_h4_conc_chip_update(hsolve);
+			    if (hsolve->nconcchips)
+				do_h4_conc_chip_update(hsolve);
 			    if (hsolve->ndiffs) do_h_conc_solve(hsolve);
-			    if (BaseObject(hsolve)->method == CRANK_INT) {
-				do_crank_hsolve(hsolve);
-			    } else {
-				do_euler_hsolve(hsolve);
+			    if (!ocl_vm_ready) {
+				if (BaseObject(hsolve)->method == CRANK_INT)
+				    do_crank_hsolve(hsolve);
+				else
+				    do_euler_hsolve(hsolve);
 			    }
+			    }
+#else
+			    if (hsolve->calcmode) {
+				do_chip_hh4_update(hsolve);
+			    } else {
+				do_chip_hh4ni_update(hsolve);
+			    }
+			    if (hsolve->nconcchips)
+				do_h4_conc_chip_update(hsolve);
+			    if (hsolve->ndiffs) do_h_conc_solve(hsolve);
+			    if (BaseObject(hsolve)->method == CRANK_INT)
+				do_crank_hsolve(hsolve);
+			    else
+				do_euler_hsolve(hsolve);
+#endif
 			    if (hsolve->outinfo) h_out_msgs(hsolve);
 			    break;
 			default:

@@ -81,13 +81,7 @@ void ExecuteTasks()
 {
 int		i;
 
-    /*
-    ** check the clocks to see which are active on this cycle
-    */
     CheckClocks();
-    /*
-    ** go through the scheduling table 
-    */
     for(i=0;i<working_tasks;i++){
 	working_schedule[i]->function(working_schedule[i]);
     }
