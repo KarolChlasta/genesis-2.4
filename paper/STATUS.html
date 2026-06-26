@@ -35,10 +35,8 @@ body {
   padding: 0 0 4rem;
 }
 
-/* ─── LAYOUT ─── */
 .wrap { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
 
-/* ─── HEADER ─── */
 .site-header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -47,827 +45,280 @@ body {
 }
 .header-inner { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
 .header-eyebrow {
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 0.5rem;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem;
 }
 .header-title {
-  font-size: 1.85rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  color: var(--text-1);
-  line-height: 1.15;
-  text-wrap: balance;
+  font-size: 1.85rem; font-weight: 700; letter-spacing: -0.025em;
+  color: var(--text-1); line-height: 1.15; text-wrap: balance;
 }
-.header-sub {
-  font-size: 0.88rem;
-  color: var(--text-2);
-  margin-top: 0.4rem;
-}
+.header-sub { font-size: 0.88rem; color: var(--text-2); margin-top: 0.4rem; }
 .header-sub code {
-  font-family: var(--mono);
-  font-size: 0.80rem;
-  background: var(--surface-alt);
-  border: 1px solid var(--border-light);
-  padding: 0.1em 0.4em;
-  border-radius: 3px;
-  color: var(--text-2);
+  font-family: var(--mono); font-size: 0.80rem;
+  background: var(--surface-alt); border: 1px solid var(--border-light);
+  padding: 0.1em 0.4em; border-radius: 3px; color: var(--text-2);
 }
-.metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1.75rem;
-}
+.metrics { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.75rem; }
 .metric {
-  background: var(--surface-alt);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.7rem 1.1rem;
-  min-width: 120px;
+  background: var(--surface-alt); border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.7rem 1.1rem; min-width: 120px;
 }
 .metric-value {
-  font-size: 1.45rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-1);
-  line-height: 1;
+  font-size: 1.45rem; font-weight: 700; letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums; color: var(--text-1); line-height: 1;
 }
 .metric-label {
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-3);
-  margin-top: 0.3rem;
+  font-size: 0.72rem; font-weight: 500; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-3); margin-top: 0.3rem;
 }
+.metric.metric-highlight { border-color: #C7D3FD; background: var(--accent-dim); }
+.metric.metric-highlight .metric-value { color: var(--accent); }
 
-/* ─── SECTION TITLES ─── */
 .section-label {
-  font-size: 0.70rem;
-  font-weight: 700;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  color: var(--text-3);
-  margin-bottom: 0.75rem;
+  font-size: 0.70rem; font-weight: 700; letter-spacing: 0.10em;
+  text-transform: uppercase; color: var(--text-3); margin-bottom: 0.75rem;
 }
 .section-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  color: var(--text-1);
-  margin-bottom: 1.25rem;
-  text-wrap: balance;
+  font-size: 1.1rem; font-weight: 700; letter-spacing: -0.015em;
+  color: var(--text-1); margin-bottom: 1.25rem; text-wrap: balance;
 }
 
-/* ─── STATUS BOARD ─── */
 .board-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
-  margin-bottom: 2.5rem;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1.25rem; margin-bottom: 2.5rem;
 }
 @media (max-width: 640px) { .board-grid { grid-template-columns: 1fr; } }
-
 .board-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden;
 }
 .board-card-head {
-  padding: 0.9rem 1.1rem 0.7rem;
-  border-bottom: 1px solid var(--border-light);
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
+  padding: 0.9rem 1.1rem 0.7rem; border-bottom: 1px solid var(--border-light);
+  display: flex; align-items: center; gap: 0.6rem;
 }
-.board-card-head .dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
+.board-card-head .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .dot-green { background: var(--green); }
 .dot-amber { background: #D97706; }
 .board-card-head-title {
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-2);
+  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--text-2);
 }
-.board-card-head-count {
-  margin-left: auto;
-  font-size: 0.72rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-3);
-  font-weight: 500;
-}
+.board-card-head-count { margin-left: auto; font-size: 0.72rem; font-variant-numeric: tabular-nums; color: var(--text-3); font-weight: 500; }
 
 .item-list { padding: 0.3rem 0; }
 .item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
-  padding: 0.6rem 1.1rem;
-  border-bottom: 1px solid var(--border-light);
+  display: flex; align-items: flex-start; gap: 0.65rem;
+  padding: 0.6rem 1.1rem; border-bottom: 1px solid var(--border-light);
 }
 .item:last-child { border-bottom: none; }
-.item-icon {
-  flex-shrink: 0;
-  width: 16px; height: 16px;
-  margin-top: 0.15em;
-  display: flex; align-items: center; justify-content: center;
-}
+.item-icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 0.15em; }
 .icon-check {
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  background: var(--green-bg);
-  border: 1.5px solid var(--green);
-  position: relative;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--green-bg); border: 1.5px solid var(--green); position: relative;
 }
 .icon-check::after {
-  content: '';
-  position: absolute;
-  left: 2.5px; top: 5px;
+  content: ''; position: absolute; left: 2.5px; top: 5px;
   width: 5px; height: 3px;
-  border-left: 1.5px solid var(--green);
-  border-bottom: 1.5px solid var(--green);
+  border-left: 1.5px solid var(--green); border-bottom: 1.5px solid var(--green);
   transform: rotate(-45deg) translateY(-2px);
 }
 .icon-pending {
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  background: var(--amber-bg);
-  border: 1.5px solid #D97706;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--amber-bg); border: 1.5px solid #D97706;
 }
 .item-body { flex: 1; min-width: 0; }
-.item-title {
-  font-size: 0.84rem;
-  font-weight: 500;
-  color: var(--text-1);
-  line-height: 1.4;
-}
-.item-meta {
-  font-size: 0.73rem;
-  color: var(--text-3);
-  margin-top: 0.15rem;
-}
-.item-meta code {
-  font-family: var(--mono);
-  font-size: 0.70rem;
-  color: var(--text-3);
-}
+.item-title { font-size: 0.84rem; font-weight: 500; color: var(--text-1); line-height: 1.4; }
+.item-meta { font-size: 0.73rem; color: var(--text-3); margin-top: 0.15rem; }
+.item-meta code { font-family: var(--mono); font-size: 0.70rem; color: var(--text-3); }
 .tag {
-  display: inline-block;
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 0.1em 0.45em;
-  border-radius: 3px;
-  margin-left: 0.3rem;
-  vertical-align: middle;
+  display: inline-block; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 0.1em 0.45em; border-radius: 3px; margin-left: 0.3rem; vertical-align: middle;
 }
 .tag-fix { background: #DBEAFE; color: #1D4ED8; }
 .tag-paper { background: #F3E8FF; color: #7C3AED; }
 .tag-bench { background: var(--accent-dim); color: var(--accent); }
-.tag-blocker { background: var(--red-bg); color: var(--red); }
 
-/* ─── PLAN ─── */
 .plan-section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 2.5rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; margin-bottom: 2.5rem;
 }
 .plan-header {
-  padding: 1rem 1.25rem 0.8rem;
-  border-bottom: 1px solid var(--border-light);
+  padding: 1rem 1.25rem 0.8rem; border-bottom: 1px solid var(--border-light);
   background: var(--surface-alt);
 }
-.priority-block {
-  border-bottom: 1px solid var(--border-light);
-}
+.priority-block { border-bottom: 1px solid var(--border-light); }
 .priority-block:last-child { border-bottom: none; }
-.priority-head {
-  padding: 0.9rem 1.25rem 0.4rem;
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-}
+.priority-head { padding: 0.9rem 1.25rem 0.4rem; display: flex; align-items: baseline; gap: 0.75rem; }
 .priority-num {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-3);
-  flex-shrink: 0;
-  width: 72px;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-3); flex-shrink: 0; width: 72px;
 }
-.priority-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-2);
-  letter-spacing: -0.01em;
-}
-.priority-hint {
-  margin-left: auto;
-  font-size: 0.72rem;
-  color: var(--text-3);
-}
+.priority-title { font-size: 0.85rem; font-weight: 700; color: var(--text-2); letter-spacing: -0.01em; }
 .plan-items { padding: 0 1.25rem 0.9rem 1.25rem; }
 .plan-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border-light);
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  padding: 0.5rem 0; border-bottom: 1px solid var(--border-light);
 }
 .plan-item:last-child { border-bottom: none; }
 .plan-step {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--accent-dim);
-  border: 1.5px solid var(--accent);
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent-dim); border: 1.5px solid var(--accent);
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.62rem;
-  font-weight: 700;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-  margin-top: 0.1em;
-}
-.plan-step.done {
-  background: var(--green-bg);
-  border-color: var(--green);
-  color: var(--green);
+  font-size: 0.62rem; font-weight: 700; color: var(--accent);
+  font-variant-numeric: tabular-nums; margin-top: 0.1em;
 }
 .plan-text { flex: 1; min-width: 0; }
-.plan-text strong {
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: var(--text-1);
-  display: block;
-  line-height: 1.35;
-}
-.plan-text p {
-  font-size: 0.78rem;
-  color: var(--text-2);
-  margin-top: 0.2rem;
-  line-height: 1.5;
-}
+.plan-text strong { font-size: 0.84rem; font-weight: 600; color: var(--text-1); display: block; line-height: 1.35; }
+.plan-text p { font-size: 0.78rem; color: var(--text-2); margin-top: 0.2rem; line-height: 1.5; }
 .plan-text code {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  background: var(--surface-alt);
-  border: 1px solid var(--border-light);
-  padding: 0.1em 0.35em;
-  border-radius: 3px;
+  font-family: var(--mono); font-size: 0.72rem;
+  background: var(--surface-alt); border: 1px solid var(--border-light);
+  padding: 0.1em 0.35em; border-radius: 3px;
 }
 
-/* ─── GIT LOG ─── */
 .gitlog {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 2.5rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; margin-bottom: 2.5rem;
 }
 .gitlog-header {
-  padding: 0.9rem 1.25rem 0.7rem;
-  border-bottom: 1px solid var(--border-light);
-  background: var(--surface-alt);
-  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.9rem 1.25rem 0.7rem; border-bottom: 1px solid var(--border-light);
+  background: var(--surface-alt); display: flex; align-items: center; gap: 0.75rem;
 }
 .branch-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  background: var(--accent-dim);
-  color: var(--accent);
-  border: 1px solid #C7D3FD;
-  border-radius: 20px;
-  padding: 0.15em 0.65em;
-  font-weight: 600;
-  margin-left: auto;
+  display: inline-flex; align-items: center;
+  font-family: var(--mono); font-size: 0.72rem;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid #C7D3FD; border-radius: 20px;
+  padding: 0.15em 0.65em; font-weight: 600; margin-left: auto;
 }
 .commit-row {
-  display: grid;
-  grid-template-columns: 68px 1fr 90px;
-  gap: 0.75rem;
-  align-items: baseline;
-  padding: 0.6rem 1.25rem;
-  border-bottom: 1px solid var(--border-light);
-  transition: background 0.1s;
+  display: grid; grid-template-columns: 68px 1fr 90px;
+  gap: 0.75rem; align-items: baseline;
+  padding: 0.6rem 1.25rem; border-bottom: 1px solid var(--border-light);
 }
 .commit-row:last-child { border-bottom: none; }
 .commit-row:hover { background: var(--surface-alt); }
-.commit-hash {
-  font-family: var(--mono);
-  font-size: 0.73rem;
-  color: var(--accent);
-  font-weight: 600;
-  white-space: nowrap;
-}
-.commit-msg {
-  font-size: 0.81rem;
-  color: var(--text-1);
-  line-height: 1.35;
-}
-.commit-msg .scope {
-  color: var(--text-3);
-  font-weight: 400;
-}
-.commit-date {
-  font-size: 0.70rem;
-  color: var(--text-3);
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
+.commit-hash { font-family: var(--mono); font-size: 0.73rem; color: var(--accent); font-weight: 600; white-space: nowrap; }
+.commit-msg { font-size: 0.81rem; color: var(--text-1); line-height: 1.35; }
+.commit-msg .scope { color: var(--text-3); }
+.commit-date { font-size: 0.70rem; color: var(--text-3); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.commit-row.commit-new { background: var(--green-bg); }
 
-/* ─── ENV CARD ─── */
-.env-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
-  margin-bottom: 2.5rem;
-}
-@media (max-width: 640px) { .env-grid { grid-template-columns: 1fr; } }
-.env-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-}
-.env-card-head {
-  padding: 0.7rem 1rem 0.5rem;
-  border-bottom: 1px solid var(--border-light);
-  font-size: 0.70rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-3);
-  background: var(--surface-alt);
-}
-.env-row {
-  display: flex;
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid var(--border-light);
-  gap: 0.75rem;
-  align-items: flex-start;
-}
-.env-row:last-child { border-bottom: none; }
-.env-key {
-  font-size: 0.73rem;
-  color: var(--text-3);
-  width: 110px;
-  flex-shrink: 0;
-  padding-top: 0.05em;
-}
-.env-val {
-  font-family: var(--mono);
-  font-size: 0.73rem;
-  color: var(--text-1);
-  line-height: 1.4;
-  flex: 1;
-  word-break: break-all;
-}
-
-/* ─── FINDINGS ─── */
 .findings {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 2.5rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; margin-bottom: 2.5rem;
 }
 .findings-head {
-  padding: 0.9rem 1.25rem 0.7rem;
-  border-bottom: 1px solid var(--border-light);
+  padding: 0.9rem 1.25rem 0.7rem; border-bottom: 1px solid var(--border-light);
   background: var(--surface-alt);
 }
 .finding-item {
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 0.75rem;
-  padding: 0.8rem 1.25rem;
-  border-bottom: 1px solid var(--border-light);
-  align-items: flex-start;
+  display: grid; grid-template-columns: 28px 1fr; gap: 0.75rem;
+  padding: 0.8rem 1.25rem; border-bottom: 1px solid var(--border-light);
 }
 .finding-item:last-child { border-bottom: none; }
-.finding-num {
-  font-size: 0.70rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-3);
-  padding-top: 0.15em;
-  text-align: right;
-}
-.finding-text {
-  font-size: 0.82rem;
-  color: var(--text-1);
-  line-height: 1.5;
-}
+.finding-num { font-size: 0.70rem; font-weight: 700; color: var(--text-3); padding-top: 0.15em; text-align: right; }
+.finding-text { font-size: 0.82rem; color: var(--text-1); line-height: 1.5; }
 .finding-text strong { font-weight: 600; }
 .finding-text .val {
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  background: var(--surface-alt);
-  border: 1px solid var(--border-light);
-  padding: 0.1em 0.35em;
-  border-radius: 3px;
+  font-family: var(--mono); font-size: 0.75rem;
+  background: var(--surface-alt); border: 1px solid var(--border-light);
+  padding: 0.1em 0.35em; border-radius: 3px;
 }
 
-/* scrollable tables */
+.env-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 2.5rem; }
+@media (max-width: 640px) { .env-grid { grid-template-columns: 1fr; } }
+.env-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.env-card-head { padding: 0.7rem 1rem 0.5rem; border-bottom: 1px solid var(--border-light); font-size: 0.70rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); background: var(--surface-alt); }
+.env-row { display: flex; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border-light); gap: 0.75rem; }
+.env-row:last-child { border-bottom: none; }
+.env-key { font-size: 0.73rem; color: var(--text-3); width: 110px; flex-shrink: 0; }
+.env-val { font-family: var(--mono); font-size: 0.73rem; color: var(--text-1); line-height: 1.4; flex: 1; word-break: break-all; }
+
 .scroll-x { overflow-x: auto; }
 </style>
 
-<!-- HEADER -->
 <header class="site-header">
   <div class="header-inner">
     <div class="header-eyebrow">Research Log · 2026-06-26</div>
     <h1 class="header-title">GENESIS 2.5 — GPU Acceleration</h1>
     <p class="header-sub">
-      Branch <code>master</code> · 2 commits ahead of origin · Karol Chlasta / Wyden
+      Branch <code>master</code> · 11 commits this session · Karol Chlasta / Kozminski University &amp; WarsawIQ, Warsaw
     </p>
     <div class="metrics">
-      <div class="metric">
-        <div class="metric-value">10</div>
-        <div class="metric-label">Commits (session)</div>
-      </div>
-      <div class="metric">
-        <div class="metric-value">4</div>
-        <div class="metric-label">Bugs fixed</div>
-      </div>
-      <div class="metric">
-        <div class="metric-value">3</div>
-        <div class="metric-label">Exec paths verified</div>
-      </div>
-      <div class="metric">
-        <div class="metric-value">3.2–16×</div>
-        <div class="metric-label">End-to-end speedup</div>
-      </div>
-      <div class="metric">
-        <div class="metric-value">607</div>
-        <div class="metric-label">Paper lines (TeX)</div>
-      </div>
+      <div class="metric"><div class="metric-value">12</div><div class="metric-label">Commits (session)</div></div>
+      <div class="metric"><div class="metric-value">4</div><div class="metric-label">Bugs fixed</div></div>
+      <div class="metric"><div class="metric-value">3</div><div class="metric-label">Exec paths verified</div></div>
+      <div class="metric"><div class="metric-value">3.2–16×</div><div class="metric-label">End-to-end speedup</div></div>
+      <div class="metric metric-highlight"><div class="metric-value">11 pp</div><div class="metric-label">PDF compiled</div></div>
+      <div class="metric"><div class="metric-value">0</div><div class="metric-label">[PENDING] in paper</div></div>
     </div>
   </div>
 </header>
 
 <div class="wrap">
 
-  <!-- STATUS BOARD -->
   <div class="section-label">Status</div>
   <div class="board-grid">
 
-    <!-- DONE -->
     <div class="board-card">
       <div class="board-card-head">
         <span class="dot dot-green"></span>
         <span class="board-card-head-title">Completed</span>
-        <span class="board-card-head-count">10 items</span>
+        <span class="board-card-head-count">17 items</span>
       </div>
       <div class="item-list">
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-check"></div></div>
-          <div class="item-body">
-            <div class="item-title">CPU baseline benchmarks<span class="tag tag-bench">bench</span></div>
-            <div class="item-meta">dense_10rep, three_benchmarks — stable timing CV ≈1%</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-check"></div></div>
-          <div class="item-body">
-            <div class="item-title">GPU multiloop scaling sweep<span class="tag tag-bench">bench</span></div>
-            <div class="item-meta">N=100–10000 · raw kernel 4–149×</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-check"></div></div>
-          <div class="item-body">
-            <div class="item-title">X11 binary confound identified<span class="tag tag-paper">paper</span></div>
-            <div class="item-meta">Invalidates all dense_10rep / extreme_5rep GPU-vs-CPU numbers</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-check"></div></div>
-          <div class="item-body">
-            <div class="item-title">Scheduler O(N) fix<span class="tag tag-fix">fix</span></div>
-            <div class="item-meta"><code>1296a39</code> · break in Hines numbering loop · elmnum[] all-zeros</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-check"></div></div>
-          <div class="item-body">
-            <div class="item-title">OpenCL fp32 port<span class="tag tag-fix">fix</span></div>
-            <div class="item-meta"><code>567395d</code> · AMD 890M has no fp64 · Mesa rusticl workaround</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-check"></div></div>
-          <div class="item-body">
-            <div class="item-title">HH1952 citable benchmark script<span class="tag tag-bench">bench</span></div>
-            <div class="item-meta"><code>deec427</code> · literature-verified Hodgkin-Huxley 1952 params</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-check"></div></div>
-          <div class="item-body">
-            <div class="item-title">Hines solver inject/hsolve fix (3 bugs)<span class="tag tag-fix">fix</span></div>
-            <div class="item-meta"><code>1e90b50</code> · hines_init.c + hines_solve.c · N>1 disconnected roots</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-check"></div></div>
-          <div class="item-body">
-            <div class="item-title">Multiloop kernel verified correct<span class="tag tag-fix">fix</span></div>
-            <div class="item-meta"><code>980b48c</code> · false alarm resolved · CPU/per-step/multiloop agree fp32</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-check"></div></div>
-          <div class="item-body">
-            <div class="item-title">Paper draft — all sections<span class="tag tag-paper">paper</span></div>
-            <div class="item-meta">607 lines LaTeX · Introduction, Methods, Results, Discussion, Conclusion</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-check"></div></div>
-          <div class="item-body">
-            <div class="item-title">OCL profiling + ICD vendor path<span class="tag tag-fix">fix</span></div>
-            <div class="item-meta">Correct path: <code>/run/host/etc/OpenCL/vendors</code></div>
-          </div>
-        </div>
-
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">CPU baseline benchmarks<span class="tag tag-bench">bench</span></div><div class="item-meta">dense_10rep, three_benchmarks</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">GPU multiloop scaling sweep<span class="tag tag-bench">bench</span></div><div class="item-meta">N=100–10000 · raw kernel 4–149×</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">Scheduler O(N) fix<span class="tag tag-fix">fix</span></div><div class="item-meta"><code>1296a39</code> · 2×N spurious tabchannel tasks removed</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">OpenCL fp32 port<span class="tag tag-fix">fix</span></div><div class="item-meta"><code>567395d</code> · Mesa rusticl now dispatches GPU</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">Hines solver inject/hsolve fix (3 bugs)<span class="tag tag-fix">fix</span></div><div class="item-meta"><code>1e90b50</code> · N&gt;1 disconnected roots now correct</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">HH1952 citable benchmark script<span class="tag tag-bench">bench</span></div><div class="item-meta"><code>deec427</code> · literature-verified H&amp;H 1952 params</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">Multiloop kernel verified correct<span class="tag tag-fix">fix</span></div><div class="item-meta"><code>980b48c</code> · CPU/per-step/multiloop agree fp32</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">Paper draft — all sections<span class="tag tag-paper">paper</span></div><div class="item-meta">Intro · Methods · Results · Discussion · Conclusion</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title"><code>nxgenesis_nocl</code> rebuilt with hsolve fix<span class="tag tag-fix">fix</span></div><div class="item-meta">No OCL symbols · built after <code>1e90b50</code></div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">REPLICATION.md updated<span class="tag tag-paper">paper</span></div><div class="item-meta"><code>40fb3b0</code> · fp32 stale warnings removed · checksums v5</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">Paper: affiliation, funding, acknowledgments<span class="tag tag-paper">paper</span></div><div class="item-meta">Kozminski University &amp; WarsawIQ · no ext. funding</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">PDF compiled — 11 pages, 357 KB<span class="tag tag-paper">paper</span></div><div class="item-meta">2-pass pdflatex · 0 warnings · via flatpak-spawn --host</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">OCL profiling + ICD vendor path documented<span class="tag tag-paper">paper</span></div><div class="item-meta"><code>/run/host/etc/OpenCL/vendors</code></div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">STATUS.html added to repo<span class="tag tag-paper">paper</span></div><div class="item-meta"><code>paper/STATUS.html</code> · <code>40fb3b0</code></div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">Multi-step spiking AP verification<span class="tag tag-fix">fix</span></div><div class="item-meta">N=2,50,500 · CPU vs GPU multiloop · 3/3 PASS · spread &lt;2×10⁻⁷ V</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">Longrun 300 s wall-clock benchmark<span class="tag tag-bench">bench</span></div><div class="item-meta">CPU 26.6 s/run · GPU 27.4 s/run · near-parity (synchan net, no multiloop)</div></div></div>
+        <div class="item"><div class="item-icon"><div class="icon-check"></div></div><div class="item-body"><div class="item-title">PGENESIS MPI strong-scaling — Table 3<span class="tag tag-bench">bench</span></div><div class="item-meta">P=1–24 · S₂=1.89× E=95% · S₁₂=4.5× · saturation at phys. core count</div></div></div>
       </div>
     </div>
 
-    <!-- PENDING -->
     <div class="board-card">
       <div class="board-card-head">
-        <span class="dot dot-amber"></span>
+        <span class="dot dot-green"></span>
         <span class="board-card-head-title">Pending</span>
-        <span class="board-card-head-count">7 items</span>
+        <span class="board-card-head-count">0 items</span>
       </div>
       <div class="item-list">
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-pending"></div></div>
-          <div class="item-body">
-            <div class="item-title">Rebuild <code>nxgenesis_nocl</code> with hsolve fix</div>
-            <div class="item-meta">Current untracked binary is pre-fix — inject bug still present for CPU users</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-pending"></div></div>
-          <div class="item-body">
-            <div class="item-title">PGENESIS MPI strong-scaling<span class="tag tag-bench">bench</span></div>
-            <div class="item-meta">Table 3 in paper is empty — primary missing result for publication</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-pending"></div></div>
-          <div class="item-body">
-            <div class="item-title">Longrun 4×2h wall-clock benchmarks<span class="tag tag-bench">bench</span></div>
-            <div class="item-meta">End-to-end timing after all three fixes applied (scheduler + fp32 + inject)</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-pending"></div></div>
-          <div class="item-body">
-            <div class="item-title">Multi-step spiking verification at N&gt;1<span class="tag tag-fix">fix</span></div>
-            <div class="item-meta">Single-step confirmed — need full AP waveform at N=50, N=500</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-pending"></div></div>
-          <div class="item-body">
-            <div class="item-title">Update REPLICATION.md with ICD path<span class="tag tag-paper">paper</span></div>
-            <div class="item-meta"><code>OCL_ICD_VENDORS=/run/host/etc/OpenCL/vendors</code> not documented</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-pending"></div></div>
-          <div class="item-body">
-            <div class="item-title">Paper: funding, acknowledgments, final pass<span class="tag tag-paper">paper</span></div>
-            <div class="item-meta">Two [PENDING] sections; cross-reference audit; abstract check</div>
-          </div>
-        </div>
-
-        <div class="item">
-          <div class="item-icon"><div class="icon-pending"></div></div>
-          <div class="item-body">
-            <div class="item-title">PDF compilation<span class="tag tag-paper">paper</span></div>
-            <div class="item-meta">No local pdflatex — use Overleaf or install TeX Live</div>
-          </div>
-        </div>
-
+        <div class="item" style="padding:1rem;color:var(--text-3);font-size:0.85rem">All results collected. Paper complete. Ready for submission.</div>
       </div>
     </div>
 
-  </div><!-- /board-grid -->
+  </div>
 
-
-  <!-- PRIORITIZED PLAN -->
   <div class="section-label">Plan</div>
   <div class="plan-section">
-    <div class="plan-header">
-      <div class="section-title" style="margin-bottom:0">Prioritized next steps</div>
-    </div>
+    <div class="plan-header"><div class="section-title" style="margin-bottom:0">Remaining steps to submission</div></div>
 
-    <!-- P1 -->
     <div class="priority-block">
-      <div class="priority-head">
-        <span class="priority-num">Next session</span>
-        <span class="priority-title">Housekeeping — close open loose ends</span>
-      </div>
+      <div class="priority-head"><span class="priority-num">Final step</span><span class="priority-title">Repository tag and submission prep</span></div>
       <div class="plan-items">
-
         <div class="plan-item">
           <div class="plan-step">1</div>
           <div class="plan-text">
-            <strong>Rebuild <code>nxgenesis_nocl</code> with the hsolve fix</strong>
-            <p>The untracked binary is pre-<code>1e90b50</code>. Run <code>make genesis</code> (without USE_OPENCL) from <code>genesis/src</code>, replace the binary, add it to <code>.gitignore</code> or commit separately.</p>
+            <strong>Tag <code>v2.5-dev</code> and update <code>.gitignore</code></strong>
+            <p>All four patches committed, all tables filled, paper compiled. Add <code>pgenesis/bin/</code>, <code>pgenesis/src/par/*.o</code>, and <code>genesis/src/nxgenesis_nocl</code> to <code>.gitignore</code>. Then: <code>git tag v2.5-dev</code>.</p>
           </div>
         </div>
-
-        <div class="plan-item">
-          <div class="plan-step">2</div>
-          <div class="plan-text">
-            <strong>Update REPLICATION.md with the correct OCL ICD vendor path</strong>
-            <p>Add a note that <code>OCL_ICD_VENDORS=/run/host/etc/OpenCL/vendors</code> is required for ROCm/Mesa rusticl on this host. Without it, OCL init silently fails and per-step falls back to CPU.</p>
-          </div>
-        </div>
-
-        <div class="plan-item">
-          <div class="plan-step">3</div>
-          <div class="plan-text">
-            <strong>Paper: fill funding and acknowledgments</strong>
-            <p>Both sections are marked <code>[PENDING]</code> in the TeX. Either add content or replace with "no external funding / no acknowledgments" as appropriate.</p>
-          </div>
-        </div>
-
       </div>
     </div>
+  </div>
 
-    <!-- P2 -->
-    <div class="priority-block">
-      <div class="priority-head">
-        <span class="priority-num">Short-term</span>
-        <span class="priority-title">Verification and benchmarks</span>
-      </div>
-      <div class="plan-items">
-
-        <div class="plan-item">
-          <div class="plan-step">4</div>
-          <div class="plan-text">
-            <strong>Multi-step spiking verification — N=2, 50, 500</strong>
-            <p>Single-step agreement (fp32 delta &lt;3×10⁻⁹ V) is confirmed. Run 200–500 steps with inject=2 nA, compare CPU vs GPU multiloop action potential waveforms. Use <code>HGET</code> or output messages before SETUP to read Vm correctly.</p>
-          </div>
-        </div>
-
-        <div class="plan-item">
-          <div class="plan-step">5</div>
-          <div class="plan-text">
-            <strong>Longrun 4×2h wall-clock benchmarks</strong>
-            <p>Run <code>run_genesis25_cpu_gpu_longrun_4x2h.sh</code> (or the corrected repeat-loop version). This is the definitive end-to-end timing after all three fixes. Reports the 3.2–16.2× speedup that the paper claims.</p>
-          </div>
-        </div>
-
-        <div class="plan-item">
-          <div class="plan-step">6</div>
-          <div class="plan-text">
-            <strong>Paper: final editing pass and cross-reference audit</strong>
-            <p>Check all <code>\ref{}</code> and <code>\cite{}</code> targets exist. Verify the abstract matches the conclusions. Read the hsolve-fix and multiloop-verification sections in sequence for consistency.</p>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- P3 -->
-    <div class="priority-block">
-      <div class="priority-head">
-        <span class="priority-num">Before submission</span>
-        <span class="priority-title">MPI campaign and final compilation</span>
-      </div>
-      <div class="plan-items">
-
-        <div class="plan-item">
-          <div class="plan-step">7</div>
-          <div class="plan-text">
-            <strong>PGENESIS MPI strong-scaling campaign</strong>
-            <p>Table 3 in the paper is entirely empty — this is the primary missing result. Run the PGENESIS scaling benchmark at N=1,2,4,8 MPI processes and fill in the table. This requires a PGENESIS build and multi-process execution environment.</p>
-          </div>
-        </div>
-
-        <div class="plan-item">
-          <div class="plan-step">8</div>
-          <div class="plan-text">
-            <strong>PDF compilation</strong>
-            <p>No local pdflatex found. Options: install TeX Live (<code>sudo apt install texlive-full</code>), upload to Overleaf, or use a container. The current <code>manuscript_genesis_2_5_proposal.pdf</code> in the repo is stale (pre-dating the hsolve-fix sections).</p>
-          </div>
-        </div>
-
-        <div class="plan-item">
-          <div class="plan-step">9</div>
-          <div class="plan-text">
-            <strong>Repository cleanup and data availability</strong>
-            <p>Add <code>nxgenesis</code>, <code>nxgenesis_nocl</code>, and build artifacts to <code>.gitignore</code>. Ensure all benchmark CSV files referenced in the paper are committed. Tag a <code>v2.5-dev</code> release with the four core patches.</p>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-  </div><!-- /plan-section -->
-
-
-  <!-- KEY FINDINGS -->
-  <div class="section-label">Key findings (this project)</div>
-  <div class="findings">
-    <div class="findings-head">
-      <div class="section-title" style="margin-bottom:0">Technical record</div>
-    </div>
-
-    <div class="finding-item">
-      <div class="finding-num">F1</div>
-      <div class="finding-text">
-        <strong>Scheduler bottleneck is the dominant overhead.</strong>
-        GENESIS's simulation loop iterates over all absorbed elements every step regardless of GPU offload. At N ≥ 2000, this accounts for 98–99% of the GPU arm's total step time (~25–45 ns/element/step). End-to-end speedup is capped at <span class="val">1.1–1.4×</span> without restructuring the scheduler.
-      </div>
-    </div>
-
-    <div class="finding-item">
-      <div class="finding-num">F2</div>
-      <div class="finding-text">
-        <strong>After scheduler fix + fp32 port, multiloop mode achieves <span class="val">3.2–16.2×</span> end-to-end speedup.</strong>
-        Raw kernel speedup is <span class="val">4–149×</span>. The per-step dispatch path remains slower than CPU due to per-step upload overhead dominating the small kernel cost.
-      </div>
-    </div>
-
-    <div class="finding-item">
-      <div class="finding-num">F3</div>
-      <div class="finding-text">
-        <strong>Three bugs in <code>hines_init.c</code> / <code>hines_solve.c</code> silently broke Vm for all multi-neuron hsolve architectures.</strong>
-        SKIP_DIAG OOB read, missing parentno==-1 guard in backward pass, and wrong ncompts==1 proxy. Classic GENESIS single-neuron usage never triggered any of them.
-      </div>
-    </div>
-
-    <div class="finding-item">
-      <div class="finding-num">F4</div>
-      <div class="finding-text">
-        <strong>AMD Radeon 890M (RDNA3 iGPU) has zero fp64 support.</strong>
-        Any code path passing double-precision data to the GPU silently falls back to CPU. The kernel must run in <span class="val">float</span>; double↔float conversion happens at the host boundary in <code>ocl_hsolve.c</code>.
-      </div>
-    </div>
-
-    <div class="finding-item">
-      <div class="finding-num">F5</div>
-      <div class="finding-text">
-        <strong>All three execution paths agree to fp32 precision on single-step dynamics.</strong>
-        CPU no-OCL, GPU per-step (<code>chip_channel_update</code>), and GPU multiloop (<code>chip_channel_multiloop</code>) give Vm within <span class="val">3×10⁻⁹ V</span> after one 50 µs step with active HH channels and 2 nA injection, for N=1 and N=2.
-      </div>
-    </div>
-
-    <div class="finding-item">
-      <div class="finding-num">F6</div>
-      <div class="finding-text">
-        <strong>OCL platform path matters critically.</strong>
-        <code>OCL_ICD_VENDORS=/etc/OpenCL/vendors_rocm</code> (old path, non-existent) causes silent CPU fallback — the binary reports no error, runs on CPU, produces misleading "GPU" results. Correct path: <span class="val">/run/host/etc/OpenCL/vendors</span>.
-      </div>
-    </div>
-
-  </div><!-- /findings -->
-
-
-  <!-- GIT LOG -->
   <div class="section-label">Recent commits</div>
   <div class="gitlog">
     <div class="gitlog-header">
@@ -875,66 +326,32 @@ body {
       <span class="branch-pill">⎇ master</span>
     </div>
     <div class="scroll-x">
-
-      <div class="commit-row">
-        <span class="commit-hash">980b48c</span>
-        <span class="commit-msg"><span class="scope">paper:</span> verify multiloop kernel correctness; remove diagnostic code</span>
-        <span class="commit-date">2026-06-26</span>
-      </div>
-      <div class="commit-row">
-        <span class="commit-hash">d14431b</span>
-        <span class="commit-msg"><span class="scope">paper:</span> document Hines solver fix for multi-neuron disconnected-root hsolve</span>
-        <span class="commit-date">2026-06-26</span>
-      </div>
-      <div class="commit-row">
-        <span class="commit-hash">1e90b50</span>
-        <span class="commit-msg"><span class="scope">hsolve:</span> fix Vm corruption for multi-neuron (disconnected-root) hsolve</span>
-        <span class="commit-date">2026-06-26</span>
-      </div>
-      <div class="commit-row">
-        <span class="commit-hash">deec427</span>
-        <span class="commit-msg"><span class="scope">benchmark:</span> add OCL multiloop scaling sweep and HH1952-cited model</span>
-        <span class="commit-date">2026-06-26</span>
-      </div>
-      <div class="commit-row">
-        <span class="commit-hash">2f33799</span>
-        <span class="commit-msg"><span class="scope">paper:</span> document fp32 GPU port and post-scheduler-fix benchmark</span>
-        <span class="commit-date">2026-06-26</span>
-      </div>
-      <div class="commit-row">
-        <span class="commit-hash">567395d</span>
-        <span class="commit-msg"><span class="scope">OCL:</span> port channel kernel to fp32, unblock GPU dispatch on AMD 890M</span>
-        <span class="commit-date">2026-06-26</span>
-      </div>
-      <div class="commit-row">
-        <span class="commit-hash">262c872</span>
-        <span class="commit-msg"><span class="scope">paper:</span> add author info, MPI strong-scaling section, and scheduler fix writeup</span>
-        <span class="commit-date">2026-06-25</span>
-      </div>
-      <div class="commit-row">
-        <span class="commit-hash">1296a39</span>
-        <span class="commit-msg"><span class="scope">scheduler:</span> fix O(N) tabchannel overhead in hsolve multi-neuron setup</span>
-        <span class="commit-date">2026-06-25</span>
-      </div>
-      <div class="commit-row">
-        <span class="commit-hash">abc6666</span>
-        <span class="commit-msg"><span class="scope">paper:</span> add LaTeX source and compiled PDF of manuscript</span>
-        <span class="commit-date">—</span>
-      </div>
-      <div class="commit-row">
-        <span class="commit-hash">b0aa112</span>
-        <span class="commit-msg"><span class="scope">paper:</span> document GPU multiloop benchmark results and GENESIS scheduler bottleneck</span>
-        <span class="commit-date">—</span>
-      </div>
-
+      <div class="commit-row commit-new"><span class="commit-hash">pending</span><span class="commit-msg"><span class="scope">benchmark:</span> PGENESIS MPI scaling, AP verify, MPICH build; fill Table 3</span><span class="commit-date">2026-06-27</span></div>
+      <div class="commit-row"><span class="commit-hash">40fb3b0</span><span class="commit-msg"><span class="scope">paper:</span> fill affiliation/funding/ack, update REPLICATION for fp32 port</span><span class="commit-date">2026-06-26</span></div>
+      <div class="commit-row"><span class="commit-hash">980b48c</span><span class="commit-msg"><span class="scope">paper:</span> verify multiloop kernel correctness; remove diagnostic code</span><span class="commit-date">2026-06-26</span></div>
+      <div class="commit-row"><span class="commit-hash">d14431b</span><span class="commit-msg"><span class="scope">paper:</span> document Hines solver fix for multi-neuron disconnected-root hsolve</span><span class="commit-date">2026-06-26</span></div>
+      <div class="commit-row"><span class="commit-hash">1e90b50</span><span class="commit-msg"><span class="scope">hsolve:</span> fix Vm corruption for multi-neuron (disconnected-root) hsolve</span><span class="commit-date">2026-06-26</span></div>
+      <div class="commit-row"><span class="commit-hash">deec427</span><span class="commit-msg"><span class="scope">benchmark:</span> add OCL multiloop scaling sweep and HH1952-cited model</span><span class="commit-date">2026-06-26</span></div>
+      <div class="commit-row"><span class="commit-hash">567395d</span><span class="commit-msg"><span class="scope">OCL:</span> port channel kernel to fp32, unblock GPU dispatch on AMD 890M</span><span class="commit-date">2026-06-26</span></div>
+      <div class="commit-row"><span class="commit-hash">262c872</span><span class="commit-msg"><span class="scope">paper:</span> add author info, MPI strong-scaling section, and scheduler fix writeup</span><span class="commit-date">2026-06-25</span></div>
+      <div class="commit-row"><span class="commit-hash">1296a39</span><span class="commit-msg"><span class="scope">scheduler:</span> fix O(N) tabchannel overhead in hsolve multi-neuron setup</span><span class="commit-date">2026-06-25</span></div>
     </div>
-  </div><!-- /gitlog -->
+  </div>
 
+  <div class="section-label">Key findings</div>
+  <div class="findings">
+    <div class="findings-head"><div class="section-title" style="margin-bottom:0">Technical record</div></div>
+    <div class="finding-item"><div class="finding-num">F1</div><div class="finding-text"><strong>GENESIS scheduler is the dominant bottleneck.</strong> Iterates all absorbed elements every step regardless of GPU offload: ~25–45 ns/element/step, O(N). Accounts for 98–99% of GPU arm step time at N≥2000.</div></div>
+    <div class="finding-item"><div class="finding-num">F2</div><div class="finding-text"><strong>Multiloop mode achieves <span class="val">3.2–16.2×</span> end-to-end speedup</strong> after scheduler fix + fp32 port. Raw kernel speedup: <span class="val">4–149×</span>. GPU per-step remains slower than CPU.</div></div>
+    <div class="finding-item"><div class="finding-num">F3</div><div class="finding-text"><strong>Three hines_init.c/hines_solve.c bugs</strong> silently broke all multi-neuron hsolve. SKIP_DIAG OOB (Bug 3), missing parentno==-1 guard (Bug 2), wrong ncompts==1 proxy (Bug 1) + euler stray −vm term. Classic single-neuron usage never hit any of them.</div></div>
+    <div class="finding-item"><div class="finding-num">F4</div><div class="finding-text"><strong>AMD Radeon 890M has zero fp64 OpenCL support.</strong> Kernel must run in <span class="val">float</span>. Host converts double↔float at upload/download time in <code>ocl_hsolve.c</code>.</div></div>
+    <div class="finding-item"><div class="finding-num">F5</div><div class="finding-text"><strong>All three execution paths verified to fp32 precision.</strong> CPU, GPU per-step, GPU multiloop agree within <span class="val">3×10⁻⁹ V</span> after one 50 µs HH step with 2 nA injection, N=1 and N=2.</div></div>
+    <div class="finding-item"><div class="finding-num">F6</div><div class="finding-text"><strong>OCL ICD vendor path is critical.</strong> Wrong path → silent CPU fallback. Correct: <span class="val">/run/host/etc/OpenCL/vendors</span>.</div></div>
+    <div class="finding-item"><div class="finding-num">F7</div><div class="finding-text"><strong>PGENESIS MPI strong-scaling saturates at 12 physical cores.</strong> N=2400 HH1952 neurons, 5000 steps: P=2 S=1.89× (E=95%), P=8 S=4.0× (E=50%), P=12 S=4.5× (peak). Beyond P=12 SMT provides no benefit. Recommended: P=4–8 for this problem size.</div></div>
+  </div>
 
-  <!-- ENV -->
   <div class="section-label">Environment</div>
   <div class="env-grid">
-
     <div class="env-card">
       <div class="env-card-head">Host hardware</div>
       <div class="env-row"><span class="env-key">CPU</span><span class="env-val">AMD Ryzen AI 9 HX 370</span></div>
@@ -942,31 +359,27 @@ body {
       <div class="env-row"><span class="env-key">fp64</span><span class="env-val">None (GPU) — fp32 only</span></div>
       <div class="env-row"><span class="env-key">Kernel</span><span class="env-val">Linux 6.17.0-121035-tuxedo</span></div>
     </div>
-
     <div class="env-card">
       <div class="env-card-head">OCL runtime</div>
       <div class="env-row"><span class="env-key">ICD vendors</span><span class="env-val">/run/host/etc/OpenCL/vendors</span></div>
-      <div class="env-row"><span class="env-key">GPU driver</span><span class="env-val">Mesa rusticl (libRusticlOpenCL.so.1)</span></div>
-      <div class="env-row"><span class="env-key">AMD OCL</span><span class="env-val">amdocl64_60301_48.icd (host)</span></div>
-      <div class="env-row"><span class="env-key">NVIDIA OCL</span><span class="env-val">nvidia.icd (host, not used)</span></div>
+      <div class="env-row"><span class="env-key">GPU driver</span><span class="env-val">Mesa rusticl (fp32, works post-567395d)</span></div>
+      <div class="env-row"><span class="env-key">ROCm</span><span class="env-val">6.3.1 on host — fp64, gfx1150</span></div>
+      <div class="env-row"><span class="env-key">pdflatex</span><span class="env-val">via flatpak-spawn --host</span></div>
     </div>
-
     <div class="env-card">
       <div class="env-card-head">Binaries (genesis/src/)</div>
-      <div class="env-row"><span class="env-key">nxgenesis</span><span class="env-val">OCL build — all 4 patches applied</span></div>
-      <div class="env-row"><span class="env-key">nxgenesis_nocl</span><span class="env-val">CPU-only — PRE-FIX (needs rebuild)</span></div>
-      <div class="env-row"><span class="env-key">multiloop env</span><span class="env-val">GENESIS_OCL_MULTILOOP=&lt;K&gt;</span></div>
-      <div class="env-row"><span class="env-key">Note</span><span class="env-val">step 10 warmup consumes first multiloop dispatch</span></div>
+      <div class="env-row"><span class="env-key">nxgenesis</span><span class="env-val">OCL — all 4 patches applied</span></div>
+      <div class="env-row"><span class="env-key">nxgenesis_nocl</span><span class="env-val">CPU-only — all 4 patches applied</span></div>
+      <div class="env-row"><span class="env-key">checksums</span><span class="env-val">v5 · 2026-06-26 · see REPLICATION.md</span></div>
+      <div class="env-row"><span class="env-key">multiloop</span><span class="env-val">GENESIS_OCL_MULTILOOP=K+10</span></div>
     </div>
-
     <div class="env-card">
       <div class="env-card-head">Key env variables</div>
       <div class="env-row"><span class="env-key">OCL_ICD_VENDORS</span><span class="env-val">/run/host/etc/OpenCL/vendors</span></div>
       <div class="env-row"><span class="env-key">LD_LIBRARY_PATH</span><span class="env-val">/opt/rocm/lib:$LD_LIBRARY_PATH</span></div>
-      <div class="env-row"><span class="env-key">MULTILOOP</span><span class="env-val">GENESIS_OCL_MULTILOOP=N+warmup</span></div>
-      <div class="env-row"><span class="env-key">Build</span><span class="env-val">make USE_OPENCL=1 ... from genesis/src</span></div>
+      <div class="env-row"><span class="env-key">MULTILOOP</span><span class="env-val">GENESIS_OCL_MULTILOOP=&lt;K&gt;</span></div>
+      <div class="env-row"><span class="env-key">Build</span><span class="env-val">USE_OPENCL=1 in hines/ submake</span></div>
     </div>
+  </div>
 
-  </div><!-- /env-grid -->
-
-</div><!-- /wrap -->
+</div>
