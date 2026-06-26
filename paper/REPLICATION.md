@@ -33,11 +33,11 @@ Two OpenCL runtimes are present on the host:
 | ROCm 6.3.1 (host) | `/opt/rocm-6.3.1/lib/libamdocl64.so` | YES | `gfx1150` |
 | Mesa rusticl (container) | `libRusticlOpenCL.so.1` | NO | `AMD Radeon 890M Graphics (radeonsi, ...)` |
 
-The `ocl_channel.cl` kernel uses `double` throughout and requires `cl_khr_fp64`.
-Mesa rusticl on this GPU reports `CL_DEVICE_DOUBLE_FP_CONFIG=0` and does not
-expose `cl_khr_fp64`, so the kernel fails to compile under rusticl and
-`ocl_chip_update` falls back to CPU for the entire run. The one-time startup
-diagnostic `"OCL: urzadzenie nie wspiera fp64, wylaczam GPU"` confirms this.
+As of commit `567395d` the `ocl_channel.cl` kernel runs in **fp32** (single
+precision). Host code in `ocl_hsolve.c` converts double↔float at upload/download
+time. Both ROCm and Mesa rusticl are therefore able to dispatch the kernel; the
+earlier requirement for `cl_khr_fp64` no longer applies. The startup diagnostic
+`"OCL: urzadzenie nie wspiera fp64, wylaczam GPU"` is no longer emitted.
 
 **To run the OCL profiling benchmark** (Table 2 data in the manuscript),
 run `nxgenesis` outside the container with the ROCm ICD active:
@@ -82,13 +82,14 @@ all N×3 absorbed elements per step (~25-45 ns/element), scaling O(N) and
 dominating at all tested N. Restructuring the GENESIS scheduler to skip
 absorbed elements is required to realize the kernel-level speedup end-to-end.
 
-In the container with Mesa rusticl (no fp64): both arms run on CPU, speedup = 1×,
-warning `"nie wspiera fp64"` is printed.
+In the container with Mesa rusticl: after the fp32 port (`567395d`) the GPU kernel
+dispatches correctly and multiloop speedup matches the ROCm numbers above.
 
-**The end-to-end CPU vs GPU benchmark campaign** (`run_genesis25_cpu_gpu_extreme_5rep.sh`)
-ran inside the container and used Mesa rusticl (no fp64), so both arms ran CPU
-code. The speedup ratio of ~1.0 reflects a CPU-vs-CPU comparison with matched
-headless binaries.
+**Historical note — extreme_5rep campaign:** `run_genesis25_cpu_gpu_extreme_5rep.sh`
+was run before the fp32 port, inside the container with Mesa rusticl. At that time
+rusticl could not compile the fp64 kernel, so both arms silently ran on CPU. The
+resulting speedup ratio of ~1.0 is a CPU-vs-CPU comparison and does not reflect
+GPU performance.
 
 ---
 
@@ -215,11 +216,11 @@ Output: `paper/genesis25_cpu_gpu_longrun_raw.csv`,
 
 ## Binary checksums
 
-Recorded 2026-06-24 (v3: multiloop kernel + kernel_multi release):
+Recorded 2026-06-26 (v5: scheduler fix + fp32 port + hsolve inject fix):
 
 ```
-4438cdc1c78e7793202616890a5dadbb1f52de165e01b5c3ddc18959aedac5e0  genesis/src/nxgenesis
-7bc0bf0d2276c18a3d5366e460d2170c453d0e94c17ef0ee0d8f11401653e5fb  genesis/src/nxgenesis_nocl
+9c3cf331b192339c03ea642a7d8a825d0c33a981fe48d2b92a3e1e25af487825  genesis/src/nxgenesis
+2ea8c5f9b9943b76b0a11a3a657aaf293d65971d8c4640ab6c2ee63a383145ef  genesis/src/nxgenesis_nocl
 ```
 
 ---
@@ -233,4 +234,4 @@ Recorded 2026-06-24 (v3: multiloop kernel + kernel_multi release):
 | `sizeof(#)` in `hines_d@.c` | Code generator emits invalid C for anonymous struct fields | Three lines commented out in-tree (Step 2) |
 | `USE_OPENCL` not propagated | Top-level Makefile doesn't forward it to subdirs | Build hines directly with `USE_OPENCL=1` (Step 3) |
 | `ncdump` link failure | `yylex` undefined from `libfl` | Irrelevant — only `libsrc/libnetcdf.a` is needed, not ncdump |
-| "GPU" arm not slower despite OCL enabled | Radeon 890M iGPU has no fp64 OpenCL support (`CL_DEVICE_DOUBLE_FP_CONFIG=0`, `cl_khr_fp64` absent) — kernel compile fails, silent CPU fallback every step | By design — code now detects this once at startup, prints diagnostic, and disables OCL for the run |
+| ~~"GPU" arm not slower despite OCL enabled~~ | ~~Radeon 890M iGPU has no fp64 OpenCL support~~ | Fixed in commit `567395d`: kernel ported to fp32; rusticl now dispatches GPU correctly |
