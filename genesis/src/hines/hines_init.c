@@ -492,7 +492,17 @@ int h_funcs_init(hsolve)
 	    if (skipdiag) {
 		skipdiag=0;
 /*  OPTIMIZE FOR DOUBLE SKIP */
-	    } else if (nkid || hassiblefts) {
+	    } else if (nkid || hassiblefts || parentno == -1) {
+		/* parentno==-1: this row is itself a disconnected root (no
+		** axial parent), e.g. one of several independent single-
+		** compartment cells sharing one hsolve. It can never be
+		** paired with a following row via the SKIP_DIAG "unbranched
+		** cable" optimization below (that pairing assumes a real
+		** parent eventually absorbs it), so force the plain 1-row
+		** SET_DIAG advance instead. Using SKIP_DIAG here would
+		** over-advance resultvalue past the end of results[] when
+		** this happens to be the last row (the implicit "soma"),
+		** corrupting that row's voltage update. */
 		if (i>1) {	/* first SET_DIAG always done */
 		    if (justcount) {
 			nfuncs++;
@@ -893,6 +903,16 @@ int h_funcs_init(hsolve)
 	    compt=compts[comptindex];
 	    Cm=compt->Cm;
 	    parentno=parents[comptindex];
+	    /* parentno==-1 means this row is itself the root of its own
+	    ** disconnected subtree (e.g. one of several independent
+	    ** single-compartment cells sharing one hsolve). Only the row
+	    ** numbered ncompts-1 ("soma") is handled automatically by the
+	    ** forward pass; any OTHER parentless row reaching this backward
+	    ** loop has no parent/sib coupling to eliminate at all, so skip
+	    ** straight to its own CALC_RESULTS (plain results[i]/diag[i]).
+	    ** Without this guard, compts[-1]/hnum[-1] below read out of
+	    ** bounds and corrupt/skip the update for that compartment. */
+	    if (parentno != -1) {
 	    if (symflag) {
 		nkid=nkids[parentno];
 		for (j=0; j<nkid; j++) {
@@ -992,6 +1012,7 @@ int h_funcs_init(hsolve)
 		    }
 		}
 	    }
+	    } /* parentno != -1 */
 	    /*
 	    **  Compute final result:
 	    **   code to execute: results[i] =  results[i+1]/diagonal[i+1];
