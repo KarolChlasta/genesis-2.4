@@ -20,6 +20,8 @@
 \usepackage{amsmath}
 \usepackage{fancyhdr}
 \usepackage{abstract}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
 
 \emergencystretch=3em
 
@@ -216,6 +218,27 @@ Cal7difshell.g  & 30 & 0.6685 & 0.0070 & 1.04 & 0.0025 & 0.6599 & 0.6803 \\
 
 Both workloads show low relative variance (CV $\approx$ 1\%), indicating stable CPU timing.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig1_mean_runtime_ci.png}
+\caption{CPU baseline mean wall-clock runtime with 95\% confidence intervals (\texttt{nxgenesis}, 30 replicates per workload).}
+\label{fig:cpu_mean_ci}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig2_runtime_boxplot.png}
+\caption{CPU baseline runtime distributions (boxplot). Whiskers extend to 1.5\,IQR; low spread (CV $\approx$1\%) confirms stable CPU timing.}
+\label{fig:cpu_boxplot}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig6_cpu_dense_runtime_ci.png}
+\caption{CPU dense-network benchmark: mean wall-clock runtime with 95\% CI across $N$ neurons (\texttt{nxgenesis}).}
+\label{fig:cpu_dense_ci}
+\end{figure}
+
 \subsection{PGENESIS Strong-Scaling (MPI)}
 \label{sec:mpi}
 
@@ -312,6 +335,20 @@ $N$ neurons & Kernel time/step & \texttt{ocl\_chip\_update} wall/step & GPU acti
 
 The GPU channel-update kernel is genuine but only 8--10\% of \texttt{ocl\_chip\_update} wall time; the remaining $\sim$90\% is host-side dispatch and buffer transfer overhead (two uploads, one enqueue, two downloads, fully serialized per step). Realizing an end-to-end speedup requires batching across steps, motivating the multiloop kernel below.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig4_gpu_large_runtime_ci.png}
+\caption{GPU per-step channel-update wall time with 95\% CI across $N = 100$--$2000$ neurons (ROCm 6.3.1, Radeon 890M).}
+\label{fig:gpu_large_ci}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig5_gpu_large_scaling_trend.png}
+\caption{GPU kernel and host-path scaling trend with neuron count ($N$). Kernel time (blue) grows sub-linearly; host-side dispatch overhead (orange) dominates at all tested sizes.}
+\label{fig:gpu_scaling_trend}
+\end{figure}
+
 \subsubsection*{Hardware fp64 limitation (third confound)}
 
 Three successive confounds were identified and resolved:
@@ -329,6 +366,13 @@ Mesa rusticl no fp64 & Kernel build fails $\Rightarrow$ CPU fallback on every st
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig3_headless_error_lines.png}
+\caption{Headless binary comparison: error lines between \texttt{genesis} (X11-linked) and \texttt{nxgenesis} (headless) runs, illustrating the construction-phase overhead confound identified in the first round of GPU benchmarking.}
+\label{fig:headless_error}
+\end{figure}
 
 \subsection{GPU Multiloop Kernel: Eliminating Per-Step Transfer Overhead}
 
@@ -370,6 +414,13 @@ The GPU kernel computes channel gate updates for all $N$ neurons across $K = 500
 However, the \textbf{end-to-end speedup is only 1.06--1.40$\times$}. The gap arises from the GENESIS simulation scheduler, which visits all $N \times 3$ absorbed elements every step ($\approx$25--45\,ns per element per step, $O(N)$). Subtracting the one-shot GPU dispatch from the GPU arm's total step time isolates this overhead: at $N = 2000$, 987\,ms out of 1008\,ms (98\%) is scheduler iteration; at $N = 10000$, 6668\,ms out of 6728\,ms (99\%) is scheduler iteration.
 
 \textbf{Implication.} The \texttt{chip\_channel\_multiloop} kernel demonstrates that the GPU itself is not the bottleneck. Realizing the kernel-level speedup end-to-end requires restructuring the GENESIS simulation loop to genuinely skip absorbed elements when their computation has been delegated to the GPU. This is a deeper change to the GENESIS core scheduler and is recorded as the primary follow-on requirement in \texttt{paper/PLAN\_gpu\_rewrite.md}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig7_cpu_gpu_speedup.png}
+\caption{CPU vs.\ GPU end-to-end speedup ratio (per-step dispatch mode) across $N$. Values below 1$\times$ indicate that per-step PCIe transfer overhead makes the GPU path slower than CPU for this $N$ range.}
+\label{fig:cpu_gpu_speedup}
+\end{figure}
 
 \subsubsection*{Scheduler fix (2026-06-25)}
 \label{sec:scheduler-fix}
@@ -427,6 +478,20 @@ $N$ & CPU step-loop (s) & GPU dispatch (s) & E2E speedup \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig8_ocl_multiloop_runtime_ci.png}
+\caption{OCL multiloop benchmark: GPU dispatch (fp32, Mesa rusticl) and CPU baseline wall-clock time with 95\% CI across $N$, post-scheduler-fix.}
+\label{fig:multiloop_ci}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig9_ocl_multiloop_speedup.png}
+\caption{OCL multiloop end-to-end speedup (GPU fp32 / CPU fp64) after scheduler fix. Speedup rises from 3.2$\times$ at $N=500$ to 16.2$\times$ at $N=5000$.}
+\label{fig:multiloop_speedup}
+\end{figure}
 
 \textbf{Methodological note.} GENESIS's own \texttt{\{cpu\}} timer (used for ``CPU
 step''/``GPU step'' in Table~\ref{tab:multiloop}) reports process CPU-time, not
