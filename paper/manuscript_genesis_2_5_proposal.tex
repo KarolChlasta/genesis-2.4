@@ -337,15 +337,15 @@ The GPU channel-update kernel is genuine but only 8--10\% of \texttt{ocl\_chip\_
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{fig4_gpu_large_runtime_ci.png}
-\caption{GPU per-step channel-update wall time with 95\% CI across $N = 100$--$2000$ neurons (ROCm 6.3.1, Radeon 890M).}
+\includegraphics[width=0.80\textwidth]{fig4_gpu_large_runtime_ci.png}
+\caption{GPU multiloop step-loop runtime with 95\% CI (fp32, Mesa rusticl, Radeon 890M, $n=30$ replicates, $K=5000$ steps). Individual replicate times are shown as translucent scatter; the line is the per-$N$ mean; the shaded band is the 95\% CI.}
 \label{fig:gpu_large_ci}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{fig5_gpu_large_scaling_trend.png}
-\caption{GPU kernel and host-path scaling trend with neuron count ($N$). Kernel time (blue) grows sub-linearly; host-side dispatch overhead (orange) dominates at all tested sizes.}
+\includegraphics[width=0.75\textwidth]{fig5_gpu_large_scaling_trend.png}
+\caption{Normalized cost (runtime per neuron, s/neuron) for the GPU multiloop (fp32) and CPU (fp64) arms across $N$. GPU cost per neuron peaks at $N=500$ and decreases to a minimum near $N=5000$ before rising again at $N=20000$, reflecting kernel launch fixed cost at small $N$ and memory bandwidth saturation at large $N$.}
 \label{fig:gpu_scaling_trend}
 \end{figure}
 
@@ -369,8 +369,8 @@ Mesa rusticl no fp64 & Kernel build fails $\Rightarrow$ CPU fallback on every st
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{fig3_headless_error_lines.png}
-\caption{Headless binary comparison: error lines between \texttt{genesis} (X11-linked) and \texttt{nxgenesis} (headless) runs, illustrating the construction-phase overhead confound identified in the first round of GPU benchmarking.}
+\includegraphics[width=0.60\textwidth]{fig3_headless_error_lines.png}
+\caption{Mean stderr diagnostic lines per run for \texttt{nxgenesis} (headless mode). Cal8.g emits substantially more diagnostic output ($\approx$110 lines/run) than Cal7difshell.g ($\approx$17 lines/run); neither run produced errors or non-zero exit codes.}
 \label{fig:headless_error}
 \end{figure}
 
@@ -417,8 +417,8 @@ However, the \textbf{end-to-end speedup is only 1.06--1.40$\times$}. The gap ari
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{fig7_cpu_gpu_speedup.png}
-\caption{CPU vs.\ GPU end-to-end speedup ratio (per-step dispatch mode) across $N$. Values below 1$\times$ indicate that per-step PCIe transfer overhead makes the GPU path slower than CPU for this $N$ range.}
+\includegraphics[width=0.80\textwidth]{fig7_cpu_gpu_speedup.png}
+\caption{GPU multiloop end-to-end speedup (CPU fp64 / GPU fp32, $n=30$ replicates). Speedup peaks at $14.8\times$ for $N=5000$ neurons and drops at $N=20000$ where GPU memory bandwidth saturates. Dashed line marks the 1$\times$ breakeven.}
 \label{fig:cpu_gpu_speedup}
 \end{figure}
 
