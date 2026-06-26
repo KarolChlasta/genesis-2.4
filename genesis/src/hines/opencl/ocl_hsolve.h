@@ -15,14 +15,23 @@ typedef struct {
     cl_kernel        kernel_multi; /* chip_channel_multiloop — K steps    */
     cl_device_id     device;
 
-    /* GPU buffers — mirrors of hsolve arrays */
-    cl_mem buf_vm;       /* double[ncompts] */
-    cl_mem buf_chip;     /* double[nchips]  */
-    cl_mem buf_results;  /* double[ncompts*2] */
-    cl_mem buf_tablist;  /* double[xdivs+1 * ncols] */
-    cl_mem buf_xvals;    /* double[xdivs+2] */
+    /* GPU buffers — float mirrors of hsolve's double arrays. Kernel runs in
+       fp32 (device may lack cl_khr_fp64, e.g. AMD RDNA3); host converts
+       double<->float at upload/download time using the scratch buffers
+       below. */
+    cl_mem buf_vm;       /* float[ncompts] */
+    cl_mem buf_chip;     /* float[nchips]  */
+    cl_mem buf_results;  /* float[ncompts*2] */
+    cl_mem buf_tablist;  /* float[xdivs+1 * ncols] */
+    cl_mem buf_xvals;    /* float[xdivs+2] */
     cl_mem buf_ops;      /* int[nops] */
-    cl_mem buf_stablist; /* double[sntab*6] */
+    cl_mem buf_stablist; /* float[sntab*6] */
+
+    /* host-side float scratch buffers reused every step for double<->float
+       conversion (avoids malloc/free per step) */
+    float *f_vm;         /* [ncompts] */
+    float *f_chip;       /* [nchips]  */
+    float *f_results;    /* [ncompts*2] */
 
     int    ncompts;
     int    nchips;
