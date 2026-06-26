@@ -57,7 +57,7 @@ Accelerator Support on AMD Ryzen AI 9 HX 370}}
 \thispagestyle{fancy}
 
 \begin{abstract}
-High-performance neural simulation remains essential for large biophysical network models where both accuracy and throughput are required. We present a benchmark and release proposal for GENESIS 2.5, defined here as an accelerator-enabled successor to GENESIS 2.4 and Parallel GENESIS (PGENESIS) 2.4 on an AMD Ryzen AI 9 HX 370 platform (12 physical cores, 24 hardware threads) with integrated Radeon 890M graphics. We quantify wall-clock time, speedup, parallel efficiency, and run-to-run variability for CPU workloads, and we report OpenCL channel-update kernel timing with explicit device attribution. A multi-step (``multiloop'') kernel that dispatches all $K$ simulation steps in a single GPU call achieves 4--149$\times$ speedup in raw channel-update computation ($N=100$--$10000$ neurons, $K=5000$ steps, Radeon 890M), but end-to-end GENESIS simulation speedup remains only 1.1--1.4$\times$ because the GENESIS scheduler iterates over all $N\times3$ absorbed elements per step ($\approx$25--45\,ns/element) regardless of GPU offload---an $O(N)$ overhead identified here as the primary bottleneck for GPU acceleration of GENESIS. CUDA support is proposed as a companion backend target for GENESIS 2.5, but is not validated in the current workspace.
+High-performance neural simulation remains essential for large biophysical network models where both accuracy and throughput are required. We present a benchmark and release proposal for GENESIS 2.5, defined here as an accelerator-enabled successor to GENESIS 2.4 and Parallel GENESIS (PGENESIS) 2.4 on an AMD Ryzen AI 9 HX 370 platform (12 physical cores, 24 hardware threads) with integrated Radeon 890M graphics. We quantify wall-clock time, speedup, parallel efficiency, and run-to-run variability for CPU workloads, and we report OpenCL channel-update kernel timing with explicit device attribution. A multi-step (``multiloop'') kernel that dispatches all $K$ simulation steps in a single GPU call achieves 4--149$\times$ speedup in raw channel-update computation ($N=100$--$10000$ neurons, $K=5000$ steps, Radeon 890M), but end-to-end GENESIS simulation speedup was initially only 1.1--1.4$\times$ because the GENESIS scheduler iterated over all $N\times3$ absorbed elements per step ($\approx$25--45\,ns/element) regardless of GPU offload---an $O(N)$ overhead identified here as the primary bottleneck for GPU acceleration of GENESIS. We trace this to a single-root assumption in the Hines-numbering routine and fix it (Section~\ref{sec:scheduler-fix}); combined with a fp32 port of the channel kernel needed because the in-container OpenCL runtime exposes no fp64 (Section~\ref{sec:fp32-port}), measured end-to-end speedup rises to 3.2--16.2$\times$. CUDA support is proposed as a companion backend target for GENESIS 2.5, but is not validated in the current workspace.
 \end{abstract}
 
 \textbf{Keywords:} GENESIS, PGENESIS, OpenCL, CUDA, GPU benchmarking, CPU benchmarking, strong scaling
@@ -102,6 +102,15 @@ The proposed GENESIS 2.5 release is intentionally narrow in scope: it is not a n
   \item Device attribution is logged for accelerator benchmark runs, captured from the benchmark run itself rather than a separate device-probe process.
   \item CUDA is not labeled as complete until it reaches the same build, execution, and reporting standard as the OpenCL path.
 \end{itemize}
+
+% ---------------------------------------------------------------
+\subsection{Relationship to GENESIS 3 and MOOSE}
+
+The name \textbf{GENESIS 2.5} is chosen deliberately to avoid implying continuity with \textbf{GENESIS 3} (G-3), a separate modularization effort announced by the original GENESIS development team~\cite{g3_dev_plans}. G-3 decomposes the simulator into an independent model container, numerical solver, simulation controller, and scripting/GUI layer. Two concrete core-solver efforts were pursued under that umbrella: \textit{Neurospaces/Heccer}, a refactoring of \texttt{hsolve} by Hugo Cornelis (Bower lab, UT San Antonio)~\cite{cornelis2011}, and \textit{MOOSE}, a C++ reimplementation by Upinder Bhalla (NCBS Bangalore) that advertises transparent parallelization.
+
+We do not build on either successor line. MOOSE in particular already offers multi-threaded/parallel execution and remains independently maintained; a reviewer may reasonably ask why this work accelerates legacy \texttt{hsolve} via OpenCL rather than migrating to MOOSE. The answer is scope: GENESIS 2.5 targets existing GENESIS 2.4 deployments---production models, SLI scripts, and PGENESIS-based MPI workflows---that should not require model or script migration to gain accelerator support. Whether the O(N) scheduler defect fixed in this work (Section~\ref{sec:scheduler-fix}) was already addressed by Heccer's redesign of \texttt{hsolve} is not established here and is noted as an open question rather than a claim.
+
+Notably, ``GENESIS 3'' itself never shipped as a single installable release comparable to GENESIS 2.4. It evolved instead into the CBI (Computational Biology Initiative) software federation, a set of independently developed, interoperating components~\cite{cornelis2008cbi}, with concrete single-neuron modeling demonstrations~\cite{cornelis2007dendrite} and federation-level interoperability work continuing at least through 2013~\cite{cornelis2013interop}. This reinforces the choice to version this proposal as ``2.5'' rather than implying compatibility with, or succession from, a ``3.0'' that does not exist as a unified artifact.
 
 % ---------------------------------------------------------------
 \section{Methods}
@@ -308,7 +317,7 @@ Confound & Effect & Status \\
 \midrule
 X11 binary difference & GPU arm had construction overhead from GUI toolkit & Fixed: both arms use headless \texttt{nxgenesis} \\
 Passive compartment & No ion channels $\Rightarrow$ \texttt{ocl\_chip\_update} never called & Fixed: \texttt{ocl\_hh\_benchmark.g} uses real HH channels \\
-Mesa rusticl no fp64 & Kernel build fails $\Rightarrow$ CPU fallback on every step & Mitigated: code detects at startup, disables OCL with one diagnostic \\
+Mesa rusticl no fp64 & Kernel build fails $\Rightarrow$ CPU fallback on every step & Resolved (2026-06-26): channel kernel ported to fp32; see Section~\ref{sec:fp32-port} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -355,6 +364,7 @@ However, the \textbf{end-to-end speedup is only 1.06--1.40$\times$}. The gap ari
 \textbf{Implication.} The \texttt{chip\_channel\_multiloop} kernel demonstrates that the GPU itself is not the bottleneck. Realizing the kernel-level speedup end-to-end requires restructuring the GENESIS simulation loop to genuinely skip absorbed elements when their computation has been delegated to the GPU. This is a deeper change to the GENESIS core scheduler and is recorded as the primary follow-on requirement in \texttt{paper/PLAN\_gpu\_rewrite.md}.
 
 \subsubsection*{Scheduler fix (2026-06-25)}
+\label{sec:scheduler-fix}
 
 A separate, related bug in \texttt{hines\_init.c} was identified and fixed on 2026-06-25
 (commit~\texttt{1296a39}).
@@ -372,6 +382,71 @@ Additionally, \texttt{hines.c} now gates \texttt{do\_euler\_hsolve} on the
 solve is skipped when the GPU multiloop kernel has already computed all timesteps.
 These fixes were confirmed with the corrected \texttt{ocl\_hh\_benchmark.g} and are part
 of the GENESIS 2.5 patch set.
+
+\subsubsection*{fp32 port and post-scheduler-fix verification (2026-06-26)}
+\label{sec:fp32-port}
+
+Table~\ref{tab:multiloop} above was collected outside the container, under ROCm, because
+Mesa rusticl's \texttt{CL\_DEVICE\_DOUBLE\_FP\_CONFIG} is 0---the device exposes no fp64
+functions at all, not merely a missing \texttt{cl\_khr\_fp64} pragma, so
+\texttt{clBuildProgram} fails immediately on the double-precision kernel. We ported
+\texttt{ocl\_channel.cl} and the corresponding host-side buffers in \texttt{ocl\_hsolve.c}
+to \texttt{float}, converting at the host/device boundary (\texttt{Hsolve}'s own arrays
+remain \texttt{double} everywhere else in GENESIS). This removes the ROCm-host
+dependency entirely: the kernel now dispatches directly under Mesa rusticl in the
+container.
+
+Repeating the multiloop benchmark in-container, fp32, \emph{after} the scheduler fix
+above, gives:
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{GPU multiloop (fp32) vs CPU (fp64) baseline, post-scheduler-fix, in-container
+Mesa rusticl, AMD Radeon 890M ($K=5000$ steps). ``CPU step-loop'' is external wall-clock
+around the step loop; ``GPU dispatch'' is the kernel's own \texttt{clock\_gettime}-based
+report (see methodological note below).}
+\label{tab:multiloop_fp32}
+\begin{tabular}{rrrr}
+\toprule
+$N$ & CPU step-loop (s) & GPU dispatch (s) & E2E speedup \\
+\midrule
+500     & 0.041 & 0.013 &  3.20$\times$ \\
+1\,000  & 0.110 & 0.013 &  8.57$\times$ \\
+2\,000  & 0.150 & 0.013 & 11.22$\times$ \\
+5\,000  & 0.299 & 0.018 & 16.24$\times$ \\
+10\,000 & 0.594 & 0.046 & 13.05$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Methodological note.} GENESIS's own \texttt{\{cpu\}} timer (used for ``CPU
+step''/``GPU step'' in Table~\ref{tab:multiloop}) reports process CPU-time, not
+wall-clock. In multiloop mode the CPU process is blocked waiting on the GPU for nearly
+the entire dispatch, which this timer barely counts as CPU-busy---an initial reading
+using that timer implied a 190--2970$\times$ speedup, which is a measurement artifact,
+not a result, and is not reported here. Table~\ref{tab:multiloop_fp32} instead uses
+external wall-clock timing for the CPU arm and the kernel's own
+\texttt{clock\_gettime(CLOCK\_MONOTONIC)}-based dispatch report for the GPU arm, neither
+of which is subject to this trap.
+
+End-to-end speedup is now \textbf{3.2$\times$ to 16.2$\times$}, compared to
+\textbf{1.06--1.40$\times$} in Table~\ref{tab:multiloop}. The two tables are not a direct
+repeat of the same measurement: Table~\ref{tab:multiloop} used ROCm/fp64 and predates the
+scheduler fix, while Table~\ref{tab:multiloop_fp32} uses Mesa/fp32 after the fix. The
+improvement is attributable to the scheduler fix removing the $O(N)$ per-step
+element-iteration overhead identified above as the dominant cost, not to the fp32 port
+itself, which only changes which hardware can run the kernel at all. The default
+per-step (non-multiloop) dispatch mode remains a net loss---1.5$\times$ to 4.5$\times$
+\emph{slower} than CPU---because per-step transfer/dispatch overhead still dominates the
+cheap ($2.5$--$9\,\mu$s) kernel cost; only multiloop batching currently wins.
+
+\textbf{Caveat.} Correctness was checked only against a resting-potential configuration
+(GPU-fp32 output matched CPU-fp64-fallback output bit-for-bit at displayed precision, no
+NaN or divergence in any tested configuration)---the benchmark's \texttt{inject} current
+did not perturb \texttt{Vm} even on the CPU-only path, so this does not yet exercise
+spiking dynamics or bound fp32 rounding error during real channel-gating transients. This
+remains open work.
 
 % ---------------------------------------------------------------
 \section{Discussion}
@@ -400,7 +475,7 @@ GPU dispatch was confirmed only by running the corrected \texttt{ocl\_hh\_benchm
 % ---------------------------------------------------------------
 \section{Conclusion}
 
-This study provides a reproducible benchmark and release proposal for GENESIS 2.5 on a modern mobile AMD platform. The present workspace establishes stable CPU baselines, an accelerator-aware reporting protocol requiring device-side confirmation of GPU kernel dispatch, an OpenCL channel-update kernel confirmed correct and efficient in isolation, and a multiloop kernel demonstrating 4--149$\times$ raw computational speedup on the Radeon 890M at $N = 100$--$10000$ neurons.
+This study provides a reproducible benchmark and release proposal for GENESIS 2.5 on a modern mobile AMD platform. The present workspace establishes stable CPU baselines, an accelerator-aware reporting protocol requiring device-side confirmation of GPU kernel dispatch, an OpenCL channel-update kernel confirmed correct and efficient in isolation, and a multiloop kernel demonstrating 4--149$\times$ raw computational speedup on the Radeon 890M at $N = 100$--$10000$ neurons. Fixing the $O(N)$ scheduler defect that initially capped end-to-end speedup at 1.1--1.4$\times$, and porting the channel kernel to fp32 so it runs without a ROCm-host detour, together raise measured end-to-end speedup to 3.2--16.2$\times$ in multiloop mode---though only in multiloop mode: the default per-step dispatch path remains slower than CPU, and correctness has so far been verified only at resting potential, not during spiking dynamics.
 
 End-to-end wall-clock speedup remains limited to 1.1--1.4$\times$: the GENESIS simulation scheduler iterates over all absorbed elements each step regardless of GPU offload, and this $O(N)$ overhead ($\approx$25--45\,ns/element/step) accounts for 98--99\% of the GPU arm's total step time at $N \geq 2000$. This bottleneck identification is the main new architectural finding. Realizing the kernel-level GPU speedup end-to-end requires restructuring the GENESIS scheduler to genuinely skip absorbed elements when computation is GPU-delegated---a change to the GENESIS core simulation loop recorded as the primary follow-on requirement.
 
@@ -440,6 +515,34 @@ GENESIS project documentation and release notes.
 \bibitem{mpi_standard}
 MPI Forum.
 MPI: A Message-Passing Interface Standard, Version 4.0, 2021.
+
+\bibitem{g3_dev_plans}
+GENESIS 3 Development Plans.
+\url{http://www.genesis-sim.org/GENESIS/G3/G3-dev-plans.html}
+
+\bibitem{cornelis2011}
+Cornelis~H, Coop~AD, Rodriguez~AL, Beeman~D, Bower~JM.
+GENESIS 3.0 functionality enhanced by interface to multiple types of database.
+\textit{BMC Neuroscience} 2011, 12(Suppl 1):P15.
+\url{https://doi.org/10.1186/1471-2202-12-S1-P15}
+
+\bibitem{cornelis2008cbi}
+Cornelis~H, Edwards~M, Coop~AD, Bower~JM.
+The CBI architecture for computational simulation of realistic neurons and circuits in the GENESIS 3 software federation.
+\textit{BMC Neuroscience} 2008, 9(Suppl 1):P88.
+\url{https://doi.org/10.1186/1471-2202-9-S1-P88}
+
+\bibitem{cornelis2007dendrite}
+Cornelis~H, Lu~H, Esquivel~A, Bower~JM.
+Modeling a single dendritic compartment using Neurospaces and GENESIS-3.
+\textit{BMC Neuroscience} 2007, 8(Suppl 2):P3.
+\url{https://doi.org/10.1186/1471-2202-8-S2-P3}
+
+\bibitem{cornelis2013interop}
+Cornelis~H, Bampasakis~D, Steuber~V, Bower~JM.
+Interoperability in the GENESIS 3.0 Software Federation: the NEURON Simulator as an Example.
+\textit{BMC Neuroscience} 2013, 14(Suppl 1):P33.
+\url{https://doi.org/10.1186/1471-2202-14-S1-P33}
 
 \end{thebibliography}
 
