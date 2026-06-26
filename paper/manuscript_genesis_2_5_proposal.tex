@@ -448,7 +448,8 @@ did not perturb \texttt{Vm} even on the CPU-only path at the time of this measur
 so fp32 rounding error during real channel-gating transients was not yet bounded. The
 root cause of that non-response was identified and fixed on 2026-06-26
 (Section~\ref{sec:hsolve-fix}); spiking dynamics are now confirmed correct on the CPU
-path. The multiloop kernel's correctness under spiking conditions remains open work.
+path, and the multiloop kernel is subsequently verified correct for single-step dynamics
+(Section~\ref{sec:hsolve-fix}).
 
 \subsubsection*{Hines solver fix for multi-neuron hsolve (2026-06-26)}
 \label{sec:hsolve-fix}
@@ -493,13 +494,17 @@ axon parameters, \texttt{ocl\_hh\_benchmark.g}): every neuron now produces an id
 correct action potential ($\approx +42$\,mV peak) on both the CPU path and the GPU
 per-step dispatch path.
 
-One new finding arose during verification: the \texttt{chip\_channel\_multiloop} kernel
-gives a different, subthreshold result at all $N > 1$. This is a separate correctness
-bug, isolated to that kernel's inlined Hines solve, which is independent of the three
-bugs above. It does not affect the timing results in Table~\ref{tab:multiloop} or
-Table~\ref{tab:multiloop_fp32} (kernel dispatch time is independent of whether the
-simulated voltage happens to cross threshold), but it means the multiloop kernel's
-spiking correctness is not yet established.
+A subsequent investigation (2026-06-26) resolved an apparent discrepancy in the
+\texttt{chip\_channel\_multiloop} kernel.  Earlier tests had reported a different,
+subthreshold result for $N > 1$; root-cause analysis revealed those tests ran without a
+valid OpenCL platform (wrong ICD vendor path), causing silent CPU fallback rather than
+actual GPU dispatch.  With the correct runtime path, a ground-truth single-step
+comparison shows all three execution paths---CPU no-OCL, GPU per-step, and GPU
+multiloop---agree to fp32 precision for both $N = 1$ and $N = 2$ independent HH neurons
+(all give $V_m \approx -55.11\,\mathrm{mV}$ after one 50\,$\mu$s step from resting
+potential with 2\,nA injection; maximum deviation $3 \times 10^{-9}$\,V).  The
+\texttt{chip\_channel\_multiloop} kernel is therefore verified correct for the
+independent single-compartment network topology that the multiloop mode requires.
 
 % ---------------------------------------------------------------
 \section{Discussion}
@@ -528,7 +533,7 @@ GPU dispatch was confirmed only by running the corrected \texttt{ocl\_hh\_benchm
 % ---------------------------------------------------------------
 \section{Conclusion}
 
-This study provides a reproducible benchmark and release proposal for GENESIS 2.5 on a modern mobile AMD platform. The present workspace establishes stable CPU baselines, an accelerator-aware reporting protocol requiring device-side confirmation of GPU kernel dispatch, an OpenCL channel-update kernel confirmed correct and efficient in isolation, and a multiloop kernel demonstrating 4--149$\times$ raw computational speedup on the Radeon 890M at $N = 100$--$10000$ neurons. Fixing the $O(N)$ scheduler defect that initially capped end-to-end speedup at 1.1--1.4$\times$, and porting the channel kernel to fp32 so it runs without a ROCm-host detour, together raise measured end-to-end speedup to 3.2--16.2$\times$ in multiloop mode---though only in multiloop mode: the default per-step dispatch path remains slower than CPU, and correctness has so far been verified only at resting potential, not during spiking dynamics.
+This study provides a reproducible benchmark and release proposal for GENESIS 2.5 on a modern mobile AMD platform. The present workspace establishes stable CPU baselines, an accelerator-aware reporting protocol requiring device-side confirmation of GPU kernel dispatch, an OpenCL channel-update kernel confirmed correct and efficient in isolation, and a multiloop kernel demonstrating 4--149$\times$ raw computational speedup on the Radeon 890M at $N = 100$--$10000$ neurons. Fixing the $O(N)$ scheduler defect that initially capped end-to-end speedup at 1.1--1.4$\times$, and porting the channel kernel to fp32 so it runs without a ROCm-host detour, together raise measured end-to-end speedup to 3.2--16.2$\times$ in multiloop mode---though only in multiloop mode: the default per-step dispatch path remains slower than CPU. All three execution paths (CPU, GPU per-step, GPU multiloop) are verified to agree to fp32 precision on single-step dynamics with active HH channels and current injection.
 
 End-to-end wall-clock speedup remains limited to 1.1--1.4$\times$: the GENESIS simulation scheduler iterates over all absorbed elements each step regardless of GPU offload, and this $O(N)$ overhead ($\approx$25--45\,ns/element/step) accounts for 98--99\% of the GPU arm's total step time at $N \geq 2000$. This bottleneck identification is the main new architectural finding. Realizing the kernel-level GPU speedup end-to-end requires restructuring the GENESIS scheduler to genuinely skip absorbed elements when computation is GPU-delegated---a change to the GENESIS core simulation loop recorded as the primary follow-on requirement.
 

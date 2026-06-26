@@ -270,7 +270,9 @@ int ocl_init(Hsolve *hsolve)
     buf_chipstart = clCreateBuffer(ocl_state.context,
                         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                         n*sizeof(int), chipstart, &err);
-    free(opstart); free(chipstart); free(cpu_only);
+    free(cpu_only);
+    free(chipstart);
+    free(opstart);
 
     /* upload tabel — konwersja double->float, uzyj dummy jesli brak tabchannels */
     fconv = (float *)malloc((nt > nx ? nt : nx) * sizeof(float));
@@ -386,6 +388,7 @@ static int ocl_multiloop_dispatch(Hsolve *hsolve, int nsteps)
     /* upload vm[] i chip[] (pelny stan startowy) — konwersja double->float */
     d2f(hsolve->vm, ocl_state.f_vm, n);
     d2f(hsolve->chip, ocl_state.f_chip, nc);
+
     clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_vm, CL_FALSE,
                          0, n*sizeof(float), ocl_state.f_vm, 0, NULL, NULL);
     clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_chip, CL_FALSE,

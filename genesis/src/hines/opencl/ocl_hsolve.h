@@ -55,6 +55,7 @@ typedef struct {
     unsigned long long prof_total_ns;   /* total wall time inside ocl_chip_update */
     unsigned long long prof_transfer_ns;/* wall time of buffer transfers only */
     unsigned long       prof_calls;     /* number of steps profiled */
+
 } OclHsolveState;
 
 /* one global state — one GPU context per GENESIS process */
