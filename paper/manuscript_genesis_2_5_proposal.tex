@@ -57,7 +57,7 @@ Accelerator Support on AMD Ryzen AI 9 HX 370}}
 \thispagestyle{fancy}
 
 \begin{abstract}
-High-performance neural simulation remains essential for large biophysical network models where both accuracy and throughput are required. We present a benchmark and release proposal for GENESIS 2.5, defined here as an accelerator-enabled successor to GENESIS 2.4 and Parallel GENESIS (PGENESIS) 2.4 on an AMD Ryzen AI 9 HX 370 platform (12 physical cores, 24 hardware threads) with integrated Radeon 890M graphics. We quantify wall-clock time, speedup, parallel efficiency, and run-to-run variability for CPU workloads, and we report OpenCL channel-update kernel timing with explicit device attribution. A multi-step (``multiloop'') kernel that dispatches all $K$ simulation steps in a single GPU call achieves 4--149$\times$ speedup in raw channel-update computation ($N=100$--$10000$ neurons, $K=5000$ steps, Radeon 890M), but end-to-end GENESIS simulation speedup was initially only 1.1--1.4$\times$ because the GENESIS scheduler iterated over all $N\times3$ absorbed elements per step ($\approx$25--45\,ns/element) regardless of GPU offload---an $O(N)$ overhead identified here as the primary bottleneck for GPU acceleration of GENESIS. We trace this to a single-root assumption in the Hines-numbering routine and fix it (Section~\ref{sec:scheduler-fix}); combined with a fp32 port of the channel kernel needed because the in-container OpenCL runtime exposes no fp64 (Section~\ref{sec:fp32-port}), measured end-to-end speedup rises to 3.2--16.2$\times$. CUDA support is proposed as a companion backend target for GENESIS 2.5, but is not validated in the current workspace.
+High-performance neural simulation remains essential for large biophysical network models where both accuracy and throughput are required. We present a benchmark and release proposal for GENESIS 2.5, defined here as an accelerator-enabled successor to GENESIS 2.4 and Parallel GENESIS (PGENESIS) 2.4 on an AMD Ryzen AI 9 HX 370 platform (12 physical cores, 24 hardware threads) with integrated Radeon 890M graphics. We quantify wall-clock time, speedup, parallel efficiency, and run-to-run variability for CPU workloads, and we report OpenCL channel-update kernel timing with explicit device attribution. A multi-step (``multiloop'') kernel that dispatches all $K$ simulation steps in a single GPU call achieves 4--149$\times$ speedup in raw channel-update computation ($N=100$--$10000$ neurons, $K=5000$ steps, Radeon 890M), but end-to-end GENESIS simulation speedup was initially only 1.1--1.4$\times$ because the GENESIS scheduler iterated over all $N\times3$ absorbed elements per step ($\approx$25--45\,ns/element) regardless of GPU offload---an $O(N)$ overhead identified here as the primary bottleneck for GPU acceleration of GENESIS. We trace this to a single-root assumption in the Hines-numbering routine and fix it (Section~\ref{sec:scheduler-fix}); combined with a fp32 port of the channel kernel needed because the in-container OpenCL runtime exposes no fp64 (Section~\ref{sec:fp32-port}), measured end-to-end speedup rises to 3.2--16.2$\times$. Three independent defects in the Hines solver that silently suppressed \texttt{inject}-driven voltage transients for multi-neuron hsolve configurations are also identified and fixed (Section~\ref{sec:hsolve-fix}); spiking dynamics are verified correct on both the CPU path and the GPU per-step dispatch path. CUDA support is proposed as a companion backend target for GENESIS 2.5, but is not validated in the current workspace.
 \end{abstract}
 
 \textbf{Keywords:} GENESIS, PGENESIS, OpenCL, CUDA, GPU benchmarking, CPU benchmarking, strong scaling
@@ -444,9 +444,62 @@ cheap ($2.5$--$9\,\mu$s) kernel cost; only multiloop batching currently wins.
 \textbf{Caveat.} Correctness was checked only against a resting-potential configuration
 (GPU-fp32 output matched CPU-fp64-fallback output bit-for-bit at displayed precision, no
 NaN or divergence in any tested configuration)---the benchmark's \texttt{inject} current
-did not perturb \texttt{Vm} even on the CPU-only path, so this does not yet exercise
-spiking dynamics or bound fp32 rounding error during real channel-gating transients. This
-remains open work.
+did not perturb \texttt{Vm} even on the CPU-only path at the time of this measurement,
+so fp32 rounding error during real channel-gating transients was not yet bounded. The
+root cause of that non-response was identified and fixed on 2026-06-26
+(Section~\ref{sec:hsolve-fix}); spiking dynamics are now confirmed correct on the CPU
+path. The multiloop kernel's correctness under spiking conditions remains open work.
+
+\subsubsection*{Hines solver fix for multi-neuron hsolve (2026-06-26)}
+\label{sec:hsolve-fix}
+
+A second bug cluster was identified and fixed on 2026-06-26, resolving the
+long-standing symptom in which \texttt{inject} current had no effect on \texttt{Vm}.
+The root cause is three independent defects in \texttt{hines\_solve.c} and
+\texttt{hines\_init.c}, all specific to this project's architecture of bundling $N$
+axially-disconnected single-compartment neurons under one \texttt{hsolve} element for
+GPU batching:
+
+\begin{enumerate}
+
+\item \textbf{\texttt{hines\_solve.c} (all three solvers).} The ``one compartment only''
+fast-path was guarded on \texttt{op == FINISH}---whether the first bytecode instruction
+is a \texttt{FINISH} opcode---rather than \texttt{hsolve->ncompts == 1}. For a
+multi-neuron hsolve whose neurons are axially disconnected, forward elimination is a
+no-op for every neuron, so each neuron's generated bytecode trivially begins with
+\texttt{FINISH}; the guard fired on all $N$ neurons and left only the first solved
+correctly. \texttt{do\_euler\_hsolve} additionally carried a stray \texttt{-{} *vm}
+term copied from a Crank-Nicolson template, giving a systematically wrong Euler voltage
+update independently of the above.
+
+\item \textbf{\texttt{hines\_init.c} backward-elimination loop.} The loop blindly
+dereferenced \texttt{compts[parentno]} and \texttt{hnum[parentno]} without checking for
+\texttt{parentno == -1}. For any disconnected-root compartment ($N > 1$) this is an
+out-of-bounds read; the resulting corruption silently skipped the \texttt{CALC\_RESULTS}
+step for that compartment, leaving its voltage unsolved.
+
+\item \textbf{\texttt{hines\_init.c} SET\_DIAG/SKIP\_DIAG selection.} The SKIP\_DIAG
+two-row optimization assumes a following row to pair with. For a parentless row
+(\texttt{parentno == -1}) that lands last in the Hines ordering, SKIP\_DIAG
+over-advances \texttt{resultvalue} past the end of \texttt{results[]}, corrupting the
+voltage of the final neuron. The fix adds \texttt{parentno == -1} to the condition that
+forces the plain SET\_DIAG path.
+
+\end{enumerate}
+
+All three fixes together were verified at $N = 1, 2, 3, 50, 500$ neurons using both
+passive RC compartments and full Hodgkin-Huxley Na/K channel dynamics (H\&H 1952 squid
+axon parameters, \texttt{ocl\_hh\_benchmark.g}): every neuron now produces an identical,
+correct action potential ($\approx +42$\,mV peak) on both the CPU path and the GPU
+per-step dispatch path.
+
+One new finding arose during verification: the \texttt{chip\_channel\_multiloop} kernel
+gives a different, subthreshold result at all $N > 1$. This is a separate correctness
+bug, isolated to that kernel's inlined Hines solve, which is independent of the three
+bugs above. It does not affect the timing results in Table~\ref{tab:multiloop} or
+Table~\ref{tab:multiloop_fp32} (kernel dispatch time is independent of whether the
+simulated voltage happens to cross threshold), but it means the multiloop kernel's
+spiking correctness is not yet established.
 
 % ---------------------------------------------------------------
 \section{Discussion}
