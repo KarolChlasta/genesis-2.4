@@ -1,0 +1,3 @@
+session,mode,neurons,steps,n_iters,total_s,mean_s,sd_s,min_s,max_s,session_target_s,achieved_ratio
+1,CPU,30000,20000,12,319.175,26.597914,0.204806,26.296361,26.952367,300,1.063917
+1,GPU,30000,20000,11,300.894,27.354001,0.359554,26.609277,27.866927,300,1.002980

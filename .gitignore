@@ -46,3 +46,29 @@ genesis/Libmake
 genesis/Usermake
 genesis/Doc/convert.txt
 genesis/man/man1/convert.1
+
+# PGENESIS build artifacts
+pgenesis/bin/
+pgenesis/lib/Linux/
+pgenesis/src/lib/
+pgenesis/src/par/*.o
+pgenesis/src/par/*.a
+pgenesis/src/par/par_d@.*
+pgenesis/src/par/par_g@.*
+pgenesis/src/par/par_l@.*
+pgenesis/src/liblistfilter
+pgenesis/src/nxliblist
+pgenesis/src/nxloadlib.c
+pgenesis/src/nxloadlib.o
+
+# genesis headless binary (rebuilt from source)
+genesis/src/nxgenesis_nocl
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+
+# Python cache
+paper/__pycache__/
+paper/.claude/
