@@ -83,14 +83,14 @@ We name this release ``2.5'' rather than ``3.0'' deliberately. ``GENESIS 3'' was
 
 \item Software architecture
 
-GENESIS 2.5 keeps the existing GENESIS/PGENESIS architecture (SLI interpreter, \texttt{hsolve} fast compartmental solver, PGENESIS MPI partitioning) unmodified and adds one new component: an OpenCL backend invoked from \texttt{hsolve} when an attached \texttt{hsolve} element uses \texttt{chanmode=4} (or 5) with real ion-channel state. Two dispatch modes are implemented in \texttt{ocl\_hsolve.c} against the kernel file \texttt{genesis/src/hines/opencl/ocl\_channel.cl}:
+GENESIS 2.5 keeps the existing GENESIS/PGENESIS architecture (SLI interpreter, \texttt{hsolve} fast compartmental solver, PGENESIS MPI partitioning) unmodified and adds one new component: an OpenCL backend invoked from \texttt{hsolve} when an attached \texttt{hsolve} element uses \texttt{chanmode=4} (or 5) with real ion-channel state. Two dispatch modes are implemented in \texttt{ocl\_hsolve.c} against the kernel file \path{genesis/src/hines/opencl/ocl_channel.cl}:
 
 \begin{itemize}
-\item \emph{Per-step dispatch} (\texttt{ocl\_chip\_update}): one \texttt{clEnqueueNDRangeKernel} call per simulation step, with channel state uploaded and downloaded every step.
-\item \emph{Multiloop dispatch} (\texttt{chip\_channel\_multiloop}, enabled via the environment variable \texttt{GENESIS\_OCL\_MULTILOOP=<K>}): a single kernel dispatch runs all $K$ steps in an inner GPU-side loop, amortizing the per-step PCIe transfer cost that otherwise dominates wall time (Section 3).
+\item \emph{Per-step dispatch} (\texttt{ocl\_chip\_update}): one {\small\texttt{clEnqueueNDRangeKernel}} call per simulation step, with channel state uploaded and downloaded every step.
+\item \emph{Multiloop dispatch} (\texttt{chip\_channel\_multiloop}, enabled via the environment variable \path{GENESIS_OCL_MULTILOOP=<K>}): a single kernel dispatch runs all $K$ steps in an inner GPU-side loop, amortizing the per-step PCIe transfer cost that otherwise dominates wall time (Section 3).
 \end{itemize}
 
-Device attribution and dispatch are confirmed at run time, not assumed: the command queue is built with \texttt{CL\_QUEUE\_PROFILING\_ENABLE}, and every accelerator-attributed benchmark run in this release emits a non-empty \texttt{OCL PROFILING SUMMARY} at exit. This guards against two failure modes found during development: an \texttt{hsolve} with no attached channels never reaches the kernel at all, and a kernel that fails to build (e.g. for lack of \texttt{cl\_khr\_fp64} on a given device) silently falls back to the CPU path with no GPU work performed. The channel kernel itself is built in \texttt{float} (fp32) rather than \texttt{double}, so it runs on OpenCL devices/runtimes that expose no fp64 support at all (observed for Mesa rusticl on the AMD Radeon 890M used here); the rest of \texttt{hsolve} remains \texttt{double} as before, with conversion only at the host/device buffer boundary.
+Device attribution and dispatch are confirmed at run time, not assumed: the command queue is built with {\small\path{CL_QUEUE_PROFILING_ENABLE}}, and every accelerator-attributed benchmark run in this release emits a non-empty \texttt{OCL PROFILING SUMMARY} at exit. This guards against two failure modes found during development: an \texttt{hsolve} with no attached channels never reaches the kernel at all, and a kernel that fails to build (e.g. for lack of \texttt{cl\_khr\_fp64} on a given device) silently falls back to the CPU path with no GPU work performed. The channel kernel itself is built in \texttt{float} (fp32) rather than \texttt{double}, so it runs on OpenCL devices/runtimes that expose no fp64 support at all (observed for Mesa rusticl on the AMD Radeon 890M used here); the rest of \texttt{hsolve} remains \texttt{double} as before, with conversion only at the host/device buffer boundary.
 
 \item Software functionalities
 
@@ -98,7 +98,7 @@ Device attribution and dispatch are confirmed at run time, not assumed: the comm
 \item Unmodified serial (\texttt{genesis}), headless (\texttt{nxgenesis}), and MPI (PGENESIS) execution paths.
 \item OpenCL channel-update kernel for Hodgkin--Huxley-style \texttt{tabchannel} gating (Na $X^3Y^1$, K $X^4$), dispatched per-step or batched over $K$ steps via multiloop.
 \item Device-side dispatch confirmation (\texttt{OCL PROFILING SUMMARY}) distinguishing a genuine GPU run from CPU fallback, so accelerator results in any downstream benchmark are auditable rather than assumed.
-\item Three corrected defects in the Hines solver (forward-elimination fast-path guard, backward-elimination root handling, SET\_DIAG/SKIP\_DIAG row selection) that make multi-neuron \texttt{hsolve} configurations produce correct, independent voltage dynamics per neuron under current injection -- a precondition for any GPU/CPU dynamical comparison, and a correctness fix independent of GPU support.
+\item Three corrected defects in the Hines solver (forward-elimination fast-path guard, backward-elimination root handling, \path{SET_DIAG}/\path{SKIP_DIAG} row selection) that make multi-neuron \texttt{hsolve} configurations produce correct, independent voltage dynamics per neuron under current injection -- a precondition for any GPU/CPU dynamical comparison, and a correctness fix independent of GPU support.
 \end{itemize}
 
 \end{enumerate}
@@ -114,7 +114,7 @@ Device attribution and dispatch are confirmed at run time, not assumed: the comm
 \label{fig:cpu_mean_ci}
 \end{figure}
 
-\textbf{Reproducing the GPU multiloop result.} \texttt{genesis/Scripts/benchmark/ocl\_hh\_benchmark.g} builds $N$ independent Hodgkin--Huxley neurons under one \texttt{hsolve} (\texttt{chanmode=4}, \texttt{calcmode=1}). Running it with \texttt{GENESIS\_OCL\_MULTILOOP=5000} dispatches all 5000 steps in one GPU call. Table~\ref{tab:multiloop_fp32} and Fig.~\ref{fig:multiloop_speedup} report wall-clock CPU-vs-GPU comparisons, fp32, in-container Mesa rusticl, AMD Radeon 890M, after the scheduler and solver fixes described in Section 2: end-to-end speedup rises from 3.2$\times$ at $N=500$ to 16.2$\times$ at $N=5000$.
+\textbf{Reproducing the GPU multiloop result.} \path{genesis/Scripts/benchmark/ocl_hh_benchmark.g} builds $N$ independent Hodgkin--Huxley neurons under one \texttt{hsolve} (\texttt{chanmode=4}, \texttt{calcmode=1}). Running it with \path{GENESIS_OCL_MULTILOOP=5000} dispatches all 5000 steps in one GPU call. Table~\ref{tab:multiloop_fp32} and Fig.~\ref{fig:multiloop_speedup} report wall-clock CPU-vs-GPU comparisons, fp32, in-container Mesa rusticl, AMD Radeon 890M, after the scheduler and solver fixes described in Section 2: end-to-end speedup rises from 3.2$\times$ at $N=500$ to 16.2$\times$ at $N=5000$.
 
 \begin{table}[!h]
 \centering
@@ -143,7 +143,7 @@ $N$ & CPU step-loop (s) & GPU dispatch (s) & End-to-end speedup \\
 
 \textbf{Reproducing the PGENESIS scaling result.} The existing MPI path is unaffected by this release; a strong-scaling sweep ($N=2400$ HH neurons, $P=1$--$24$ ranks) on a 12-core/24-thread host gives near-ideal scaling at $P=2$ ($E_P=0.95$), a practical efficiency knee near $P \approx 5$, and a recommended operating range of $P=4$--$8$ ($3.1$--$4.0\times$ speedup, 50--78\% efficiency) for this problem size.
 
-Full replication steps, scripts, and raw CSV outputs are in \texttt{paper/REPLICATION.md} and \texttt{genesis/Scripts/benchmark/}.
+Full replication steps, scripts, and raw CSV outputs are in \path{paper/REPLICATION.md} and \path{genesis/Scripts/benchmark/}.
 
 \item Impact
 
@@ -153,7 +153,7 @@ Full replication steps, scripts, and raw CSV outputs are in \texttt{paper/REPLIC
 
 \textbf{A reusable accelerator-validation discipline.} Three successive confounds masked false ``GPU-accelerated'' readings during this work (a GUI-linked comparison binary, a passive-compartment benchmark that never dispatches to the kernel, and CPU-timer semantics that overstate GPU-blocked wait time as compute). The device-side dispatch confirmation and wall-clock-only timing protocol established here (Section 2.1) generalize to any future accelerator backend added to GENESIS, including the CUDA backend proposed as a companion target, and are recorded so that future contributors do not repeat the same false-positive measurements.
 
-\textbf{Identified architectural bottleneck for follow-on work.} The raw GPU kernel achieves 4--149$\times$ speedup in isolation, but the dominant cost in the unfixed scheduler was an $O(N)$ per-step iteration over all absorbed elements (98--99\% of GPU-arm step time at $N \geq 2000$), independent of GPU dispatch. This is recorded as the primary remaining architectural barrier to fuller end-to-end GPU speedup and is the basis for a follow-on GENESIS scheduler change (\texttt{paper/PLAN\_gpu\_rewrite.md}).
+\textbf{Identified architectural bottleneck for follow-on work.} The raw GPU kernel achieves 4--149$\times$ speedup in isolation, but the dominant cost in the unfixed scheduler was an $O(N)$ per-step iteration over all absorbed elements (98--99\% of GPU-arm step time at $N \geq 2000$), independent of GPU dispatch. This is recorded as the primary remaining architectural barrier to fuller end-to-end GPU speedup and is the basis for a follow-on GENESIS scheduler change (\path{paper/PLAN_gpu_rewrite.md}).
 
 \item Conclusions
 
