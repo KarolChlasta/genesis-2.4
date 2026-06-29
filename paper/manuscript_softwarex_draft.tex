@@ -1,20 +1,72 @@
-\documentclass[preprint,12pt,a4paper]{elsarticle}
+%% 
+%% Copyright 2026 Elsevier Ltd
+%% 
+%% This file is part of the 'Elsarticle Bundle'.
+%% ---------------------------------------------
+%% 
+%% It may be distributed under the conditions of the LaTeX Project Public
+%% License, either version 1.2 of this license or (at your option) any
+%% later version.  The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%% and version 1.2 or later is part of all distributions of LaTeX
+%% version 1999/12/01 or later.
+%% 
+%% The list of all files belonging to the 'Elsarticle Bundle' is
+%% given in the file `manifest.txt'.
+%% 
 
+%% Template article for Elsevier's document class `elsarticle'
+%% with numbered style bibliographic references
+%% SP 2008/03/01
+
+\documentclass[preprint,12pt, a4paper]{elsarticle}
+
+%% Use the option review to obtain double line spacing
+%% \documentclass[authoryear,preprint,review,12pt]{elsarticle}
+
+%% For including figures, graphicx.sty has been loaded in
+%% elsarticle.cls. If you prefer to use the old commands
+%% please give \usepackage{epsfig}
+
+%% The amssymb package provides various useful mathematical symbols
 \usepackage{amssymb}
 \usepackage{hyperref}
-\usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{makecell}
-\usepackage{caption}
 \setlength{\parindent}{0pt}
-\graphicspath{{figures/}}
+%% The amsthm package provides extended theorem environments
+%% \usepackage{amsthm}
+
+%% The lineno packages adds line numbers. Start line numbering with
+%% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
+%% for the whole article with \linenumbers.
+%\usepackage{lineno}
 
 \journal{SoftwareX}
+\graphicspath{{figures/}}
 
 \begin{document}
 \renewcommand{\labelenumii}{\arabic{enumi}.\arabic{enumii}}
 
 \begin{frontmatter}
+
+%% Title, authors and addresses
+
+%% use the tnoteref command within \title for footnotes;
+%% use the tnotetext command for theassociated footnote;
+%% use the fnref command within \author or \address for footnotes;
+%% use the fntext command for theassociated footnote;
+%% use the corref command within \author for corresponding author footnotes;
+%% use the cortext command for theassociated footnote;
+%% use the ead command for the email address,
+%% and the form \ead[url] for the home page:
+%% \title{Title\tnoteref{label1}}
+%% \tnotetext[label1]{}
+%% \author{Name\corref{cor1}\fnref{label2}}
+%% \ead{email address}
+%% \ead[url]{home page}
+%% \fntext[label2]{}
+%% \cortext[cor1]{}
+%% \address{Address\fnref{label3}}
+%% \fntext[label3]{}
 
 \title{GENESIS 2.5: an OpenCL accelerator backend and three correctness fixes for the GENESIS/PGENESIS neural simulator}
 
@@ -24,7 +76,7 @@
 \cortext[cor1]{Corresponding author.}
 
 \begin{abstract}
-GENESIS is a long-established compartmental neural simulator; PGENESIS extends it to MPI execution. We release GENESIS 2.5, an accelerator-enabled extension of GENESIS 2.4/PGENESIS 2.4 that adds an OpenCL backend for Hodgkin--Huxley channel updates while preserving all existing CPU and MPI workflows unchanged. A multi-step ("multiloop") GPU kernel that batches $K$ simulation steps into one dispatch reaches 4--149$\times$ raw kernel speedup and, after a scheduler and solver fix described here, 3.2--16.2$\times$ measured end-to-end speedup ($N=500$--$10000$ neurons) on integrated AMD Radeon graphics. The same work also fixes three independent, previously unnoticed defects in the GENESIS Hines solver that silently suppressed \texttt{inject}-driven voltage transients for any multi-neuron \texttt{hsolve} configuration, GPU or CPU-only.
+GENESIS is a long-established compartmental neural simulator; PGENESIS extends it to MPI execution. We release GENESIS 2.5, an accelerator-enabled extension of GENESIS 2.4/PGENESIS 2.4 that adds an OpenCL backend for Hodgkin--Huxley channel updates while preserving all existing CPU and MPI workflows unchanged. A multi-step (``multiloop'') GPU kernel that batches $K$ simulation steps into one dispatch reaches 4--149$\times$ raw kernel speedup and, after a scheduler and solver fix described here, 3.2--16.2$\times$ measured end-to-end speedup ($N=500$--$10000$ neurons) on integrated AMD Radeon graphics. The same work also fixes three independent, previously unnoticed defects in the GENESIS Hines solver that silently suppressed \texttt{inject}-driven voltage transients for any multi-neuron \texttt{hsolve} configuration, GPU or CPU-only.
 \end{abstract}
 
 \begin{keyword}
@@ -33,21 +85,24 @@ GENESIS \sep PGENESIS \sep OpenCL \sep GPU acceleration \sep compartmental neura
 
 \end{frontmatter}
 
+%\linenumbers
+
 \section*{Required Metadata}
+\label{}
 
 \section*{Current code version}
+\label{}
 
 \begin{table}[!h]
-\small
-\begin{tabular}{|l|p{6cm}|p{6cm}|}
+\begin{tabular}{|l|p{6.5cm}|p{6.5cm}|}
 \hline
 \textbf{Nr.} & \textbf{Code metadata description} & \textbf{Please fill in this column} \\
 \hline
-C1 & Current code version & v2.5-proposal (commit \texttt{90aae17}, 2026-06-27) -- TODO: cut a tagged GitHub release before submission \\
+C1 & Current code version & v2.5-proposal (commit \texttt{90aae17}, 2026-06-27) \\
 \hline
 C2 & Permanent GitHub link to code/repository used for this code version & \url{https://github.com/KarolChlasta/genesis-2.4} \\
 \hline
-C3 & Legal Code License & GNU General Public License v2 or later (program); GNU Lesser General Public License v2.1 or later (library portions) -- see \texttt{LICENSE} \\
+C3 & Legal Code License   & GNU General Public License v2 or later (program); GNU Lesser General Public License v2.1 or later (library portions) -- see \texttt{LICENSE} \\
 \hline
 C4 & Code versioning system used & git \\
 \hline
@@ -55,16 +110,16 @@ C5 & Software code languages, tools, and services used & C, OpenCL C, MPI (PGENE
 \hline
 C6 & Compilation requirements, operating environments \& dependencies & Linux x86\_64, GCC, GNU make, an OpenCL 1.2+ runtime (tested: ROCm 6.3.1 and Mesa rusticl) for the GPU backend, an MPI implementation for PGENESIS \\
 \hline
-C7 & Link to developer documentation/manual & \texttt{README.md} and \texttt{paper/REPLICATION.md} in the repository \\
+C7 & If available Link to developer documentation/manual & \texttt{README.md} and \path{paper/REPLICATION.md} in the repository \\
 \hline
 C8 & Support email for questions & kchlasta@kozminski.edu.pl \\
 \hline
 \end{tabular}
-\caption{Code metadata.}
+\caption{Code metadata (mandatory)}
+\label{} 
 \end{table}
 
-\textbf{Main text}
-
+\textbf{Main text}\\
 \begin{enumerate}
 
 \item Motivation and significance
@@ -73,34 +128,30 @@ Compartmental neural simulators remain essential for biophysically detailed mode
 
 Modern workstations increasingly ship capable integrated GPUs, but GENESIS has no accelerator backend: every channel-kinetics update runs on the CPU regardless of available GPU hardware. This is a growing gap, since channel-update kernels (per-compartment gating-variable integration) are an embarrassingly parallel workload well suited to GPU execution, and existing GENESIS/PGENESIS users have no path to accelerator support without abandoning their existing models and SLI scripts.
 
-GENESIS 2.5 closes this gap directly: it is GENESIS 2.4/PGENESIS 2.4 plus an OpenCL backend for the \texttt{hsolve} channel-update path, with CUDA proposed as a second backend on the same interface. No existing CPU or MPI workflow, model file, or SLI script needs to change to benefit from GPU acceleration where it is available, and the same workflows run unmodified where it is not. While building and validating this backend, we additionally found and fixed three independent solver defects in \texttt{hines\_solve.c}/\texttt{hines\_init.c} that affect any multi-neuron \texttt{hsolve} configuration -- including pure-CPU GENESIS deployments. Their effect on the literature reported here is concrete: current injection (\texttt{inject}) silently failed to produce a voltage response in this configuration prior to the fix, which would have invalidated any benchmark that compares dynamics rather than only opcode-level throughput, and may have affected unrelated multi-neuron \texttt{hsolve} models elsewhere.
+GENESIS 2.5 closes this gap directly: it is GENESIS 2.4/PGENESIS 2.4 plus an OpenCL backend for the \texttt{hsolve} channel-update path, with CUDA proposed as a second backend on the same interface. No existing CPU or MPI workflow, model file, or SLI script needs to change to benefit from GPU acceleration where it is available, and the same workflows run unmodified where it is not. While building and validating this backend, we additionally found and fixed three independent solver defects in \texttt{hines\_solve.c}/\texttt{hines\_init.c} that affect any multi-neuron \texttt{hsolve} configuration -- including pure-CPU GENESIS deployments. Their effect on the benchmarks reported here is concrete: current injection (\texttt{inject}) silently failed to produce a voltage response in this configuration prior to the fix, which would have invalidated any benchmark that compares dynamics rather than only opcode-level throughput, and may have affected unrelated multi-neuron \texttt{hsolve} models elsewhere.
 
 We name this release ``2.5'' rather than ``3.0'' deliberately. ``GENESIS 3'' was a separate modularization effort~\cite{g3_dev_plans} that produced independent successor lines (Neurospaces/Heccer~\cite{cornelis2011}, MOOSE) rather than a single installable artifact comparable to GENESIS 2.4, and evolved into the CBI software federation~\cite{cornelis2008cbi,cornelis2007dendrite,cornelis2013interop}. GENESIS 2.5 is not a re-architecture and does not depend on, or claim continuity with, that line; it targets existing GENESIS 2.4 deployments that should not need to migrate models or scripts to gain accelerator support.
 
 \item Software description
 
 \begin{enumerate}
+    \item Software architecture
 
-\item Software architecture
+    GENESIS 2.5 keeps the existing GENESIS/PGENESIS architecture (SLI interpreter, \texttt{hsolve} fast compartmental solver, PGENESIS MPI partitioning) unmodified and adds one new component: an OpenCL backend invoked from \texttt{hsolve} when an attached \texttt{hsolve} element uses \texttt{chanmode=4} (or 5) with real ion-channel state. Two dispatch modes are implemented in \texttt{ocl\_hsolve.c} against the kernel file \path{genesis/src/hines/opencl/ocl_channel.cl}:
+    \begin{itemize}
+        \item \emph{Per-step dispatch} (\texttt{ocl\_chip\_update}): one {\small\texttt{clEnqueueNDRangeKernel}} call per simulation step, with channel state uploaded and downloaded every step.
+        \item \emph{Multiloop dispatch} (\texttt{chip\_channel\_multiloop}, enabled via the environment variable \path{GENESIS_OCL_MULTILOOP=<K>}): a single kernel dispatch runs all $K$ steps in an inner GPU-side loop, amortizing the per-step PCIe transfer cost that otherwise dominates wall time (see Illustrative examples below).
+    \end{itemize}
+    Device attribution and dispatch are confirmed at run time, not assumed: the command queue is built with {\small\path{CL_QUEUE_PROFILING_ENABLE}}, and every accelerator-attributed benchmark run in this release emits a non-empty \texttt{OCL PROFILING SUMMARY} at exit. This guards against two failure modes found during development: an \texttt{hsolve} with no attached channels never reaches the kernel at all, and a kernel that fails to build (e.g. for lack of \texttt{cl\_khr\_fp64} on a given device) silently falls back to the CPU path with no GPU work performed. The channel kernel itself is built in \texttt{float} (fp32) rather than \texttt{double}, so it runs on OpenCL devices/runtimes that expose no fp64 support at all (observed for Mesa rusticl on the AMD Radeon 890M used here); the rest of \texttt{hsolve} remains \texttt{double} as before, with conversion only at the host/device buffer boundary.
 
-GENESIS 2.5 keeps the existing GENESIS/PGENESIS architecture (SLI interpreter, \texttt{hsolve} fast compartmental solver, PGENESIS MPI partitioning) unmodified and adds one new component: an OpenCL backend invoked from \texttt{hsolve} when an attached \texttt{hsolve} element uses \texttt{chanmode=4} (or 5) with real ion-channel state. Two dispatch modes are implemented in \texttt{ocl\_hsolve.c} against the kernel file \path{genesis/src/hines/opencl/ocl_channel.cl}:
+    \item Software functionalities
 
-\begin{itemize}
-\item \emph{Per-step dispatch} (\texttt{ocl\_chip\_update}): one {\small\texttt{clEnqueueNDRangeKernel}} call per simulation step, with channel state uploaded and downloaded every step.
-\item \emph{Multiloop dispatch} (\texttt{chip\_channel\_multiloop}, enabled via the environment variable \path{GENESIS_OCL_MULTILOOP=<K>}): a single kernel dispatch runs all $K$ steps in an inner GPU-side loop, amortizing the per-step PCIe transfer cost that otherwise dominates wall time (Section 3).
-\end{itemize}
-
-Device attribution and dispatch are confirmed at run time, not assumed: the command queue is built with {\small\path{CL_QUEUE_PROFILING_ENABLE}}, and every accelerator-attributed benchmark run in this release emits a non-empty \texttt{OCL PROFILING SUMMARY} at exit. This guards against two failure modes found during development: an \texttt{hsolve} with no attached channels never reaches the kernel at all, and a kernel that fails to build (e.g. for lack of \texttt{cl\_khr\_fp64} on a given device) silently falls back to the CPU path with no GPU work performed. The channel kernel itself is built in \texttt{float} (fp32) rather than \texttt{double}, so it runs on OpenCL devices/runtimes that expose no fp64 support at all (observed for Mesa rusticl on the AMD Radeon 890M used here); the rest of \texttt{hsolve} remains \texttt{double} as before, with conversion only at the host/device buffer boundary.
-
-\item Software functionalities
-
-\begin{itemize}
-\item Unmodified serial (\texttt{genesis}), headless (\texttt{nxgenesis}), and MPI (PGENESIS) execution paths.
-\item OpenCL channel-update kernel for Hodgkin--Huxley-style \texttt{tabchannel} gating (Na $X^3Y^1$, K $X^4$), dispatched per-step or batched over $K$ steps via multiloop.
-\item Device-side dispatch confirmation (\texttt{OCL PROFILING SUMMARY}) distinguishing a genuine GPU run from CPU fallback, so accelerator results in any downstream benchmark are auditable rather than assumed.
-\item Three corrected defects in the Hines solver (forward-elimination fast-path guard, backward-elimination root handling, \path{SET_DIAG}/\path{SKIP_DIAG} row selection) that make multi-neuron \texttt{hsolve} configurations produce correct, independent voltage dynamics per neuron under current injection -- a precondition for any GPU/CPU dynamical comparison, and a correctness fix independent of GPU support.
-\end{itemize}
-
+    \begin{itemize}
+        \item Unmodified serial (\texttt{genesis}), headless (\texttt{nxgenesis}), and MPI (PGENESIS) execution paths.
+        \item OpenCL channel-update kernel for Hodgkin--Huxley-style \texttt{tabchannel} gating (Na $X^3Y^1$, K $X^4$), dispatched per-step or batched over $K$ steps via multiloop.
+        \item Device-side dispatch confirmation (\texttt{OCL PROFILING SUMMARY}) distinguishing a genuine GPU run from CPU fallback, so accelerator results in any downstream benchmark are auditable rather than assumed.
+        \item Three corrected defects in the Hines solver (forward-elimination fast-path guard, backward-elimination root handling, \path{SET_DIAG}/\path{SKIP_DIAG} row selection) that make multi-neuron \texttt{hsolve} configurations produce correct, independent voltage dynamics per neuron under current injection -- a precondition for any GPU/CPU dynamical comparison, and a correctness fix independent of GPU support.
+    \end{itemize}
 \end{enumerate}
 
 \item Illustrative examples
@@ -114,24 +165,27 @@ Device attribution and dispatch are confirmed at run time, not assumed: the comm
 \label{fig:cpu_mean_ci}
 \end{figure}
 
-\textbf{Reproducing the GPU multiloop result.} \path{genesis/Scripts/benchmark/ocl_hh_benchmark.g} builds $N$ independent Hodgkin--Huxley neurons under one \texttt{hsolve} (\texttt{chanmode=4}, \texttt{calcmode=1}). Running it with \path{GENESIS_OCL_MULTILOOP=5000} dispatches all 5000 steps in one GPU call. Table~\ref{tab:multiloop_fp32} and Fig.~\ref{fig:multiloop_speedup} report wall-clock CPU-vs-GPU comparisons, fp32, in-container Mesa rusticl, AMD Radeon 890M, after the scheduler and solver fixes described in Section 2: end-to-end speedup rises from 3.2$\times$ at $N=500$ to 16.2$\times$ at $N=5000$.
+\textbf{Reproducing the GPU multiloop result.} \path{genesis/Scripts/benchmark/ocl_hh_benchmark.g} builds $N$ independent Hodgkin--Huxley neurons under one \texttt{hsolve} (\texttt{chanmode=4}, \texttt{calcmode=1}). Running it with \path{GENESIS_OCL_MULTILOOP=5000} dispatches all 5000 steps in one GPU call. Table~\ref{tab:multiloop_fp32} and Fig.~\ref{fig:multiloop_speedup} report wall-clock CPU-vs-GPU comparisons, fp32, in-container Mesa rusticl, AMD Radeon 890M, after the scheduler and solver fixes described above: end-to-end speedup rises from 3.2$\times$ at $N=500$ to 16.2$\times$ at $N=5000$.
 
 \begin{table}[!h]
 \centering
-\small
+\begin{tabular}{|r|r|r|r|}
+\hline
+\textbf{$N$} & \textbf{CPU step-loop (s)} & \textbf{GPU dispatch (s)} & \textbf{End-to-end speedup} \\
+\hline
+500     & 0.041 & 0.013 &  3.2$\times$ \\
+\hline
+1\,000  & 0.110 & 0.013 &  8.6$\times$ \\
+\hline
+2\,000  & 0.150 & 0.013 & 11.2$\times$ \\
+\hline
+5\,000  & 0.299 & 0.018 & 16.2$\times$ \\
+\hline
+10\,000 & 0.594 & 0.046 & 13.1$\times$ \\
+\hline
+\end{tabular}
 \caption{GPU multiloop (fp32) vs.\ CPU (fp64) baseline, AMD Radeon 890M, $K=5000$ steps.}
 \label{tab:multiloop_fp32}
-\begin{tabular}{rrrr}
-\toprule
-$N$ & CPU step-loop (s) & GPU dispatch (s) & End-to-end speedup \\
-\midrule
-500     & 0.041 & 0.013 &  3.2$\times$ \\
-1\,000  & 0.110 & 0.013 &  8.6$\times$ \\
-2\,000  & 0.150 & 0.013 & 11.2$\times$ \\
-5\,000  & 0.299 & 0.018 & 16.2$\times$ \\
-10\,000 & 0.594 & 0.046 & 13.1$\times$ \\
-\bottomrule
-\end{tabular}
 \end{table}
 
 \begin{figure}[!h]
@@ -149,11 +203,12 @@ Full replication steps, scripts, and raw CSV outputs are in \path{paper/REPLICAT
 
 \textbf{New capability for existing deployments.} GENESIS/PGENESIS users with channel-kinetics-heavy models gain a path to GPU acceleration (3.2--16.2$\times$ end-to-end, batched dispatch mode) without migrating models, SLI scripts, or MPI workflows -- the principal barrier that an architecturally different successor (e.g., MOOSE) would otherwise impose.
 
-\textbf{A correctness fix with effect beyond this release.} The three Hines-solver defects fixed here (Section 2.2) are independent of GPU support and affect any multi-neuron \texttt{hsolve} configuration: prior to the fix, \texttt{inject}-driven voltage transients were silently suppressed for neurons other than the first in such a configuration, with no error raised. This is a latent correctness issue in the existing GENESIS 2.4 codebase, not introduced by this work, and is reported and fixed for the benefit of any user running multi-neuron \texttt{hsolve} models, independent of whether they use the OpenCL backend.
+\textbf{A correctness fix with effect beyond this release.} The three Hines-solver defects fixed here (Section 2) are independent of GPU support and affect any multi-neuron \texttt{hsolve} configuration: prior to the fix, \texttt{inject}-driven voltage transients were silently suppressed for neurons other than the first in such a configuration, with no error raised. This is a latent correctness issue in the existing GENESIS 2.4 codebase, not introduced by this work, and is reported and fixed for the benefit of any user running multi-neuron \texttt{hsolve} models, independent of whether they use the OpenCL backend.
 
-\textbf{A reusable accelerator-validation discipline.} Three successive confounds masked false ``GPU-accelerated'' readings during this work (a GUI-linked comparison binary, a passive-compartment benchmark that never dispatches to the kernel, and CPU-timer semantics that overstate GPU-blocked wait time as compute). The device-side dispatch confirmation and wall-clock-only timing protocol established here (Section 2.1) generalize to any future accelerator backend added to GENESIS, including the CUDA backend proposed as a companion target, and are recorded so that future contributors do not repeat the same false-positive measurements.
+\textbf{A reusable accelerator-validation discipline.} Three successive confounds masked false ``GPU-accelerated'' readings during this work (a GUI-linked comparison binary, a passive-compartment benchmark that never dispatches to the kernel, and CPU-timer semantics that overstate GPU-blocked wait time as compute). The device-side dispatch confirmation and wall-clock-only timing protocol established here (Section 2) generalize to any future accelerator backend added to GENESIS, including the CUDA backend proposed as a companion target, and are recorded so that future contributors do not repeat the same false-positive measurements.
 
 \textbf{Identified architectural bottleneck for follow-on work.} The raw GPU kernel achieves 4--149$\times$ speedup in isolation, but the dominant cost in the unfixed scheduler was an $O(N)$ per-step iteration over all absorbed elements (98--99\% of GPU-arm step time at $N \geq 2000$), independent of GPU dispatch. This is recorded as the primary remaining architectural barrier to fuller end-to-end GPU speedup and is the basis for a follow-on GENESIS scheduler change (\path{paper/PLAN_gpu_rewrite.md}).
+
 
 \item Conclusions
 
@@ -162,8 +217,26 @@ GENESIS 2.5 adds a validated, opt-in OpenCL accelerator backend to GENESIS 2.4/P
 \end{enumerate}
 
 \section*{Acknowledgements}
+\label{}
 
 None.
+
+%% The Appendices part is started with the command \appendix;
+%% appendix sections are then done as normal sections
+%% \appendix
+
+%% \section{}
+%% \label{}
+
+%% References:
+%% If you have bibdatabase file and want bibtex to generate the
+%% bibitems, please use
+%%
+%%  \bibliographystyle{elsarticle-num} 
+%%  \bibliography{<your bibdatabase>}
+
+%% else use the following coding to input the bibitems directly in the
+%% TeX file.
 
 \begin{thebibliography}{9}
 
@@ -198,6 +271,14 @@ Interoperability in the GENESIS 3.0 Software Federation: the NEURON Simulator as
 
 \end{thebibliography}
 
+
 \section*{Current executable software version}
+\label{}
+
+Not applicable; this release is distributed as source code only (see Current code version above).
+
 
 \end{document}
+\endinput
+%%
+%% End of file `SoftwareX_article_template.tex'.
