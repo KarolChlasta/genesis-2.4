@@ -99,3 +99,12 @@ genesis-binaries tree.
 
 Alternatively, if you are familiar with using git and want to clone your
 own copy of the repository, you may do that.
+
+License
+-------
+
+GENESIS 2.4 / PGENESIS 2.4 are distributed under the GNU General Public
+License v2 (program) and GNU Lesser General Public License v2.1 (library
+portions); see `LICENSE`, `Licence.txt`, and `genesis/COPYRIGHT` for full
+terms. Code added for the GENESIS 2.5 proposal (`paper/`, OpenCL kernels,
+benchmark scripts) is distributed under the same GPL v2-or-later terms.
