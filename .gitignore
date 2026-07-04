@@ -73,3 +73,4 @@ paper/*.out
 paper/__pycache__/
 paper/.claude/
 *.spl
+!genesis/src/diskio/interface/netcdf/netcdf-3.4/src/macros.make
