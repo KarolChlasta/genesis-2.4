@@ -16,9 +16,10 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-P = Path(__file__).resolve().parent
-FIG = P / "figures"
-FIG.mkdir(exist_ok=True)
+ROOT = Path(__file__).resolve().parent.parent
+DATA = ROOT / "experiments" / "data"     # campaign CSV inputs
+FIG = ROOT / "paper" / "figures"          # figures live with the paper
+FIG.mkdir(parents=True, exist_ok=True)
 
 # Okabe-Ito colourblind-safe qualitative palette
 BLUE, ORANGE, GREEN, VERM = "#0072B2", "#E69F00", "#009E73", "#D55E00"
@@ -46,7 +47,7 @@ def fnum(r, k):
 
 # --------------------------------------------------------------------------
 def fig_speedup():
-    rows = read(P / "campaign_final_table.csv")
+    rows = read(DATA / "campaign_final_table.csv")
     if not rows:
         print("skip speedup: no final table"); return
     N    = [int(r["N"]) for r in rows]
@@ -79,7 +80,7 @@ def fig_speedup():
 
 
 def fig_throughput():
-    rows = read(P / "campaign_wallclock_summary.csv")
+    rows = read(DATA / "campaign_wallclock_summary.csv")
     if not rows:
         print("skip throughput: no summary yet"); return
     N   = [int(r["N"]) for r in rows]
@@ -101,7 +102,7 @@ def fig_throughput():
 
 
 def fig_ksweep():
-    rows = read(P / "campaign_ksweep.csv")
+    rows = read(DATA / "campaign_ksweep.csv")
     if not rows:
         print("skip ksweep: no csv yet"); return
     K   = [int(r["K"]) for r in rows]
@@ -123,7 +124,7 @@ def fig_ksweep():
 
 
 def fig_divergence():
-    rows = read(P / "campaign_divergence.csv")
+    rows = read(DATA / "campaign_divergence.csv")
     if not rows:
         print("skip divergence: no csv yet"); return
     steps = [int(r["steps"]) for r in rows]

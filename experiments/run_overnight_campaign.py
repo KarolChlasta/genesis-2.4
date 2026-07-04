@@ -79,7 +79,8 @@ DEADLINE_S = 8.0 * 3600         # matches the requested 8 h window; studies 1-3
                                 # (the paper data) finish in ~1 h, study 4
                                 # (reproducibility loop) fills the remainder
 
-P = ROOT / "paper"
+P = ROOT / "experiments" / "data"
+P.mkdir(parents=True, exist_ok=True)
 RAW = P / "campaign_wallclock_raw.csv"
 SUMMARY = P / "campaign_wallclock_summary.csv"
 KSWEEP_CSV = P / "campaign_ksweep.csv"

@@ -5,7 +5,7 @@
 This document records every build and run step needed to reproduce the CPU vs GPU
 benchmark results. The authoritative results for the SoftwareX submission
 (`paper/manuscript_softwarex_draft.tex`, Table 2 / Figs. of the campaign) are
-produced by the single driver `paper/run_overnight_campaign.py` — see
+produced by the single driver `experiments/run_overnight_campaign.py` — see
 **"Authoritative reproduction"** below. The earlier sections document the build
 and the historical per-dispatch measurements that led to it.
 
@@ -25,8 +25,8 @@ one driver produces every number and figure in the manuscript's illustrative
 examples:
 
 ```bash
-python3 paper/run_overnight_campaign.py      # writes paper/campaign_*.csv
-python3 paper/plot_campaign.py               # writes paper/figures/fig_campaign_*.png
+python3 experiments/run_overnight_campaign.py      # writes experiments/data/campaign_*.csv
+python3 experiments/plot_campaign.py               # writes paper/figures/fig_campaign_*.png
 ```
 
 What it measures and why it supersedes the older method:
@@ -56,7 +56,11 @@ row is written incrementally, so it is interrupt-safe.
 
 **CUDA:** the same driver drives the CUDA build (parses `CUDA MULTILOOP:` lines).
 Build with `make USE_CUDA=1 CUDA_HOME=/usr/local/cuda` and see
-`genesis/src/hines/cuda/BUILD_CUDA.md`. Not yet validated on NVIDIA hardware.
+`genesis/src/hines/cuda/BUILD_CUDA.md`. **Validated on an NVIDIA RTX 4090**
+(sm_89, CUDA 12.8): compiles, dispatches on the GPU, matches fp64 CPU to 7e-8 V,
+and reaches 5–132× step-phase speedup (N=500–50000). Full results and the exact
+pod recipe: `experiments/cuda_validation/`. Automated bring-up:
+`genesis/src/hines/cuda/runpod_validate.sh`.
 
 ---
 
