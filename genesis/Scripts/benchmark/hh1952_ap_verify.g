@@ -31,10 +31,11 @@ float ELEAK     = {EREST_ACT + 0.010613}
 float SOMA_L    = 20e-6
 float SOMA_D    = 20e-6
 
-if ({argc} > 1)
+// argv i is valid for i in 1..argc, so the guard for argv i is (argc > i-1).
+if ({argc} > 0)
     N_NEURONS = {argv 1}
 end
-if ({argc} > 2)
+if ({argc} > 1)
     N_STEPS = {argv 2}
 end
 

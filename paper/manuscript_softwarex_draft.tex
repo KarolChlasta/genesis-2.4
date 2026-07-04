@@ -81,7 +81,7 @@
 \cortext[cor1]{Corresponding author.}
 
 \begin{abstract}
-GENESIS is a long-established compartmental neural simulator; PGENESIS extends it to MPI execution. We release GENESIS 2.5, an accelerator-enabled extension of GENESIS 2.4/PGENESIS 2.4 that adds an OpenCL backend for Hodgkin--Huxley channel updates while preserving all existing CPU and MPI workflows unchanged. A multi-step (``multiloop'') GPU kernel that batches $K$ simulation steps into one dispatch reaches 4--149$\times$ raw kernel speedup and, after a scheduler and solver fix described here, 3.2--16.2$\times$ measured end-to-end speedup ($N=500$--$10000$ neurons) on integrated AMD Radeon graphics. The same work also fixes three independent, previously unnoticed defects in the GENESIS Hines solver that silently suppressed \texttt{inject}-driven voltage transients for any multi-neuron \texttt{hsolve} configuration, GPU or CPU-only.
+GENESIS is a long-established compartmental neural simulator; PGENESIS extends it to MPI execution. We release GENESIS 2.5, an accelerator-enabled extension of GENESIS 2.4/PGENESIS 2.4 that adds an OpenCL backend for Hodgkin--Huxley channel updates while preserving all existing CPU and MPI workflows unchanged. A multi-step (``multiloop'') GPU kernel batches $K$ simulation steps into a single dispatch. Measured by wall-clock time on identically instrumented CPU and GPU arms (integrated AMD Radeon 890M, fp32 kernel vs.\ fp64 CPU, $K=50\,000$ steps of driven spiking neurons), and after a scheduler fix that removed an $O(N)$ per-step overhead, the accelerated \emph{simulation phase} peaks near $N=5000$ neurons at $\sim$18$\times$ (GPU in its sustained clock state) or $\sim$13$\times$ (single cold-start run), reaching $\sim$$1.5\times10^{9}$ neuron-steps/s, and the full end-to-end run (including one-time, CPU-bound model construction) up to $\sim$4$\times$. The fp32 accelerator agrees with the fp64 CPU to $\sim$$2\times10^{-7}$\,V over a single action potential. A CUDA backend on the same interface is included, pending validation on NVIDIA hardware. The same work also fixes three independent, previously unnoticed defects in the GENESIS Hines solver that silently suppressed \texttt{inject}-driven voltage transients for any multi-neuron \texttt{hsolve} configuration, GPU or CPU-only.
 \end{abstract}
 
 \begin{keyword}
@@ -111,7 +111,7 @@ C3 & Legal Code License   & GNU General Public License v2 or later (program); GN
 \hline
 C4 & Code versioning system used & git \\
 \hline
-C5 & Software code languages, tools, and services used & C, OpenCL C, MPI (PGENESIS), Python (benchmark analysis/plotting) \\
+C5 & Software code languages, tools, and services used & C, OpenCL C, CUDA C++ (accelerator backends), MPI (PGENESIS), Python (benchmark analysis/plotting) \\
 \hline
 C6 & Compilation requirements, operating environments \& dependencies & Linux x86\_64, GCC, GNU make, an OpenCL 1.2+ runtime (tested: ROCm 6.3.1 and Mesa rusticl) for the GPU backend, an MPI implementation for PGENESIS \\
 \hline
@@ -133,7 +133,7 @@ Compartmental neural simulators remain essential for biophysically detailed mode
 
 Modern workstations increasingly ship capable integrated GPUs, but GENESIS has no accelerator backend: every channel-kinetics update runs on the CPU regardless of available GPU hardware. This is a growing gap, since channel-update kernels (per-compartment gating-variable integration) are an embarrassingly parallel workload well suited to GPU execution, and existing GENESIS/PGENESIS users have no path to accelerator support without abandoning their existing models and SLI scripts.
 
-GENESIS 2.5 closes this gap directly: it is GENESIS 2.4/PGENESIS 2.4 plus an OpenCL backend for the \texttt{hsolve} channel-update path, with CUDA proposed as a second backend on the same interface. No existing CPU or MPI workflow, model file, or SLI script needs to change to benefit from GPU acceleration where it is available, and the same workflows run unmodified where it is not. While building and validating this backend, we additionally found and fixed three independent solver defects in \texttt{hines\_solve.c}/\texttt{hines\_init.c} that affect any multi-neuron \texttt{hsolve} configuration -- including pure-CPU GENESIS deployments. Their effect on the benchmarks reported here is concrete: current injection (\texttt{inject}) silently failed to produce a voltage response in this configuration prior to the fix, which would have invalidated any benchmark that compares dynamics rather than only opcode-level throughput, and may have affected unrelated multi-neuron \texttt{hsolve} models elsewhere.
+GENESIS 2.5 closes this gap directly: it is GENESIS 2.4/PGENESIS 2.4 plus an OpenCL backend for the \texttt{hsolve} channel-update path, and a CUDA backend implemented on the same interface (a faithful fp32 port of the OpenCL kernels, selected at build time by \texttt{-DUSE\_CUDA}; validated on NVIDIA hardware is deferred to a companion evaluation, see Impact). No existing CPU or MPI workflow, model file, or SLI script needs to change to benefit from GPU acceleration where it is available, and the same workflows run unmodified where it is not. While building and validating this backend, we additionally found and fixed three independent solver defects in \texttt{hines\_solve.c}/\texttt{hines\_init.c} that affect any multi-neuron \texttt{hsolve} configuration -- including pure-CPU GENESIS deployments. Their effect on the benchmarks reported here is concrete: current injection (\texttt{inject}) silently failed to produce a voltage response in this configuration prior to the fix, which would have invalidated any benchmark that compares dynamics rather than only opcode-level throughput, and may have affected unrelated multi-neuron \texttt{hsolve} models elsewhere.
 
 We name this release ``2.5'' rather than ``3.0'' deliberately. ``GENESIS 3'' was a separate modularization effort~\cite{g3_dev_plans} that produced independent successor lines (Neurospaces/Heccer~\cite{cornelis2011}, MOOSE) rather than a single installable artifact comparable to GENESIS 2.4, and evolved into the CBI software federation~\cite{cornelis2008cbi,cornelis2007dendrite,cornelis2013interop}. GENESIS 2.5 is not a re-architecture and does not depend on, or claim continuity with, that line; it targets existing GENESIS 2.4 deployments that should not need to migrate models or scripts to gain accelerator support.
 
@@ -154,7 +154,9 @@ We name this release ``2.5'' rather than ``3.0'' deliberately. ``GENESIS 3'' was
     \begin{itemize}
         \item Unmodified serial (\texttt{genesis}), headless (\texttt{nxgenesis}), and MPI (PGENESIS) execution paths.
         \item OpenCL channel-update kernel for Hodgkin--Huxley-style \texttt{tabchannel} gating (Na $X^3Y^1$, K $X^4$), dispatched per-step or batched over $K$ steps via multiloop.
-        \item Device-side dispatch confirmation (\texttt{OCL PROFILING SUMMARY}) distinguishing a genuine GPU run from CPU fallback, so accelerator results in any downstream benchmark are auditable rather than assumed.
+        \item A CUDA backend on the same call site (\path{genesis/src/hines/cuda/}): the device kernels are a line-for-line fp32 port of the OpenCL kernels, and a thin C glue mirrors the OpenCL dispatch and multiloop control flow. The GENESIS-facing entry point is identical (\texttt{cuda\_chip\_update} in place of \texttt{ocl\_chip\_update}), so the same models, SLI scripts, and benchmark harness drive either backend; the accelerator env var and dispatch/profiling reports are shared. NVIDIA hardware validation is pending (see Impact).
+        \item Device-side dispatch confirmation (\texttt{OCL}/\texttt{CUDA PROFILING SUMMARY}) distinguishing a genuine GPU run from CPU fallback, so accelerator results in any downstream benchmark are auditable rather than assumed.
+        \item A driven-spiking benchmark (\path{hh_spiking_benchmark.g}): $N$ Hodgkin--Huxley neurons under one \texttt{hsolve}, each injected with a suprathreshold current so they fire action-potential trains -- the biophysically relevant regime, and the one that exercises the repaired \texttt{inject} path -- with a wall-clock harness that times both arms identically and separates one-time model construction from the per-step simulation phase.
         \item Three corrected defects in the Hines solver (forward-elimination fast-path guard, backward-elimination root handling, \path{SET_DIAG}/\path{SKIP_DIAG} row selection) that make multi-neuron \texttt{hsolve} configurations produce correct, independent voltage dynamics per neuron under current injection -- a precondition for any GPU/CPU dynamical comparison, and a correctness fix independent of GPU support.
     \end{itemize}
 \end{enumerate}
@@ -170,34 +172,59 @@ We name this release ``2.5'' rather than ``3.0'' deliberately. ``GENESIS 3'' was
 \label{fig:cpu_mean_ci}
 \end{figure}
 
-\textbf{Reproducing the GPU multiloop result.} \path{genesis/Scripts/benchmark/ocl_hh_benchmark.g} builds $N$ independent Hodgkin--Huxley neurons under one \texttt{hsolve} (\texttt{chanmode=4}, \texttt{calcmode=1}). Running it with \path{GENESIS_OCL_MULTILOOP=5000} dispatches all 5000 steps in one GPU call. Table~\ref{tab:multiloop_fp32} and Fig.~\ref{fig:multiloop_speedup} report wall-clock CPU-vs-GPU comparisons, fp32, in-container Mesa rusticl, AMD Radeon 890M, after the scheduler and solver fixes described above: end-to-end speedup rises from 3.2$\times$ at $N=500$ to 16.2$\times$ at $N=5000$.
+\textbf{Reproducing the GPU multiloop result.} \path{genesis/Scripts/benchmark/hh_spiking_benchmark.g} builds $N$ Hodgkin--Huxley neurons under one \texttt{hsolve} (\texttt{chanmode=4}), each driven by a suprathreshold current so they fire action-potential trains. Running the \texttt{nxgenesis} binary with \path{GENESIS_OCL_MULTILOOP=}$K$ dispatches all $K$ steps in one GPU call. We time both arms by wall clock with identical instrumentation (\path{paper/run_overnight_campaign.py}): each configuration is run at $K=50\,000$ steps and at $K=0$, and the per-step \emph{simulation phase} is their difference, so one-time model construction (CPU-bound and identical on both arms) is separated from the accelerated stepping. The CPU arm is \texttt{nxgenesis\_nocl} (built without OpenCL, fp64); the GPU arm is \texttt{nxgenesis} (fp32 multiloop, Mesa rusticl, AMD Radeon 890M). Both are headless, avoiding the earlier GUI-linked-binary confound. Reps are 30+ at small $N$; 95\% CIs are in \path{paper/campaign_wallclock_summary.csv}.
+
+Table~\ref{tab:multiloop_fp32} and Fig.~\ref{fig:multiloop_speedup} report the result after the scheduler and solver fixes described above. The \emph{step-phase} speedup (the accelerated channel-update simulation, which is what scales with simulated biological duration) peaks near $N=5000$, at $\sim$18$\times$ with the GPU in its sustained (warm) clock state and $\sim$13.5$\times$ for a single cold-start run; peak GPU throughput is $\sim$$1.5\times10^{9}$ neuron-steps/s. The gap between the two is a property of the integrated GPU, not measurement noise: the CPU-bound model build leaves the GPU idle and downclocked, so the first dispatch of a single run is $\sim$1.3--2$\times$ slower than the sustained state that long or repeated runs reach. The sustained dispatch is highly reproducible ($\pm2\%$ for $N\le10\,000$; \path{paper/campaign_warm_dispatch.csv}), whereas single-run timings vary run-to-run by up to $\sim$2$\times$ (\path{paper/campaign_reproducibility.csv}). Beyond $N\approx10\,000$ the integrated GPU no longer sustains its fast clock state under this workload and the speedup falls toward $\sim$3$\times$ regardless of warm-up. The \emph{end-to-end} speedup (including one-time, CPU-bound model construction) peaks at $\sim$4$\times$ for a single run; for longer simulations the construction cost amortizes and end-to-end approaches the step-phase figure (Fig.~\ref{fig:ksweep}).
 
 \begin{table}[!h]
 \centering
-\begin{tabular}{|r|r|r|r|}
+\begin{tabular}{|r|r|r|r|r|r|}
 \hline
-\textbf{$N$} & \textbf{CPU step-loop (s)} & \textbf{GPU dispatch (s)} & \textbf{End-to-end speedup} \\
+\textbf{$N$} & \textbf{CPU step} & \textbf{GPU step} & \textbf{Step-phase} & \textbf{Step-phase} & \textbf{Throughput} \\
+             & \textbf{(s)}      & \textbf{(s)}      & \textbf{sustained}  & \textbf{single-run} & \textbf{(M nsteps/s)} \\
 \hline
-500     & 0.041 & 0.013 &  3.2$\times$ \\
+500     & 0.302  & 0.112 &  2.7$\times$ &  2.0$\times$ &  223 \\
 \hline
-1\,000  & 0.110 & 0.013 &  8.6$\times$ \\
+1\,000  & 0.587  & 0.112 &  5.2$\times$ &  3.7$\times$ &  446 \\
 \hline
-2\,000  & 0.150 & 0.013 & 11.2$\times$ \\
+2\,000  & 1.166  & 0.117 & 10.0$\times$ &  6.5$\times$ &  855 \\
 \hline
-5\,000  & 0.299 & 0.018 & 16.2$\times$ \\
+5\,000  & 2.965  & 0.164 & \textbf{18.1}$\times$ & 13.5$\times$ & \textbf{1524} \\
 \hline
-10\,000 & 0.594 & 0.046 & 13.1$\times$ \\
+10\,000 & 5.799  & 0.406 & 14.3$\times$ &  6.8$\times$ & 1232 \\
+\hline
+20\,000 & 11.918 & 3.283 &  3.6$\times$ &  3.1$\times$ &  305 \\
+\hline
+50\,000 & 31.179 & 9.880 &  3.2$\times$ &  3.2$\times$ &  253 \\
 \hline
 \end{tabular}
-\caption{GPU multiloop (fp32) vs.\ CPU (fp64) baseline, AMD Radeon 890M, $K=5000$ steps.}
+\caption{GPU multiloop (fp32) vs.\ CPU (fp64) baseline, AMD Radeon 890M, driven spiking neurons, $K=50\,000$ steps. CPU step is the wall-clock simulation phase (construction removed by a $K=0$ baseline; low variance, 30+ reps). ``GPU step'' and ``sustained'' use the warm steady-state kernel dispatch (reproducible to $\pm2\%$ for $N\le10\,000$); ``single-run'' is the median of a cold-start run where the CPU-bound model build precedes the first dispatch ($\sim$1.3--2$\times$ slower, and up to $\sim$2$\times$ more variable). Step-phase speedup peaks near $N=5000$; beyond $N\approx10\,000$ the integrated GPU does not sustain its fast clock state under this workload. End-to-end (incl.\ construction) single-run speedup is 1.2--4.2$\times$ (Fig.~\ref{fig:multiloop_speedup}). Raw data: \protect\path{paper/campaign_warm_dispatch.csv}, \protect\path{campaign_wallclock_summary.csv}, \protect\path{campaign_reproducibility.csv}.}
 \label{tab:multiloop_fp32}
 \end{table}
 
 \begin{figure}[!h]
 \centering
-\includegraphics[width=0.8\textwidth]{fig9_ocl_multiloop_speedup.png}
-\caption{Measured end-to-end speedup, GPU multiloop (fp32) vs.\ CPU (fp64), after the scheduler and Hines-solver fixes.}
+\includegraphics[width=0.8\textwidth]{fig_campaign_speedup.png}
+\caption{Measured wall-clock speedup, GPU multiloop (fp32) vs.\ CPU (fp64), after the scheduler and Hines-solver fixes. Step-phase speedup is shown for the GPU's sustained (warm) clock state and for a single cold-start run; the two differ because the CPU-bound model build downclocks the idle GPU before the first dispatch. Both peak near $N=5000$ and fall beyond $N\approx10\,000$ as the integrated GPU stops sustaining its fast clocks. End-to-end (single run, including construction) is lower still.}
 \label{fig:multiloop_speedup}
+\end{figure}
+
+\textbf{Numerical fidelity of the fp32 accelerator.} \path{genesis/Scripts/benchmark/hh1952_ap_verify.g} runs the classic 1952 squid model under a 2\,nA step and compares the membrane voltage across three execution paths (CPU fp64, GPU per-step, GPU multiloop). Over a single action potential the fp32 GPU paths agree with the fp64 CPU to $\sim$$2\times10^{-7}$\,V, and all $N$ neurons remain identical to $<10^{-6}$\,V (Fig.~\ref{fig:divergence}; \path{paper/campaign_divergence.csv}). Over long spiking runs the fp32 and fp64 traces drift in spike \emph{phase}, as any reduced-precision integration of an oscillator must; per-spike waveform and firing rate are preserved. This bounds the accelerator's fidelity honestly and is why the timing comparison above uses driven neurons but the correctness check uses a single-AP window.
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.8\textwidth]{fig_campaign_divergence.png}
+\caption{fp32 accelerator vs.\ fp64 CPU: absolute membrane-voltage difference for a single neuron as a function of simulated steps, for both the per-step and multiloop GPU paths.}
+\label{fig:divergence}
+\end{figure}
+
+\textbf{Speedup grows with simulation length.} Because model construction is a fixed one-time cost, the end-to-end speedup depends on how long the simulation runs. Sweeping $K$ at fixed $N=5000$ (Fig.~\ref{fig:ksweep}) shows the end-to-end speedup rising toward the step-phase ceiling as $K$ increases -- i.e., the accelerator pays off most for the long runs that dominate real modeling studies (\path{paper/campaign_ksweep.csv}).
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.8\textwidth]{fig_campaign_ksweep.png}
+\caption{Speedup vs.\ simulation length $K$ at fixed $N=5000$. As the run lengthens, the one-time model-construction cost amortizes and the end-to-end speedup approaches the step-phase (simulation-only) speedup.}
+\label{fig:ksweep}
 \end{figure}
 
 \textbf{Reproducing the PGENESIS scaling result.} The existing MPI path is unaffected by this release; a strong-scaling sweep ($N=2400$ HH neurons, $P=1$--$24$ ranks) on a 12-core/24-thread host gives near-ideal scaling at $P=2$ ($E_P=0.95$), a practical efficiency knee near $P \approx 5$, and a recommended operating range of $P=4$--$8$ ($3.1$--$4.0\times$ speedup, 50--78\% efficiency) for this problem size.
@@ -206,18 +233,18 @@ Full replication steps, scripts, and raw CSV outputs are in \path{paper/REPLICAT
 
 \item Impact
 
-\textbf{New capability for existing deployments.} GENESIS/PGENESIS users with channel-kinetics-heavy models gain a path to GPU acceleration (3.2--16.2$\times$ end-to-end, batched dispatch mode) without migrating models, SLI scripts, or MPI workflows -- the principal barrier that an architecturally different successor (e.g., MOOSE) would otherwise impose.
+\textbf{New capability for existing deployments.} GENESIS/PGENESIS users with channel-kinetics-heavy models gain a path to GPU acceleration -- up to $\sim$18$\times$ on the simulation phase (sustained; $\sim$13$\times$ for a single cold-start run) and up to $\sim$4$\times$ end-to-end on a laptop-class integrated GPU, batched dispatch mode -- without migrating models, SLI scripts, or MPI workflows, the principal barrier that an architecturally different successor (e.g., MOOSE) would otherwise impose.
 
 \textbf{A correctness fix with effect beyond this release.} The three Hines-solver defects fixed here (Section 2) are independent of GPU support and affect any multi-neuron \texttt{hsolve} configuration: prior to the fix, \texttt{inject}-driven voltage transients were silently suppressed for neurons other than the first in such a configuration, with no error raised. This is a latent correctness issue in the existing GENESIS 2.4 codebase, not introduced by this work, and is reported and fixed for the benefit of any user running multi-neuron \texttt{hsolve} models, independent of whether they use the OpenCL backend.
 
-\textbf{A reusable accelerator-validation discipline.} Three successive confounds masked false ``GPU-accelerated'' readings during this work (a GUI-linked comparison binary, a passive-compartment benchmark that never dispatches to the kernel, and CPU-timer semantics that overstate GPU-blocked wait time as compute). The device-side dispatch confirmation and wall-clock-only timing protocol established here (Section 2) generalize to any future accelerator backend added to GENESIS, including the CUDA backend proposed as a companion target, and are recorded so that future contributors do not repeat the same false-positive measurements.
+\textbf{A reusable accelerator-validation discipline.} Four confounds masked false readings during this work: a GUI-linked comparison binary, a passive-compartment benchmark that never dispatches to the kernel, CPU-timer semantics that overstate GPU-blocked wait time as compute, and an off-by-one \texttt{argc} guard that silently pinned the benchmark step count to its default. The wall-clock protocol established here -- both arms timed identically, construction separated from the step phase by a $K=0$ baseline, device-side dispatch confirmation, and reported alongside the internal timers they must agree with -- generalizes to any future accelerator backend added to GENESIS, including the CUDA backend, and is recorded so that future contributors do not repeat the same false-positive measurements. The CUDA backend is implemented on this same interface and instrumentation; its NVIDIA-hardware validation is the immediate companion task (a numerical parity check against the fp64 CPU path, then the same wall-clock sweep), for which cluster access has been arranged.
 
-\textbf{Identified architectural bottleneck for follow-on work.} The raw GPU kernel achieves 4--149$\times$ speedup in isolation, but the dominant cost in the unfixed scheduler was an $O(N)$ per-step iteration over all absorbed elements (98--99\% of GPU-arm step time at $N \geq 2000$), independent of GPU dispatch. This is recorded as the primary remaining architectural barrier to fuller end-to-end GPU speedup and is the basis for a follow-on GENESIS scheduler change (\path{paper/PLAN_gpu_rewrite.md}).
+\textbf{Scheduler fix, and the remaining architectural bottleneck.} An earlier profiling round found the dominant cost was not GPU dispatch but an $O(N)$ per-step iteration over all absorbed elements in the scheduler (98--99\% of GPU-arm step time at $N \geq 2000$). That defect -- a broken Hines-numbering loop that left neurons $2\ldots N$ unabsorbed and re-scheduled every step -- has been fixed, and the step-phase speedups reported here are the result. The remaining limits are hardware and structural rather than scheduler overhead: on the integrated GPU tested, the peak speedup is near $N=5000$ and beyond $N\approx10\,000$ the device no longer sustains its fast clock state under this workload (the speedup falls toward $\sim$3$\times$), and the multiloop kernel updates each compartment independently, so it is valid only for single-compartment networks. Extending GPU acceleration to multi-compartment dendritic trees requires a GPU-side tridiagonal (Hines) solve and is recorded as the primary follow-on (\path{paper/PLAN_gpu_rewrite.md}).
 
 
 \item Conclusions
 
-GENESIS 2.5 adds a validated, opt-in OpenCL accelerator backend to GENESIS 2.4/PGENESIS 2.4 with no change to existing CPU or MPI workflows, demonstrating 3.2--16.2$\times$ measured end-to-end speedup for channel-update-dominated workloads via a batched multi-step GPU kernel. In the course of this work we also identified and fixed three independent, previously latent defects in the GENESIS Hines solver affecting any multi-neuron \texttt{hsolve} configuration, and an $O(N)$ scheduler bottleneck that currently caps end-to-end GPU benefit outside multiloop mode. A CUDA backend on the same interface, and a scheduler change to skip GPU-delegated elements, are the recorded next steps.
+GENESIS 2.5 adds a validated, opt-in OpenCL accelerator backend to GENESIS 2.4/PGENESIS 2.4 with no change to existing CPU or MPI workflows. On a laptop-class integrated GPU it delivers up to $\sim$18$\times$ measured wall-clock speedup on the simulation phase in sustained use ($\sim$13$\times$ for a single cold-start run; up to $\sim$$1.5\times10^{9}$ neuron-steps/s) and up to $\sim$4$\times$ end-to-end for channel-update-dominated workloads via a batched multi-step GPU kernel, with the fp32 accelerator agreeing with the fp64 CPU to $\sim$$2\times10^{-7}$\,V over an action potential. In the course of this work we identified and fixed three independent, previously latent defects in the GENESIS Hines solver affecting any multi-neuron \texttt{hsolve} configuration, and an $O(N)$ scheduler bottleneck whose removal is what makes the reported speedups attainable. A CUDA backend is implemented on the same interface (fp32 port of the OpenCL kernels); validation on NVIDIA hardware, and a GPU-side tridiagonal solve extending acceleration to multi-compartment dendritic trees, are the recorded next steps.
 
 \end{enumerate}
 

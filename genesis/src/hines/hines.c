@@ -86,6 +86,17 @@ static char rcsid[] = "$Id: hines.c,v 1.4 2006/01/10 08:59:01 svitak Exp $";
 
 #include "hines_ext.h"
 
+/* Accelerator backend selection. The OpenCL and CUDA backends expose the same
+   chanmode-4 channel-update entry point; pick one at build time. When neither
+   USE_OPENCL nor USE_CUDA is defined the pure-CPU path below is used unchanged.
+   USE_CUDA is inert unless the CUDA backend files are compiled and linked. */
+#ifdef USE_CUDA
+#include "cuda/cuda_hsolve.h"
+#define ACCEL_CHIP_UPDATE cuda_chip_update
+#elif defined(USE_OPENCL)
+#define ACCEL_CHIP_UPDATE ocl_chip_update
+#endif
+
 /* We would like to acknowlege the advice of Dr. Michael Mascagni
 ** during the development of this element.
 ** 
@@ -189,14 +200,15 @@ Action	*action;
 			case 4:
 			case 5:
 			    if (hsolve->ininfo) h_in_msgs(hsolve);
-#ifdef USE_OPENCL
-			    /* ocl_chip_update returns 1 in multiloop mode:
-			       vm[] already has GPU-computed final voltages,
-			       skip the Hines solve entirely for that batch. */
+#if defined(USE_OPENCL) || defined(USE_CUDA)
+			    /* ACCEL_CHIP_UPDATE (ocl_chip_update or cuda_chip_update)
+			       returns 1 in multiloop mode: vm[] already has the
+			       GPU-computed final voltages, so skip the Hines solve
+			       entirely for that batch. */
 			    {
 			    int ocl_vm_ready = 0;
 			    if (hsolve->calcmode) {
-				ocl_vm_ready = ocl_chip_update(hsolve);
+				ocl_vm_ready = ACCEL_CHIP_UPDATE(hsolve);
 			    } else {
 				do_chip_hh4ni_update(hsolve);
 			    }

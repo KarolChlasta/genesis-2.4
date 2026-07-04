@@ -3,7 +3,11 @@
 ## Overview
 
 This document records every build and run step needed to reproduce the CPU vs GPU
-benchmark results reported in `paper/manuscript_genesis_2_5_proposal.md`.
+benchmark results. The authoritative results for the SoftwareX submission
+(`paper/manuscript_softwarex_draft.tex`, Table 2 / Figs. of the campaign) are
+produced by the single driver `paper/run_overnight_campaign.py` — see
+**"Authoritative reproduction"** below. The earlier sections document the build
+and the historical per-dispatch measurements that led to it.
 
 A clean CPU vs GPU comparison requires **two headless binaries built from the same
 source** — one with the OpenCL channel-update kernel compiled in (`USE_OPENCL=1`)
@@ -11,6 +15,48 @@ and one without. Using the X11-linked `genesis` binary as the CPU arm is invalid
 it has per-element construction overhead from the GUI toolkit that scales with
 network size and is unrelated to GPU acceleration. Full investigation:
 `paper/x11_binary_confound_investigation.md`.
+
+---
+
+## Authoritative reproduction (SoftwareX draft, 2026-07)
+
+After building `nxgenesis` (USE_OPENCL=1) and `nxgenesis_nocl` (Steps 1–3 below),
+one driver produces every number and figure in the manuscript's illustrative
+examples:
+
+```bash
+python3 paper/run_overnight_campaign.py      # writes paper/campaign_*.csv
+python3 paper/plot_campaign.py               # writes paper/figures/fig_campaign_*.png
+```
+
+What it measures and why it supersedes the older method:
+
+- **Wall-clock, both arms identical.** Whole-process time via `time.monotonic()`
+  around each `nxgenesis(_nocl)` run — not GENESIS's `{cpu}` timer for CPU and the
+  kernel's dispatch report for GPU (that asymmetry overstated the GPU arm by
+  omitting its residual per-step overhead). The internal timers are still recorded
+  and agree with the wall-clock step phase, which is what licenses the comparison.
+- **Construction separated from stepping.** Each config is timed at `K` steps and
+  at `K=0`; the per-step simulation phase is their difference, so one-time,
+  CPU-bound model construction does not dilute (or, for tiny fast steps, dominate)
+  the accelerator comparison. Both the step-phase and the end-to-end speedup are
+  reported.
+- **Biophysically meaningful workload.** `hh_spiking_benchmark.g` drives every
+  neuron with a suprathreshold current so it fires action potentials, exercising
+  the repaired `inject` path (not a flat rest state).
+- **Correctness quantified.** `hh1952_ap_verify.g` across CPU / GPU per-step /
+  GPU multiloop; fp32 vs fp64 agree to ~2e-7 V over a single AP
+  (`campaign_divergence.csv`).
+
+Studies produced: `campaign_wallclock_summary.csv` (speedup/throughput/real-time
+factor vs N), `campaign_ksweep.csv` (speedup vs simulation length), and
+`campaign_divergence.csv` (fp32/fp64 fidelity), plus a long-run reproducibility
+loop (`campaign_reproducibility.csv`). A hard deadline bounds the run and every
+row is written incrementally, so it is interrupt-safe.
+
+**CUDA:** the same driver drives the CUDA build (parses `CUDA MULTILOOP:` lines).
+Build with `make USE_CUDA=1 CUDA_HOME=/usr/local/cuda` and see
+`genesis/src/hines/cuda/BUILD_CUDA.md`. Not yet validated on NVIDIA hardware.
 
 ---
 

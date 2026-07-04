@@ -113,6 +113,23 @@ else
 OCL_OBJS	=
 OCL_LIBS	=
 endif
+
+# CUDA backend (mutually exclusive with USE_OPENCL at the hines.c call site;
+# if both are set, hines.c selects CUDA). Build with e.g.:
+#   make USE_CUDA=1 CUDA_HOME=/usr/local/cuda
+# and add $(CUDA_LIBS) to the final nxgenesis link (see cuda/BUILD_CUDA.md).
+# Untested on this laptop (no NVIDIA GPU); intended for RunPod / UMCS inf02.
+CUDA_HOME	?=	/usr/local/cuda
+NVCC		?=	$(CUDA_HOME)/bin/nvcc
+NVCCFLAGS	?=	-O2 -std=c++14
+ifdef USE_CUDA
+CFLAGS		+=	-DUSE_CUDA
+CUDA_OBJS	=	cuda/cuda_hsolve.o cuda/cuda_backend.o
+CUDA_LIBS	=	-L$(CUDA_HOME)/lib64 -lcudart
+else
+CUDA_OBJS	=
+CUDA_LIBS	=
+endif
 INSTALL_LIB 	= 	$(INSTALLDIR)/lib
 INSTALL_INCLUDE	= 	$(INSTALLDIR)/include
 INSTALL_STARTUP	= 	$(INSTALLDIR)/startup
@@ -134,6 +151,7 @@ default: $(TARGET_OBJ)
 
 OBJECTS =	\
 		$(OCL_OBJS) \
+		$(CUDA_OBJS) \
 		hines.o \
 		hines_init.o \
 		hh_init.o \
@@ -198,6 +216,14 @@ $(TARGET_OBJ): $(SYMBOLTAB) $(OBJECTS)
 
 opencl/ocl_hsolve.o: opencl/ocl_hsolve.c opencl/ocl_hsolve.h
 	$(CC) $(CFLAGS) $(SIMINCLUDE) -I. opencl/ocl_hsolve.c -c -o opencl/ocl_hsolve.o
+
+# CUDA backend objects. The glue (.c) is built by the C compiler and includes
+# GENESIS headers; the device unit (.cu) is built by nvcc and includes none.
+cuda/cuda_hsolve.o: cuda/cuda_hsolve.c cuda/cuda_hsolve.h
+	$(CC) $(CFLAGS) $(SIMINCLUDE) -I. cuda/cuda_hsolve.c -c -o cuda/cuda_hsolve.o
+
+cuda/cuda_backend.o: cuda/cuda_backend.cu cuda/cuda_channel.cuh
+	$(NVCC) $(NVCCFLAGS) -I. cuda/cuda_backend.cu -c -o cuda/cuda_backend.o
 
 install:
 	-cp $(TARGET_OBJ) $(INSTALL_LIB)
