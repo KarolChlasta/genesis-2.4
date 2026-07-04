@@ -53,20 +53,26 @@ def fig_speedup():
     sus  = [fnum(r, "speedup_sustained") for r in rows]
     sing = [fnum(r, "speedup_singlerun") for r in rows]
     e2e  = [fnum(r, "end2end_singlerun") for r in rows]
-    fig, ax = plt.subplots(figsize=(7, 4.6))
+    fig, ax = plt.subplots(figsize=(7.2, 4.8))
     ax.plot(N, sus,  "-o", color=BLUE,   lw=2, ms=7, label="Step-phase, sustained (warm GPU)")
     ax.plot(N, sing, "-s", color=ORANGE, lw=2, ms=7, label="Step-phase, single cold-start run")
     ax.plot(N, e2e,  "-^", color=GREEN,  lw=2, ms=7, label="End-to-end, single run (incl. build)")
     ax.axhline(1.0, color="0.5", lw=1, ls="--")
-    ax.text(N[0], 1.03, "parity (1×)", color="0.4", fontsize=9, va="bottom")
+    ax.text(N[-1], 1.15, "parity (1×)", color="0.4", fontsize=9, va="bottom", ha="right")
     ax.set_xscale("log")
+    ax.set_ylim(0, 21)
     ax.set_xlabel("Number of HH neurons  $N$  (single hsolve, $K$=50000 steps)")
     ax.set_ylabel("Speedup  (CPU fp64 / GPU fp32)")
-    ax.set_title("GENESIS 2.5 OpenCL multiloop speedup — AMD Radeon 890M")
-    ax.legend(frameon=False, loc="upper right")
+    ax.set_title("GENESIS 2.5 OpenCL multiloop speedup — AMD Radeon 890M", pad=12)
+    # opaque framed legend, placed in the empty upper-right where all curves are low
+    leg = ax.legend(frameon=True, framealpha=0.95, edgecolor="0.6",
+                    facecolor="white", loc="upper right", fontsize=9,
+                    borderpad=0.7, labelspacing=0.5)
+    leg.get_frame().set_linewidth(0.8)
+    # annotate the peak beside the marker (not above, to clear the title)
     i = max(range(len(sus)), key=lambda k: (sus[k] or 0))
     ax.annotate(f"{sus[i]:.0f}×", (N[i], sus[i]), textcoords="offset points",
-                xytext=(0, 8), ha="center", color=BLUE, fontsize=10)
+                xytext=(-6, 8), ha="right", color=BLUE, fontsize=11, fontweight="bold")
     fig.savefig(FIG / "fig_campaign_speedup.png")
     plt.close(fig)
     print("wrote fig_campaign_speedup.png")

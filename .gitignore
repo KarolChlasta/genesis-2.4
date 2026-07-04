@@ -72,3 +72,4 @@ paper/*.out
 # Python cache
 paper/__pycache__/
 paper/.claude/
+*.spl
