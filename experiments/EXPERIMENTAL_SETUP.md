@@ -19,8 +19,8 @@ Two platforms were used:
 | GPU driver / stack | Mesa **rusticl** (OpenCL 1.2, fp32 only, no `cl_khr_fp64`) | NVIDIA **570.195.03**, CUDA 12.8 |
 | VRAM | shared (integrated) | 24 GB |
 | GPU max clock | — | 3105 MHz (SM); benchmarked with clocks locked |
-| CPU | AMD (AVX-512, Strix-class APU) | 32 vCPU (server host) |
-| System RAM | 78 GB | 188 GB (host) |
+| CPU | AMD (AVX-512, Strix-class APU) | AMD Ryzen 9 9950X (16C/32T) |
+| System RAM | 78 GB | 123 GB |
 | OS | Linux 6.17 | Ubuntu 24.04.3 LTS |
 
 The two arms are compared **only within a platform** (CPU vs GPU on the same

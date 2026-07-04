@@ -6,7 +6,7 @@ NVIDIA hardware (previously code-only / unvalidated).
 ## Environment
 - GPU: NVIDIA GeForce RTX 4090 (Ada, `sm_89`, 128 SMs, 24 GB), driver 570.195.03
 - Toolkit: CUDA 12.8 (nvcc 12.8.93), gcc 13.3.0, Ubuntu 24.04.3
-- Host: 32 vCPU, 188 GB RAM (RunPod pod, $0.69/hr)
+- Host: AMD Ryzen 9 9950X (16C/32T), 123 GB RAM (RunPod pod, $0.69/hr)
 - Image: `runpod/pytorch` CUDA 12.8 devel; OpenCL loader added via `ocl-icd-opencl-dev`
 - Build: `USE_CUDA=1`, `nvcc -O2 -std=c++14 -arch=sm_89 -ccbin gcc`, linked `-lcudart`
 
