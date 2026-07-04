@@ -141,38 +141,42 @@ GPU performance.
 
 ## Step 1: Restore the netcdf library (one-time, after clean)
 
-The GENESIS diskio subsystem bundles netcdf-3.4. Its `configure` script fails on
-this platform (cross-compile false positive). A pre-filled `ncconfig.h` for Linux
-x86_64 is committed at:
+The GENESIS diskio subsystem bundles netcdf-3.4. Its `configure` script false-
+detects "cross-compiling" on modern hosts (the `ftruncate` run-test) and aborts
+before emitting `macros.make`, so **`configure` is not run at all**. Both files it
+would otherwise generate are committed to the repo:
 
 ```
 genesis/src/diskio/interface/netcdf/netcdf-3.4/src/libsrc/ncconfig.h
+genesis/src/diskio/interface/netcdf/netcdf-3.4/src/macros.make
 ```
 
-If the build fails with `No rule to make target 'diskio/interface/netcdf/netcdflib.o'`,
-the stale `fflibs` sentinel exists but the objects were deleted. Fix:
+`make nxgenesis` builds most diskio objects itself, but **not** the three the final
+link needs: `libnetcdf.a`, `netcdflib.o`, and `FMT1lib.o`. Build them once after a
+clean checkout (verified on a fresh clone, 2026-07):
 
 ```bash
-rm genesis/src/diskio/interface/netcdf/netcdflib.o 2>/dev/null || true
-rm genesis/src/diskio/interface/fflibs 2>/dev/null || true
+CF="-O2 -D__NO_MATH_INLINES -DLONGWORDS -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X \
+    -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion \
+    -Wno-incompatible-pointer-types -Wno-strict-prototypes"
 
-# Build libnetcdf.a (configure step skipped — ncconfig.h is pre-filled):
+# 1. libnetcdf.a  (NO ./configure — macros.make + ncconfig.h are committed)
 cd genesis/src/diskio/interface/netcdf/netcdf-3.4/src
-CC=gcc CPICOPT="" CXX="" FC="" AR=ar YACC=bison ./configure || true
 make libsrc/all         # only libsrc is needed; ncdump will fail, ignore it
 cd ../../../../../..
 
-# Touch the netcdflib sentinel and build the GENESIS wrapper object:
-touch genesis/src/diskio/interface/netcdf/netcdflib
-cd genesis/src/diskio/interface/netcdf
-make CC="gcc" \
-     CFLAGS_IN="-O2 -D__NO_MATH_INLINES -DLONGWORDS -Dnetcdf -DFMT1 -DINCSPRNG \
-                -DNO_X -std=gnu89 -Wno-implicit-function-declaration \
-                -Wno-int-conversion -Wno-incompatible-pointer-types \
-                -Wno-strict-prototypes" \
-     LD="ld" LDFLAGS="" AR="ar" RANLIB="ranlib"
-cd ../../../..
+# 2. netcdflib.o  (GENESIS wrapper around libnetcdf.a)
+( cd genesis/src/diskio/interface/netcdf \
+    && make CC=gcc CFLAGS_IN="$CF" LD=ld LDFLAGS="" AR=ar RANLIB=ranlib )
+
+# 3. FMT1lib.o    (second diskio format; make nxgenesis does not build it)
+( cd genesis/src/diskio/interface/FMT1 \
+    && make CC=gcc CFLAGS_IN="$CF" LD=ld LDFLAGS="" AR=ar RANLIB=ranlib )
 ```
+
+(`fflib.o` and `diskiolib.o` are built automatically by `make nxgenesis` in Step 2.)
+An automated, phase-guarded version of this whole sequence — including the CUDA
+build — is in `genesis/src/hines/cuda/runpod_validate.sh`.
 
 ---
 

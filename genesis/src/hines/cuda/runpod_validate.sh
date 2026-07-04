@@ -43,21 +43,34 @@ if phase 2; then
 fi
 cd "$DIR/genesis/src" || { echo "FATAL: source tree missing"; exit 1; }
 
-# 3 ------------------------------------------------------------ netcdf (diskio)
-# The bundled netcdf-3.4 configure false-positives as cross-compile; ncconfig.h
-# is pre-filled in-tree. Only libsrc is needed (ncdump link failure is harmless).
+# 3 --------------------------------------------------- diskio libs (VERIFIED recipe)
+# Verified on a clean clone. macros.make is now committed (the bundled netcdf-3.4
+# configure false-positives as cross-compile and never emits it), so NO configure
+# is run. `make nxgenesis` builds most diskio objects itself but NOT these three,
+# which the final link needs — build them explicitly first:
+#   libnetcdf.a  (netcdf-3.4 libsrc)   netcdflib.o  (wrapper)   FMT1lib.o
 if phase 3; then
-  say 3 "build bundled netcdf libsrc"
-  ( cd diskio/interface/netcdf/netcdf-3.4/src && \
-    CC=gcc CPICOPT="" CXX="" FC="" AR=ar YACC=bison ./configure >/dev/null 2>&1 || true; \
-    make libsrc/all >/dev/null 2>&1 || true )
-  touch diskio/interface/netcdf/netcdflib || true
+  say 3 "build diskio libs (netcdf libsrc + netcdflib.o + FMT1lib.o, no configure)"
+  DCF="$CFLAGS_COMMON -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X"
+  ( cd diskio/interface/netcdf/netcdf-3.4/src && make libsrc/all ) \
+    || { echo "FATAL: libnetcdf.a build failed (is macros.make present?)"; exit 1; }
+  ( cd diskio/interface/netcdf && make CC=gcc CFLAGS_IN="$DCF" LD=ld LDFLAGS="" AR=ar RANLIB=ranlib ) \
+    || { echo "FATAL: netcdflib.o build failed"; exit 1; }
+  ( cd diskio/interface/FMT1 && make CC=gcc CFLAGS_IN="$DCF" LD=ld LDFLAGS="" AR=ar RANLIB=ranlib ) \
+    || { echo "FATAL: FMT1lib.o build failed"; exit 1; }
+  ls diskio/interface/netcdf/netcdflib.o diskio/interface/FMT1/FMT1lib.o \
+     diskio/interface/netcdf/netcdf-3.4/src/libsrc/libnetcdf.a >/dev/null 2>&1 \
+     && echo "  diskio libs OK ✓" || { echo "FATAL: a diskio lib is missing"; exit 1; }
 fi
 
 # 4 ------------------------------------------------------- CPU arm (no accel)
+# Plain `make nxgenesis` — the committed Makefile already carries the modern-GCC
+# flags (-std=gnu89, -Wno-*); it builds fflib.o/diskiolib.o and links against the
+# phase-3 libs. Do NOT override CFLAGS here (it drops those flags and breaks GCC 15).
 if phase 4; then
   say 4 "build nxgenesis_nocl (fp64 CPU baseline)"
-  make -s nxgenesis CFLAGS="$CFLAGS_COMMON -DNO_X -Dnetcdf -DFMT1 -DINCSPRNG" 2>&1 | tail -5
+  make nxgenesis 2>&1 | tail -5
+  [ -f nxgenesis ] || { echo "FATAL: nxgenesis (CPU) did not build"; exit 1; }
   cp -f nxgenesis nxgenesis_nocl
   nm nxgenesis_nocl | grep -q ocl_chip_update && echo "WARN: nocl has OCL syms" || echo "  nocl clean ✓"
 fi
