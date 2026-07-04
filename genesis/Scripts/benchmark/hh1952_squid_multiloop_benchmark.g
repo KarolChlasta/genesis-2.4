@@ -59,7 +59,7 @@ echo "Steps:     " {N_STEPS}
 echo "dt:        " {DT} " s"
 echo ""
 
-include /datadisk/od-kchlasta/5.Dev/GitHub/genesis-2.4/genesis/startup/schedule.g
+include genesis/src/startup/schedule.g
 
 // ---- prototype library ----
 create neutral /library

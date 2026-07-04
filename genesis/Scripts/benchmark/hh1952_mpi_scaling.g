@@ -51,7 +51,7 @@ float soma_xarea = PI * (SOMA_D/2) * (SOMA_D/2)
 float gbar_Na    = GNA_DENS * soma_area
 float gbar_K     = GK_DENS  * soma_area
 
-include /datadisk/od-kchlasta/5.Dev/GitHub/genesis-2.4/genesis/startup/schedule.g
+include genesis/src/startup/schedule.g
 
 create neutral /library
 pushe /library

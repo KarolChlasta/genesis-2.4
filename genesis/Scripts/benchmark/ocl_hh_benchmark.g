@@ -48,7 +48,7 @@ echo ""
 
 // Default simulation schedule (bypassed by -nosimrc):
 // Required for CLASS=hsolver PROCESS task
-include /datadisk/od-kchlasta/5.Dev/GitHub/genesis-2.4/genesis/startup/schedule.g
+include genesis/src/startup/schedule.g
 
 // ---- prototype library ----
 create neutral /library

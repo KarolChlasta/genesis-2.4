@@ -41,7 +41,7 @@ end
 
 echo "=== HH1952 AP Verify N=" {N_NEURONS} " steps=" {N_STEPS} " ==="
 
-include /datadisk/od-kchlasta/5.Dev/GitHub/genesis-2.4/genesis/startup/schedule.g
+include genesis/src/startup/schedule.g
 
 create neutral /library
 pushe /library

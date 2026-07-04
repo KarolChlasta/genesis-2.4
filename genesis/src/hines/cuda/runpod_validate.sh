@@ -29,9 +29,16 @@ phase(){ [ "$1" -ge "$START_PHASE" ]; }
 # 1 ----------------------------------------------------------- system + toolkit
 if phase 1; then
   say 1 "system deps + toolkit check"
+  # ocl-icd-opencl-dev provides libOpenCL.so: GENESIS links -lOpenCL into EVERY
+  # binary (even the code_g generator), so without the loader the whole build
+  # dies at "cannot find -lOpenCL" -> "No rule to make sim/simlib.o". CUDA pod
+  # images have CUDA but no OpenCL loader, so install it (loader stub only).
   apt-get update -qq && apt-get install -y -qq build-essential bison flex \
-      libncurses-dev git ca-certificates python3 python3-matplotlib >/dev/null || true
-  command -v nvcc >/dev/null || { echo "FATAL: nvcc not found; use a CUDA pod image"; exit 1; }
+      libncurses-dev git ca-certificates python3 python3-matplotlib \
+      ocl-icd-opencl-dev >/dev/null || true
+  # nvcc may be installed but not on PATH (e.g. /usr/local/cuda-12.x/bin)
+  export PATH="$CUDA_HOME/bin:$PATH"
+  command -v nvcc >/dev/null || { echo "FATAL: nvcc not found; use a CUDA *devel* pod image"; exit 1; }
   nvcc --version | tail -1
   nvidia-smi --query-gpu=name,memory.total,clocks.max.sm --format=csv,noheader || true
 fi
@@ -88,13 +95,27 @@ if phase 5; then
 fi
 
 # 6 ------------------------------------------------- link GPU binary (-lcudart)
+# NB: passing EXTRALIBS/CFLAGS to `make nxgenesis` reorders the link and drops
+# the termcap libs (undefined `tgetstr`). Instead relink explicitly, reusing the
+# object list from the working CPU link and appending `-lcudart` LAST so library
+# order is preserved. hines/hineslib.o already contains the CUDA objects (phase 5).
 if phase 6; then
-  say 6 "link nxgenesis with USE_CUDA + -lcudart"
-  make -s nxgenesis USE_CUDA=1 CUDA_HOME="$CUDA_HOME" \
-      CFLAGS="$CFLAGS_COMMON -DUSE_CUDA -DNO_X -Dnetcdf -DFMT1 -DINCSPRNG" \
-      EXTRALIBS="-L$CUDA_HOME/lib64 -lcudart" 2>&1 | tail -10
-  nm nxgenesis | grep -q cuda_chip_update && echo "  CUDA symbols present ✓" \
-    || echo "WARN: cuda_chip_update not linked — check EXTRALIBS/TERMCAP (-lcudart)"
+  say 6 "link nxgenesis with the CUDA hineslib + -lcudart"
+  OBJS="sim/simlib.o sys/utillib.o ss/ss.o shell/shelllib.o par/parlib.o \
+    buffer/buflib.o segment/seglib.o hh/hhlib.o device/devlib.o out/outlib.o \
+    olf/olflib.o tools/toollib.o concen/conclib.o hines/hineslib.o user/userlib.o \
+    param/paramlib.o pore/porelib.o oldconn/axon/axonlib.o oldconn/synapse/synlib.o \
+    oldconn/personal/perlib.o oldconn/sim/simconnlib.o oldconn/tools/toolconnlib.o \
+    diskio/interface/netcdf/netcdflib.o \
+    diskio/interface/netcdf/netcdf-3.4/src/libsrc/libnetcdf.a \
+    diskio/interface/FMT1/FMT1lib.o diskio/diskiolib.o kinetics/kinlib.o \
+    chemesis/chemlib.o newconn/newconnlib.o nxloadlib.o"
+  gcc $CFLAGS_COMMON -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X $OBJS \
+      -lfl -lm sprng/lib/liblfg.a -lncurses -ltinfo -lOpenCL \
+      -L"$CUDA_HOME/lib64" -lcudart -o nxgenesis 2>&1 | tail -8
+  nm nxgenesis 2>/dev/null | grep -q cuda_chip_update \
+    && { echo "  CUDA symbols present ✓"; ldd nxgenesis | grep -i cudart; } \
+    || { echo "FATAL: cuda_chip_update not linked"; exit 1; }
 fi
 
 # 7 ------------------------------------------------------- lock clocks + validate

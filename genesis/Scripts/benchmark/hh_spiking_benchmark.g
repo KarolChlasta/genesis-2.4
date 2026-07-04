@@ -66,7 +66,7 @@ echo "inject:    " {INJECT} " A"
 echo "record:    " {RECORD}
 echo ""
 
-include /datadisk/od-kchlasta/5.Dev/GitHub/genesis-2.4/genesis/startup/schedule.g
+include genesis/src/startup/schedule.g
 
 // ---- prototype library (classic 1952 squid HH kinetics) ----
 create neutral /library
