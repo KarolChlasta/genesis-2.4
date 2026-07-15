@@ -1,0 +1,24 @@
+// .psimrc for the PGENESIS Liquid State Machine (liquid/), used via
+//   nxpgenesis -altsimrc .psimrc -notty -batch pgmwojcik.g
+//
+// Self-contained: SIMPATH is set with paths RELATIVE to this directory so the
+// run does not depend on the invoking user's ~/.simrc (which on some hosts
+// points at an unrelated GENESIS checkout). Launch from the liquid/ dir.
+//
+// Search order: current dir (model + local includes), serial GENESIS startup
+// and neurokit prototypes (hhchan and friends), then PGENESIS startup
+// (parallel schedule).
+//
+// Prepared by Karol Chlasta (karol@chlasta.pl), 2026-07-15.
+setenv SIMPATH . \
+    ../genesis/startup \
+    ../genesis/Scripts/neurokit \
+    ../genesis/Scripts/neurokit/prototypes \
+    ../pgenesis/startup
+
+setenv SIMNOTES {getenv HOME}/.notes
+setenv GENESIS_HELP ../genesis/Doc
+
+// Parallel simulation schedule (PGENESIS). Keyboard-macro setup (escapelist)
+// is deliberately omitted -- it is irrelevant to headless -batch runs.
+pschedule

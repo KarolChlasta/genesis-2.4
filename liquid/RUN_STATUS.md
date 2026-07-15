@@ -41,3 +41,31 @@ which is also where the MPI+GPU scaling numbers for the paper belong.
 cd liquid
 mpirun -np 1 ../pgenesis/bin/Linux/nxpgenesis pgmwojcik.g   # loads, then Parlib error
 ```
+
+## 2026-07-15 — launch preparation (turnkey for the cluster)
+Prepared the PGENESIS launch so the cluster session only needs `sbatch` /
+`./start.sh` once an MPI runtime is loaded. Full turnkey guide: `LAUNCH.md`.
+
+Done and validated on the laptop up to the parallel-init step:
+- **Wrapper regenerated.** The 0-byte `pgenesis/bin/pgenesis` now rebuilds from
+  the template via `pgenesis/regen_pgenesis_wrapper.sh`: `USE_MPI=1`,
+  `PVM_ARCH=Linux`, `mpirun -np $num_nodes ...` inserted at the MPI markers, and
+  path placeholders left in place so the wrapper self-locates (portable across
+  laptop/RunPod/cluster). It is still `#!/bin/csh`, so the run host needs csh.
+- **`start.sh` rewritten** as a csh-free POSIX launcher. It derives
+  `NP = pdim^2 + 1` from `pparameters.g` (single source of truth — fixes the old
+  `-np 17` vs `pdim=8` drift), points at the real `nxpgenesis` binary, runs
+  headless (`-notty -batch`), and supports `NP=`, `HOSTFILE=`, `DRYRUN=`,
+  `BATCH=` overrides plus a SLURM `--ntasks` sanity check.
+- **`.psimrc` added** (self-contained SIMPATH via relative paths) so the run no
+  longer depends on the invoking user's `~/.simrc` — on this laptop that global
+  file pointed at an unrelated GENESIS checkout and dropped the run to an
+  interactive prompt.
+- **`mpich.cfg`** replaced with a documented example template (opt-in only).
+- **`run_lsm.slurm`** added: SLURM batch template for inf02/inf03.
+
+Validated behavior now (`NP=1 ./start.sh`): pins the correct SIMPATH, runs
+headless (no interactive hang), reaches `GRZEGORZ M. WOJCIK presents...`, and
+stops at the expected `Parlib error 23: postmaster doesn't exist` — the
+documented single-rank checkpoint. What remains is a real multi-rank run
+(`NP = pdim^2 + 1`) where PGENESIS/MPI is properly configured (UMCS cluster).
