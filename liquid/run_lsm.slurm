@@ -11,9 +11,9 @@
 #
 # Before submitting:
 #   1. Edit the MPI module name below to match `module avail` on the cluster.
-#   2. Keep --ntasks == pdim^2 + 1. For a scaling sweep, change pdim in
-#      pparameters.g and --ntasks together (pdim=4 -> 17, 6 -> 37, 8 -> 65,
-#      10 -> 101, 12 -> 145).
+#   2. Keep --ntasks == pdim^2 + 1. pdim must divide 16, so valid values are
+#      pdim = 2/4/8/16 -> --ntasks = 5/17/65/257. For a scaling sweep, change
+#      pdim in pparameters.g and --ntasks together. Max for this model: pdim=16.
 #   3. Submit from the liquid/ directory:  sbatch run_lsm.slurm
 #
 # Prepared by Karol Chlasta (karol@chlasta.pl), 2026-07-15.

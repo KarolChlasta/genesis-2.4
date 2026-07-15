@@ -74,3 +74,7 @@ paper/__pycache__/
 paper/.claude/
 *.spl
 !genesis/src/diskio/interface/netcdf/netcdf-3.4/src/macros.make
+
+# Private cluster-access correspondence + requirements (do NOT publish:
+# public repo; contains third-party names/contact from private email thread)
+cluster/

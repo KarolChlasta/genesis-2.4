@@ -50,13 +50,21 @@ sbatch run_lsm.slurm
 
 ## Rank count vs pdim (single source of truth: `pparameters.g`)
 
-| pdim | workers (pdim^2) | NP (--ntasks) |
-|-----:|-----------------:|--------------:|
-|    4 |               16 |            17 |
-|    6 |               36 |            37 |
-|    8 |               64 |            65 |
-|   10 |              100 |           101 |
-|   12 |              144 |           145 |
+`pdim` **must divide 16** (retina/readout are a fixed 16x16 grid tiled as
+`patchdim = 16/pdim`), so only these values are valid. The reservoir is a full
+8x8x16 = 1024-neuron column *per node*, so total neurons scale as `pdim^2 * 1024`
+(weak scaling, ~1024 neurons per rank).
+
+| pdim | workers (pdim^2) | NP (--ntasks) | reservoir neurons |
+|-----:|-----------------:|--------------:|------------------:|
+|    2 |                4 |             5 |             4,096 |
+|    4 |               16 |            17 |            16,384 |
+|    8 |               64 |            65 |            65,536 |
+|   16 |              256 |           257 |           262,144 |
+
+Largest configuration this model allows unmodified: `pdim=16` -> 257 ranks,
+~262k HH neurons (+512 retina/readout). To go bigger, edit `array_Nx/Ny/Nz`
+(column size) or the 16x16 grid dimension in the model.
 
 For an MPI scaling sweep, change `pdim` in `pparameters.g` and re-run;
 `start.sh` picks up the new `NP` automatically (keep `--ntasks` in sync under
