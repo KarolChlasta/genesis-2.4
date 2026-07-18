@@ -145,6 +145,42 @@ works downsample to **32×32 or 64×64** with little accuracy loss. Practical pl
 16×16 to close the loop → 32–64 (post-refactor) as the sweet spot → 128×128 as the
 ceiling after refactor + sparse connectivity.
 
+## Related work & comparability
+
+**Deckers, Tsang, Van Leekwijck, Latré — "Extended liquid state machines for
+speech recognition", Frontiers in Neuroscience, 2022**
+(<https://www.frontiersin.org/journals/neuroscience/articles/10.3389/fnins.2022.1023470/full>).
+A recent, peer-reviewed playbook for improving LSMs — closely aligned with this
+plan:
+
+- **Validates our readout choice:** they train only a linear classifier (logistic
+  regression) on spike counts — exactly what `train_readout.py` does.
+- **A concrete recipe for improving the reservoir** (matches the improvement axes
+  we identified for the Wójcik liquid), with quantified gains (+5.2% accuracy,
+  −20% spikes):
+  1. **E/I balance → edge-of-chaos** dynamics,
+  2. **spike-frequency adaptation (SFA)** → larger memory capacity,
+  3. **neuronal heterogeneity** (diverse membrane time constants).
+- **Benchmarks:** SHD, TI-46, Google Speech Commands, N-TIDIGITS (speech /
+  neuromorphic-audio).
+
+**Where we differ / our niche:**
+- They use conductance-based **LIF**; our liquid is **multicompartmental
+  Hodgkin–Huxley** (more biophysical, more expensive → our GPU/MPI acceleration
+  story matters more).
+- They have **no HPC angle**; the GENESIS 2.5 CUDA/MPI acceleration
+  (A40/A100/H200) is our distinct contribution — complementary to their
+  algorithmic work.
+
+## Optional / complementary task: SHD (Spiking Heidelberg Digits)
+
+Besides DVS-Gesture (vision), **SHD** is worth considering — it is spike-native
+(cochlear channels over time), smaller and simpler to inject than downsampled DVS,
+and gives **direct comparability with Deckers et al.** ("we compared against
+Deckers et al. on SHD" is a strong paper line). Same three-stage pipeline; only
+the Stage-1 encoder changes (audio-spike channels → input layer instead of a
+16×16 retina). Could run alongside or instead of DVS-Gesture.
+
 ## Tie-in with the GENESIS 2.5 paper
 
 Same model yields **accuracy on a recognized benchmark** AND **wall-clock across
