@@ -1,6 +1,11 @@
 genesis-2.4
 ===========
 
+> **Note:** Active development has moved to a separate repository, **GENESIS 2.5**,
+> which adds first-class accelerator support (OpenCL + CUDA) and PGENESIS/MPI
+> scaling on top of GENESIS 2.4. This public repository is retained for reference
+> and may lag behind the current work.
+
 Repository for continued development of the GENESIS 2.4 neural simulator
 ------------------------------------------------------------------------
 
