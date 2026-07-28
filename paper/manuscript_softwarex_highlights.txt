@@ -1,0 +1,9 @@
+Adds opt-in OpenCL and CUDA GPU backends to GENESIS 2.4 / PGENESIS 2.4.
+No changes needed to existing CPU, MPI, model, or SLI-script workflows.
+CUDA validated on RTX 4090 and UMCS A100/A40; parity to fp64 CPU (~7e-8 V).
+New GPU tridiagonal Hines solver for real dendritic trees (not just single
+compartments): validated speedups up to 82.1x (A100), 60.7x (RTX 4090),
+37.3x (A40) at N=50,000 neurons, still rising with N.
+Fixes three latent Hines-solver defects affecting any multi-neuron hsolve.
+Fixes five O(n^2) GENESIS model-construction defects (any user, any
+backend): builds a 100,000-neuron, 1.7M-compartment population in 51.5s.

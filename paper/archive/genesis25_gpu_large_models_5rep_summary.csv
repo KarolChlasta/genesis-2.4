@@ -1,0 +1,7 @@
+benchmark,mode,config,n,mean_s,sd_s,ci95_s,min_s,max_s,mean_error_lines,fail_count
+mesoscale_sparse_benchmark,GPU,N20000_S20000,5,13.244784,0.107601,0.094316,13.090125,13.361342,0.00,0
+mesoscale_sparse_benchmark,GPU,N30000_S20000,5,26.929601,0.242239,0.212332,26.604143,27.208601,0.00,0
+biophysical_cellscale_benchmark,GPU,N2000_S20000,5,0.391455,0.014808,0.012980,0.376872,0.414826,0.00,0
+biophysical_cellscale_benchmark,GPU,N4000_S20000,5,0.777843,0.012100,0.010606,0.760230,0.791707,0.00,0
+region_proxy_microcircuit_benchmark,GPU,EX120x120_INH60x60_S20000,5,0.274024,0.012599,0.011043,0.257468,0.292479,0.00,0
+region_proxy_microcircuit_benchmark,GPU,EX160x160_INH80x80_S20000,5,0.310092,0.007011,0.006146,0.301270,0.320024,0.00,0

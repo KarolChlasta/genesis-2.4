@@ -1,0 +1,45 @@
+Starting Genesis
+Executable:         /datadisk/od-kchlasta/5.Dev/GitHub/genesis-2.4/genesis/src/nxgenesis
+The kinetics library is copylefted under the LGPL, see kinetics/COPYRIGHT.
+
+Simulation Script:  genesis/Scripts/benchmark/ocl_hh_benchmark.g
+=== OCL HH Benchmark (single hsolve, N neurons) ===
+Neurons:    1000
+Steps:      5000
+dt:         5e-05  s
+
+/library
+/
+Building HH cells...
+changing clock [0] from 1 to 5e-05
+Configuring single hsolve (chanmode=4, calcmode=1, N= 1000  neurons)...
+ncompts:  1000
+nchips:   11000
+time = 0.000000 ; step = 0          
+OCL: urzadzenie: gfx1150
+OCL: gotowy (1000 kompartmentow, 11000 chips)
+time = 0.000500 ; step = 10          
+completed 10 steps in 0.250206 cpu seconds
+user time used		= 0 sec  282159 usec
+system time used	= 0 sec  56024 usec
+time = 0.250500 ; step = 5010          
+completed 5000 steps in 1.049385 cpu seconds
+user time used		= 1 sec  331594 usec
+system time used	= 0 sec  71922 usec
+
+=== Results ===
+Neurons:               1000
+Steps:                 5000
+Total wall time:       0  s
+Time per step:         0  s
+Time per neuron/step:  0  us
+
+(OCL PROFILING SUMMARY printed at exit by atexit handler)
+OCL PROFILING SUMMARY
+  steps profiled  : 5010
+  kernel total    : 52.717 ms  (10.52 us/step)
+  ocl_chip_update : 585.437 ms  (wall incl. transfers)
+  GPU active frac : 9.00%  (kernel / ocl_chip_update wall)
+  NOTE: ocl_chip_update is only the channel-update fraction
+        of total step time. Hines solver runs on CPU.
+OCL: zasoby zwolnione

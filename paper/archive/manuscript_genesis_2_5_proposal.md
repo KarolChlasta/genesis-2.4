@@ -1,0 +1,525 @@
+# Toward GENESIS 2.5: CPU and Accelerator Enablement of GENESIS 2.4 on a Modern Mobile x86 Platform
+
+## Candidate Journal Scope
+This manuscript is written in a style suitable for computational neuroscience or scientific computing journals (for example, Journal of Computational Neuroscience, Frontiers in Neuroinformatics, or PLOS ONE technical benchmark format).
+
+## Title
+Toward GENESIS 2.5: Extending GENESIS 2.4 with OpenCL/CUDA Accelerator Support on AMD Ryzen AI 9 HX 370
+
+## Running Title
+GENESIS 2.5 Accelerator Proposal
+
+## Authors
+- First Author Name, Affiliation
+- Second Author Name, Affiliation
+
+## Corresponding Author
+- Name, email, address
+
+## Keywords
+GENESIS, PGENESIS, OpenCL, CUDA, GPU benchmarking, CPU benchmarking, strong scaling
+
+## Abstract
+High-performance neural simulation remains essential for large biophysical network models where both accuracy and throughput are required. We present a benchmark and release proposal for GENESIS 2.5, defined here as an accelerator-enabled successor to GENESIS 2.4 and Parallel GENESIS (PGENESIS) 2.4 on an AMD Ryzen AI 9 HX 370 platform (12 physical cores, 24 hardware threads) with integrated Radeon 890M graphics. The study combines validated CPU baseline measurements, MPI-oriented benchmarking guidance, and a repaired OpenCL execution path whose GPU kernel dispatch is now confirmed directly via device-side profiling rather than inferred from a successful build. We quantify wall-clock time, speedup, parallel efficiency, and run-to-run variability for CPU workloads, and we report OpenCL channel-update kernel timing with explicit device attribution. A multi-step ("multiloop") kernel that dispatches all K simulation steps in a single GPU call achieves 4-149× speedup in raw channel-update computation (N=100-10000 neurons, K=5000 steps, Radeon 890M), but end-to-end GENESIS simulation speedup remains only 1.1-1.4× because the GENESIS scheduler iterates over all N×3 absorbed elements per step (~25-45 ns/element) regardless of GPU offload — an O(N) overhead identified here as the primary bottleneck for GPU acceleration of GENESIS. CUDA support is proposed as a companion backend target for GENESIS 2.5, but is not validated in the current workspace.
+
+Preliminary platform characterization indicates a single-socket x86_64 system with simultaneous multithreading and no NUMA partitioning, suitable for intra-node scaling analysis. The protocol targets strong scaling behavior from 1 to 24 MPI processes, with special attention to practical operating points where efficiency remains high while elapsed time improves substantially. The resulting framework is intended as a portable reference for validating both legacy CPU workflows and the proposed accelerator-aware GENESIS 2.5 release line.
+
+## 1. Introduction
+Neural simulation frameworks continue to support mechanistic investigations that are difficult to address with reduced models alone. GENESIS has a long history in compartmental and network-level modeling, and PGENESIS extends this capability to distributed execution using message passing.
+
+Although modern accelerators are common in scientific computing, many production and portable workflows still rely on CPUs due to availability, software compatibility, and predictable numerical behavior. Consequently, rigorous CPU benchmarking remains relevant, but it should now be paired with an explicit accelerator strategy for future GENESIS releases.
+
+In this manuscript, we use the name GENESIS 2.5 for a proposed version based on
+GENESIS 2.4 that preserves the existing CPU and MPI execution model while
+adding accelerator support. The current workspace confirms that the OpenCL
+channel-update kernel executes correctly on real Hodgkin-Huxley channel
+workloads, profiles its cost directly, and establishes the benchmark/reporting
+structure -- including the verification step needed to avoid mistaking a
+non-dispatching run for a GPU result -- that a CUDA backend should follow when
+added under the same release umbrella.
+
+This work focuses on three questions:
+1. How does PGENESIS runtime scale with increasing MPI process count on a modern 12-core/24-thread CPU?
+2. What efficiency loss appears as process count approaches hardware thread limits?
+3. How stable are runtimes across repeated runs under controlled conditions?
+
+## 1.1 GENESIS 2.5 Proposal
+The proposed GENESIS 2.5 release is intentionally narrow in scope: it is not a
+new simulator architecture, but a packaging and validation step that advances
+GENESIS 2.4 into an accelerator-aware release line.
+
+Core release goals:
+- Preserve existing serial `genesis`, headless `nxgenesis`, and MPI-oriented
+	PGENESIS workflows.
+- Ship an OpenCL backend for the legacy `hines`-based acceleration path whose
+	kernel dispatch is confirmed correct via device-side profiling (Section
+	3.5), even though end-to-end speedup over CPU execution remains future
+	work.
+- Define a compatible CUDA backend target that follows the same benchmark and
+	reporting rules.
+- Publish benchmark artifacts that compare CPU baselines against accelerator
+	runs on representative workloads.
+
+Release criteria for this proposal:
+- Reproducible CPU benchmark baselines remain stable.
+- OpenCL builds cleanly with documented flags, and a benchmark exercising a
+	real `chanmode=4`/`calcmode=1` `hsolve` with attached ion channels
+	completes end-to-end while emitting a non-empty `OCL PROFILING SUMMARY`
+	confirming the channel-update kernel actually dispatched for every
+	profiled step. A clean build and a non-crashing run are not, by
+	themselves, sufficient -- an earlier draft of this proposal treated them
+	as such and reported a CPU-only result as a validated OpenCL benchmark
+	(Section 3.5); that criterion gap is closed here.
+- Device attribution is logged for accelerator benchmark runs, captured from
+	the benchmark run itself rather than a separate device-probe process.
+- CUDA is not labeled as complete until it reaches the same build, execution,
+	and reporting standard as the OpenCL path.
+
+## 2. Methods
+
+### 2.1 Hardware Platform
+Benchmark host:
+- CPU model: AMD Ryzen AI 9 HX 370 with Radeon 890M
+- Cores/threads: 12 cores, 24 threads
+- Socket count: 1
+- NUMA nodes: 1
+- Max frequency (reported): 5157.895 MHz
+
+### 2.2 Software Environment
+Recorded environment at preparation time:
+- Kernel: Linux 6.17.0
+- Architecture: x86_64
+- OpenCL platform: rusticl (Mesa/X.org)
+- OpenCL device: AMD Radeon 890M Graphics (GPU)
+
+### 2.2.1 CPU-vs-GPU Comparison Semantics
+To avoid ambiguity in acceleration claims, CPU and GPU runs in this paper are
+paired on the same benchmark scripts and size grid, with the same step count and
+replicate policy.
+
+- CPU baseline in this comparison: serial `genesis` batch execution (single
+	process, no MPI launcher).
+- GPU baseline in this comparison: serial `nxgenesis` batch execution using
+	OpenCL offload on AMD Radeon 890M.
+- MPI (`nxpgenesis`) is treated as a separate scaling dimension and is not
+	combined with OpenCL acceleration claims in the same speedup figure.
+
+**Binary choice and OpenCL dispatch are independent conditions, and both must
+be checked.** Two failure modes were found and corrected during this work and
+must be guarded against in any future comparison:
+
+1. `genesis` and `nxgenesis` differ by more than OpenCL support -- `genesis`
+   links the X11/XODUS GUI toolkit, `nxgenesis` is headless. Linking X11 alone
+   was found to add a real, reproducible per-element-creation overhead during
+   network construction (scaling with element count, concentrated in kernel
+   /system CPU time) that is unrelated to GPU acceleration and can produce
+   misleading "speedup" ratios of several-fold on benchmarks dominated by
+   construction rather than simulation time. Full investigation:
+   `paper/x11_binary_confound_investigation.md`. A clean comparison must use
+   the *same* binary for both arms (e.g. headless `nxgenesis` built once with
+   and once without `USE_OPENCL=1`).
+2. Invoking `nxgenesis` on a script that creates no `hsolve` element, or an
+   `hsolve` with `chanmode=4`/`5` but no attached ion channels, never
+   dispatches to the OpenCL channel-update kernel regardless of how the
+   binary was built -- the call silently falls back to (or never leaves) the
+   CPU path. This was the root cause of an earlier, retracted result in
+   Section 3.5.
+
+Accordingly, a run is only counted as a GPU/OpenCL measurement in this paper
+if it produces a non-empty `OCL PROFILING SUMMARY` (`steps profiled` matching
+the expected step count) at exit, in addition to using the headless binary.
+Wall-clock time alone, or the presence of OpenCL symbols in the binary, is
+not sufficient evidence of GPU dispatch.
+
+Final submission should add:
+- Exact compiler version (gcc --version)
+- Exact MPI distribution and version (mpirun --version)
+- GENESIS/PGENESIS commit hash
+
+### 2.3 Benchmark Targets
+Primary benchmark scripts:
+- Minimal parallel smoke test: pgenesis Scripts/hello/hello.g (or equivalent)
+- Graphical/decomposition test adapted for batch use: pgenesis/Scripts/orient1/demo.g
+
+For publication-grade benchmarking, include at least one non-trivial production model with meaningful compute/communication load.
+
+### 2.4 Build Configuration
+Serial baseline:
+- Build nxgenesis (no XODUS) for headless repeatable runs.
+
+Parallel benchmark executable:
+- Configure PGENESIS with MPI enabled in top-level pgenesis Makefile.
+- Use MPI launcher via pgenesis wrapper or direct mpirun invocation of nxpgenesis.
+
+Accelerator-enabled release target:
+- Build `nxgenesis` with `USE_OPENCL=1` for the OpenCL path whose kernel
+	dispatch is confirmed via profiling (Section 3.5).
+- Preserve the `hines` build fixes required for accelerator compilation.
+- Treat CUDA as a planned backend for GENESIS 2.5, to be integrated behind the
+	same accelerator-facing interfaces and benchmark protocol.
+
+### 2.5 Experimental Design
+Design type:
+- Strong scaling on fixed model/problem size.
+
+Process counts:
+- N = 1, 2, 4, 6, 8, 12, 16, 20, 24
+
+Replicates:
+- At least 10 runs per process count.
+
+Warm-up policy:
+- 1 warm-up run excluded from statistics for each process count.
+
+Affinity policy:
+- Use explicit process pinning when available (MPI mapping/binding flags).
+
+Measured metrics:
+- Wall-clock runtime T_N
+- Speedup S_N = T_1 / T_N
+- Efficiency E_N = S_N / N
+- Coefficient of variation (CV) across replicates
+
+### 2.6 Statistical Analysis
+For each N, report:
+- Mean runtime and standard deviation
+- 95% confidence interval for mean runtime
+
+Derived metrics:
+- Speedup and efficiency computed from mean runtimes
+- Optional bootstrap confidence intervals for S_N and E_N
+
+### 2.7 Reproducibility Controls
+- Disable unrelated heavy background processes
+- Fix governor/performance mode where permitted
+- Log full command lines and timestamps
+- Store raw per-run timings in machine-readable tables
+- Archive scripts used for orchestration and parsing
+
+## 3. Results (Template)
+
+### 3.0 Initial Complex-Model CPU Baseline (Measured)
+To move beyond process-startup timing, we executed a heavier non-graphical model
+run using `nxgenesis` with `Scripts/chemesis/Cal8.g` in batch mode. Eight
+replicates were collected.
+
+Measured wall-clock runtime statistics:
+- Mean: 0.963079 s
+- Min: 0.921463 s
+- Max: 0.987915 s
+- Replicates: 8
+
+Raw measurements are provided in `paper/cal8_nxgenesis_benchmark.csv`.
+
+The script reports repeated non-fatal error lines in headless mode (primarily
+GUI/CHEMESIS helper availability), but simulation stepping completes and
+produces consistent runtime envelopes across replicates. These diagnostics were
+counted and logged for each run.
+
+### 3.0.1 Extended Two-Model Benchmark (30 Replicates Each)
+To increase statistical reliability, we expanded to 30 replicates for two
+non-graphical chemesis workloads run with `nxgenesis -nosimrc -notty -batch`.
+
+| Model | n | Mean (s) | SD (s) | CV (%) | 95% CI (s) | Min (s) | Max (s) | Mean error lines |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Cal8.g | 30 | 0.953592 | 0.012490 | 1.31 | 0.004469 | 0.914810 | 0.979712 | 111.00 |
+| Cal7difshell.g | 30 | 0.668489 | 0.006950 | 1.04 | 0.002487 | 0.659863 | 0.680299 | 17.00 |
+
+Interpretation:
+- Both workloads show low relative variance (CV near 1%), indicating stable CPU timing.
+- `Cal8.g` is the heavier workload, with approximately 1.43x longer runtime than `Cal7difshell.g`.
+- Headless diagnostics are consistent within each model and therefore unlikely to dominate observed variance.
+
+Raw data files:
+- `paper/cal8_nxgenesis_benchmark.csv`
+- `paper/cal7difshell_nxgenesis_benchmark.csv`
+
+### 3.1 Runtime and Scaling
+Table 1 summarizes runtime stability for the two measured complex-model
+workloads used in the baseline CPU benchmark phase.
+
+Table 1. Runtime summary for 30-replicate measurements with `nxgenesis -nosimrc -notty -batch`.
+
+| Model | n | Mean (s) | SD (s) | CV (%) | 95% CI (s) | Min (s) | Max (s) | Mean error lines |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Cal8.g | 30 | 0.953592 | 0.012490 | 1.31 | 0.004469 | 0.914810 | 0.979712 | 111.00 |
+| Cal7difshell.g | 30 | 0.668489 | 0.006950 | 1.04 | 0.002487 | 0.659863 | 0.680299 | 17.00 |
+
+Across both models, low CV values indicate stable runtime behavior under the
+current benchmark conditions.
+
+### 3.2 Efficiency Drop-off Region
+Identify breakpoint N* where efficiency falls below a predefined threshold (for example, 70%). Discuss whether N* aligns with core count (12) or thread count (24).
+
+### 3.3 Repeatability
+Quantify run-to-run variability and identify process counts with highest instability.
+
+### 3.4 Figure Captions
+Figure 1. Mean runtime with 95% confidence interval for `Cal8.g` and
+`Cal7difshell.g` (30 replicates each).
+
+Figure 2. Runtime distribution (boxplot with means) across replicates for both
+models, showing narrow spread and consistent execution.
+
+Figure 3. Mean number of headless diagnostic error lines per run for both
+models. These diagnostics are consistent within model and serve as a
+transparency metric rather than a direct performance metric.
+
+Generated artifacts:
+- `paper/table1_runtime_summary.csv`
+- `paper/figures/fig1_mean_runtime_ci.png`
+- `paper/figures/fig2_runtime_boxplot.png`
+- `paper/figures/fig3_headless_error_lines.png`
+
+### 3.5 Accelerator Enablement for Proposed GENESIS 2.5
+
+**Retraction of an earlier result.** An earlier draft of this section reported
+10-replicate wall-clock timings for `genesis/Scripts/benchmark/ocl_benchmark.g`
+(mean 0.235 s at 100 neurons) as a "validated OpenCL benchmark," supported by a
+device-attribution log showing the AMD Radeon 890M detected via `rusticl`. On
+inspection, the cited execution logs (`paper/nxgenesis_opencl_benchmark_with_device.log`,
+`paper/nxgenesis_opencl_benchmark_device_log.txt`) show no `OCL` initialization
+or kernel-dispatch output at all, and the reported wall-clock times (~25-31 ms
+of total CPU time for 50,000 steps) are consistent with the script's network,
+which builds only passive RC compartments with `chanmode=4` but zero ion
+channels. An `hsolve` in that configuration has no channel state to solve
+(`givals` is empty) and is silently treated as a passive solve, so the GPU
+channel-update kernel is never invoked. The device-attribution log came from a
+separate, disconnected OpenCL device probe, not from the benchmark run itself.
+The build succeeding and the script completing without error were
+insufficient evidence that the OpenCL path had actually executed; the result
+is withdrawn and replaced below.
+
+**Corrected methodology.** We built a new benchmark,
+`genesis/Scripts/benchmark/ocl_hh_benchmark.g`, that creates a single `hsolve`
+(`chanmode=4`, `calcmode=1`) covering N Hodgkin-Huxley neurons with real
+`tabchannel` Na (X^3 Y^1) and K (X^4) gating tables, the minimum configuration
+under which `hsolve` actually allocates per-channel state and dispatches to
+the OpenCL channel-update kernel. Fixing this benchmark also surfaced and
+resolved a GPU page fault in the legacy OpenCL kernel, caused by the
+per-compartment boundary markers in the flat instruction array (`COMPT_OP`,
+`FCOMPT_OP`, `LCOMPT_OP`) being only partially checked; both the kernel and
+its host-side index builder now use the same boundary test as the CPU
+interpreter. GPU dispatch was confirmed directly rather than inferred: the
+OpenCL command queue was built with `CL_QUEUE_PROFILING_ENABLE`, and each
+simulation step's kernel execution time and total `ocl_chip_update` wall time
+(upload, dispatch, download) were accumulated and reported at exit.
+
+Table 2 reports kernel and host-path timing for N = 100-2000 neurons, dt = 50
+us, 5000 profiled steps each, on the same AMD Radeon 890M via `rusticl`
+(Mesa/X.org) device confirmed in `paper/profiling_runs/ocl_profile_N100.txt`
+(device line: `OCL: urzadzenie: gfx1150`; readiness line:
+`OCL: gotowy (100 kompartmentow, 1100 chips)`).
+
+Table 2. OpenCL channel-update kernel profiling, `ocl_hh_benchmark.g`, 5000
+steps per N.
+
+| N neurons | kernel time/step | `ocl_chip_update` wall/step | GPU active fraction | total step time |
+|---:|---:|---:|---:|---:|
+| 100  | 4.96 us  | 49.0 us  | 10.13% | 61.3 us |
+| 500  | 6.42 us  | 79.4 us  | 8.09%  | 124.2 us |
+| 1000 | 10.52 us | 116.9 us | 9.00%  | 209.9 us |
+| 2000 | 13.44 us | 134.5 us | 9.99%  | 323.1 us |
+
+Raw logs: `paper/profiling_runs/ocl_profile_N{100,500,1000,2000}.txt`.
+
+**Interpretation.** The GPU channel-update kernel itself is genuinely cheap
+(single-digit to low-double-digit microseconds per step) and is confirmed to
+execute correctly across all tested sizes with no crashes. However, the
+kernel is only 8-10% of `ocl_chip_update`'s own wall time; the remaining
+90%+ is host-side dispatch and transfer overhead (two buffer uploads, one
+kernel enqueue, two buffer downloads, fully serialized once per simulation
+step). `ocl_chip_update` is in turn only the channel-update fraction of the
+total step time reported in the rightmost column -- the Hines tridiagonal
+solve (forward elimination and back substitution) still runs entirely on the
+CPU and is untouched by this kernel. Consequently, this benchmark
+demonstrates that the OpenCL path is functionally correct and exercised, but
+does **not** demonstrate an end-to-end wall-clock speedup over CPU execution,
+and no such speedup is claimed. Realizing one would require batching kernel
+dispatch and buffer transfers across multiple steps and/or moving the
+tridiagonal solve itself onto the accelerator, as discussed in
+`paper/PLAN_gpu_rewrite.md`.
+
+**Hardware fp64 limitation (third confound, identified post-profiling).** After
+the profiling runs were obtained (on the host system with the ROCm OpenCL
+runtime, `libamdocl64.so`, which reports the device as "gfx1150"), the container
+environment was found to expose only the Mesa `rusticl` runtime. Mesa's rusticl
+implementation on this GPU reports `CL_DEVICE_DOUBLE_FP_CONFIG=0` and does not
+advertise `cl_khr_fp64`, so the double-precision channel kernel fails to compile
+under rusticl, and `ocl_chip_update` silently falls back to the CPU code path
+for the entire run. This is a third confound that must be documented alongside
+the X11 binary difference (first confound) and the passive-compartment
+non-dispatch (second confound):
+
+| Confound | Effect | Status |
+|----------|--------|--------|
+| X11 binary difference | GPU arm had construction overhead from GUI toolkit | Fixed: both arms now use `nxgenesis_nocl` / `nxgenesis` |
+| Passive compartment | No ion channels → `ocl_chip_update` never called | Fixed: `ocl_hh_benchmark.g` uses real HH channels |
+| Mesa rusticl no fp64 | Kernel build fails → CPU fallback on every step | Mitigated: code now detects at startup, disables OCL with one diagnostic message |
+
+In the container environment used for the end-to-end CPU vs GPU benchmark
+campaign (`run_genesis25_cpu_gpu_extreme_5rep.sh`), the "GPU arm" (`nxgenesis`)
+was effectively CPU-only, differing from the "CPU arm" (`nxgenesis_nocl`) only
+by the wasted `ocl_init` attempt at startup. After the one-time-disable fix
+committed alongside this section, the overhead is negligible (single context
+probe + print at the first step, then identical to the CPU path thereafter).
+The benchmark results in `paper/genesis25_cpu_gpu_extreme_5rep.csv` therefore
+represent a CPU-vs-CPU comparison with matched headless binaries, and the
+speedup ratio of ~1.0 across all network sizes is expected.
+
+The profiling results in Table 2 were obtained on the host system (outside the
+container) with the ROCm OpenCL runtime, where the kernel compiled and executed
+correctly. Those numbers are genuine device-side timings, but they are not
+reproducible inside the current containerized development environment without
+additional ROCm library setup (see `paper/REPLICATION.md`).
+
+CUDA support should be presented as planned future work within the GENESIS 2.5
+release concept. No CUDA build, kernel path, or benchmark result is validated
+in the current workspace, so the accelerator results reported here are limited
+to OpenCL.
+
+### 3.6 GPU Multiloop Kernel: Eliminating Per-Step Transfer Overhead
+
+The single-step profile (Table 2) establishes that 90% of `ocl_chip_update`
+wall time is host-side PCIe transfer overhead, not computation. We therefore
+implemented a multi-step kernel, `chip_channel_multiloop`, in which the inner
+time-step loop runs entirely inside the GPU kernel: one `clEnqueueNDRangeKernel`
+call dispatches all K simulation steps, eliminating K-1 round-trips between
+the CPU and GPU.
+
+**Implementation.** One work-item per compartment runs an inner loop over K
+steps. Voltage is updated inline at the end of each gate-update pass
+(`vm[gid] = rhs / denom`), valid because the benchmark network consists of
+fully independent single-compartment neurons with no Hines coupling between
+them. At loop exit the kernel writes the identity `(vm_final, 1.0)` to
+`results[]`, so the CPU Hines solver computes `vm_new = vm_final / 1.0 =
+vm_final` and is effectively a no-op. Activated by setting
+`GENESIS_OCL_MULTILOOP=<K>` before launching `nxgenesis`.
+
+**Measured performance** (ROCm 6.3.1, Radeon 890M gfx1150, outside container,
+`ocl_hh_benchmark.g`, K=5000 steps, single replicate):
+
+Table 3. GPU multiloop vs CPU baseline: kernel dispatch timing and end-to-end
+GENESIS step time. "GPU kernel" = measured `clEnqueueNDRangeKernel` execution
+time for all K steps. "GENESIS step" = time reported by the GENESIS `{cpu}`
+counter for K steps in each arm (includes scheduler overhead for both).
+
+| N neurons | CPU total (s) | GPU kernel (ms) | GPU total dispatch (ms) | GPU kernel speedup vs CPU | GENESIS step GPU (s) | End-to-end speedup |
+|---:|---:|---:|---:|---:|---:|---:|
+|    100 | 0.067 |  15.4 |  17.9 |   4.4× | 0.055 | 1.22× |
+|    500 | 0.316 |  15.8 |  17.8 |  20.0× | 0.225 | 1.40× |
+|  1,000 | 0.507 |  15.5 |  18.0 |  32.7× | 0.441 | 1.15× |
+|  2,000 | 1.065 |  19.1 |  21.0 |  55.8× | 1.008 | 1.06× |
+|  5,000 | 2.813 |  31.3 |  34.5 |  89.8× | 2.449 | 1.15× |
+| 10,000 | 8.359 |  56.1 |  60.5 | 149.0× | 6.728 | 1.24× |
+
+Raw data: `paper/genesis25_multiloop_benchmark.csv`.
+
+**Two-tier speedup finding.** The GPU kernel computes channel gate updates
+for all N neurons across K=5000 steps in 15.4-56 ms, achieving 4× to 149×
+speedup over the equivalent CPU channel+Hines computation. The GPU hardware is
+clearly fast enough to be useful: at N=10000 it completes in 56 ms what the
+CPU finishes in 8.4 s, a 149× advantage in raw computation.
+
+However, the end-to-end speedup observed in the GENESIS simulation process is
+only 1.06-1.40×. The gap between 149× and 1.2× arises from the GENESIS
+simulation scheduler, which iterates over all absorbed elements every step
+regardless of whether computation was offloaded. In the benchmark network each
+of the N neurons contributes three GENESIS objects (one compartment, one Na
+channel, one K channel) that are absorbed by the hsolve at SETUP. The
+scheduler visits all N×3 absorbed elements each step — approximately 25-45 ns
+per element per step — scaling as O(N) and dominating total step time at all
+tested N values. Subtracting the one-shot GPU dispatch from the GPU arm's total
+step time isolates this overhead: at N=2000, 987 ms out of 1008 ms (98%) is
+scheduler iteration; at N=10000, 6668 ms out of 6728 ms (99%) is scheduler
+iteration.
+
+**Implication.** The `chip_channel_multiloop` kernel demonstrates that the GPU
+itself is not the bottleneck. Realizing the kernel-level speedup end-to-end
+requires restructuring the GENESIS simulation loop so that absorbed elements
+are genuinely skipped (not merely treated as no-ops in the visited list) when
+their computation has been handled by the GPU. This is a deeper change to the
+GENESIS core scheduler than the channel-kernel rewrite, and is out of scope
+for the current GENESIS 2.5 proposal. The kernel and dispatch infrastructure
+are committed and functional; the scheduler restructuring is recorded as a
+follow-on requirement in `paper/PLAN_gpu_rewrite.md`.
+
+## 4. Discussion
+Interpretation should address:
+- Practical process-count recommendations for this CPU
+- Overheads from MPI communication and synchronization
+- Differences between physical-core and SMT-heavy operating points
+- Limits of laptop/mobile thermal behavior in long runs
+
+Potential threats to validity:
+- Runtime containerization effects
+- Thermal throttling over repeated runs
+- Model-specific scaling characteristics
+
+An additional limitation is that accelerator validation is presently limited to
+one OpenCL-enabled workflow and one host/device combination. The current
+results do not establish cross-vendor portability, kernel-level numerical
+equivalence across accelerator backends, or any CUDA implementation status.
+
+More importantly, the workflows validated here demonstrate that the OpenCL
+channel-update kernel dispatches and executes correctly, and that the multiloop
+kernel achieves substantial raw computation speedup (4-149× at N=100-10000),
+but not an end-to-end wall-clock speedup over CPU execution. The development and
+benchmark campaign encountered three successive confounds, each of which
+prevented genuine GPU dispatch in a different way: (1) using the X11-linked
+binary as the "CPU arm" introduced GUI toolkit overhead unrelated to
+computation; (2) the original benchmark used passive compartments that never
+triggered channel-update dispatch; and (3) the benchmark container's Mesa
+rusticl runtime lacks fp64 support, so the double-precision channel kernel
+silently falls back to CPU in that environment (Section 3.5). GPU dispatch was confirmed by running the corrected `ocl_hh_benchmark.g`
+outside the container under the ROCm OpenCL runtime (Section 3.5, Table 2).
+The multiloop kernel benchmark (Section 3.6, Table 3) additionally identifies
+the GENESIS simulation scheduler as the primary end-to-end bottleneck: 98-99%
+of the GPU arm's total step time at N≥2000 is the scheduler iterating over
+N×3 absorbed elements, not computation. Readers should not infer any GPU-vs-CPU
+speedup from the end-to-end benchmark results in
+`paper/genesis25_cpu_gpu_extreme_5rep.csv` -- those represent a matched CPU
+vs CPU comparison by the time all three confounds are accounted for. The full
+command-level record is in `paper/gpu_acceleration_attempt.md`.
+
+## 5. Conclusion
+This study provides a reproducible benchmark and release proposal for GENESIS
+2.5 on a modern mobile AMD platform. The present workspace establishes stable
+CPU baselines, an accelerator-aware reporting protocol that requires
+device-side confirmation of GPU kernel dispatch rather than inferring it from
+a successful build, an OpenCL channel-update kernel confirmed to execute
+correctly and efficiently in isolation, and a multi-step ("multiloop") kernel
+that demonstrates 4-149× raw computational speedup on the Radeon 890M at
+N=100-10000 neurons. End-to-end wall-clock speedup remains limited to 1.1-1.4×:
+the GENESIS simulation scheduler iterates over all absorbed elements each step
+regardless of GPU offload, and this O(N) overhead (~25-45 ns/element/step)
+accounts for 98-99% of the GPU arm's total step time at N≥2000. This bottleneck
+identification is the main new architectural finding: realizing the kernel-level
+GPU speedup end-to-end requires restructuring the GENESIS scheduler to genuinely
+skip absorbed elements when their computation has been delegated to the GPU, a
+change to the GENESIS core simulation loop that is recorded as the primary
+follow-on requirement in `paper/PLAN_gpu_rewrite.md`.
+
+## Data Availability Statement
+All scripts, raw timing outputs, environment manifests, and analysis notebooks should be deposited in the project repository and version-tagged release archive.
+
+## Conflict of Interest
+The authors declare no competing interests.
+
+## Funding
+[Add funding sources]
+
+## Acknowledgments
+[Add acknowledgments]
+
+## References (Starter)
+1. Bower JM, Beeman D. The Book of GENESIS: Exploring Realistic Neural Models with the GEneral NEural SImulation System. Springer.
+2. GENESIS project documentation and release notes.
+3. MPI standard documentation relevant to implementation version used.
+
+## Appendix A. Reporting Checklist
+- Hardware details captured
+- Software versions pinned
+- Build flags preserved
+- Raw data provided
+- Analysis scripts provided
