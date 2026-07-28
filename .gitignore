@@ -1,0 +1,90 @@
+# Pliki binarne z kompilacji GENESIS
+genesis/src/**/*.o
+genesis/src/**/*@.c
+# hines_d@.c committed with anonymous-field patch (sizeof(#) invalid on GCC 15)
+!genesis/src/hines/hines_d@.c
+genesis/src/**/*@.h
+genesis/src/**/lex.yy.c
+genesis/src/**/y.tab.c
+genesis/src/**/y.tab.h
+genesis/src/sys/code_g
+genesis/src/sys/code_func
+genesis/src/sys/code_lib
+genesis/src/sys/code_sym
+genesis/src/convert/convert
+genesis/src/sprng/**/*.a
+genesis/src/sprng/check.*
+genesis/src/sprng/check_*
+genesis/src/sprng/timelfg
+genesis/src/diskio/interface/netcdf/netcdf-3.4/src/config.*
+genesis/src/diskio/interface/netcdf/netcdf-3.4/src/macros.make
+genesis/src/diskio/interface/netcdf/netcdf-3.4/src/libsrc/*.c
+genesis/src/diskio/interface/netcdf/netcdf-3.4/src/libsrc/*.a
+genesis/src/diskio/interface/netcdf/netcdf-3.4/src/ncdump/ncdump
+genesis/src/diskio/interface/netcdf/netcdf-3.4/src/ncgen/ncgen
+genesis/src/diskio/interface/netcdf/netcdflib
+genesis/src/**/lib*.a
+genesis/src/nxgenesis
+genesis/src/nxloadlib.c
+genesis/src/nxloadlib.o
+genesis/src/loadlib.c
+genesis/src/liblist
+genesis/src/genesis
+genesis/nxgenesis
+genesis/genesis
+genesis/src/diskio/interface/netcdf/netcdf-3.4/src/confdefs.h
+# ncconfig.h committed as pre-filled platform config (configure cross-compile false positive)
+!genesis/src/diskio/interface/netcdf/netcdf-3.4/src/libsrc/ncconfig.h
+genesis/bin/
+genesis/lib/
+genesis/include/
+genesis/startup/
+genesis/.simrc
+genesis/.nxsimrc
+genesis/.minsimrc
+genesis/Libmake
+genesis/Usermake
+genesis/Doc/convert.txt
+genesis/man/man1/convert.1
+
+# PGENESIS build artifacts
+pgenesis/bin/
+pgenesis/lib/Linux/
+pgenesis/src/lib/
+pgenesis/src/par/*.o
+pgenesis/src/par/*.a
+pgenesis/src/par/par_d@.*
+pgenesis/src/par/par_g@.*
+pgenesis/src/par/par_l@.*
+pgenesis/src/liblistfilter
+pgenesis/src/nxliblist
+pgenesis/src/nxloadlib.c
+pgenesis/src/nxloadlib.o
+
+# genesis headless binary (rebuilt from source)
+genesis/src/nxgenesis_nocl
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+
+# Python cache
+paper/__pycache__/
+paper/.claude/
+*.spl
+!genesis/src/diskio/interface/netcdf/netcdf-3.4/src/macros.make
+
+# cluster/ holds private cluster-access material. The raw email drafts
+# (mail_*.md) contain third-party names/contact from a private thread and MUST
+# stay untracked. The technical requirements (GENESIS25_wymagania_*_v2.tex/.pdf)
+# are force-added (git add -f) into the PRIVATE genesis-2.5 repo only.
+# WARNING: do not push master to the public genesis-2.4 fork, or the tracked
+# requirements doc (names prof. Wójcik + cluster specs) would become public.
+cluster/
+
+# liquid/ (Wójcik LSM / functional-LSM research) is a SEPARATE, unpublished
+# project, not part of the genesis-2.5 accelerator release. Scrubbed from
+# master's history 2026-07-27 ahead of making this repo public -- must stay
+# untracked here.
+liquid/

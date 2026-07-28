@@ -69,7 +69,7 @@ def speedup_by_n(rows: list[Row]) -> tuple[list[int], list[float], list[float]]:
 
 
 def main() -> None:
-    root = Path(__file__).resolve().parent
+    root = Path(__file__).resolve().parent.parent
     logs = root.parent / "cluster_bringup" / "logs"
     figures = root / "figures"
     figures.mkdir(exist_ok=True)

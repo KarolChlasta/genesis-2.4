@@ -7,15 +7,15 @@
 # internally strips the last command-line argument, so a dummy "0" is appended.
 #
 # Usage: bash paper/run_pgenesis_mpi_scaling.sh
-# Output: paper/genesis25_pgenesis_mpi_scaling.csv
+# Output: paper/data/genesis25_pgenesis_mpi_scaling.csv
 
 set -euo pipefail
 
-REPO="$(cd "$(dirname "$0")/.." && pwd)"
+REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 PGEN="$REPO/pgenesis/bin/Linux/nxpgenesis"
 BENCH="$REPO/genesis/Scripts/benchmark/hh1952_mpi_scaling.g"
 MPIRUN="/home/griffi/.local/bin/mpirun"
-CSV="$REPO/paper/genesis25_pgenesis_mpi_scaling.csv"
+CSV="$REPO/paper/data/genesis25_pgenesis_mpi_scaling.csv"
 
 N_TOTAL=2400
 N_STEPS=5000

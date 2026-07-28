@@ -23,7 +23,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 CPU_BIN="$REPO_ROOT/genesis/src/nxgenesis_nocl"
 GPU_BIN="$REPO_ROOT/genesis/src/nxgenesis"
@@ -53,7 +53,7 @@ if [ ! -x "$GPU_BIN" ]; then
 fi
 
 # CSV output
-CSV="$SCRIPT_DIR/genesis25_multiloop_benchmark.csv"
+CSV="$SCRIPT_DIR/../data/genesis25_multiloop_benchmark.csv"
 echo "mode,neurons,steps,rep,wall_seconds,genesis_step_seconds" > "$CSV"
 
 # ---- helper: run one arm and extract timing ----

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 CPU=genesis/src/nxgenesis_nocl
 GPU=genesis/src/nxgenesis
-OUT=paper/genesis25_cpu_gpu_extreme_5rep.csv
-SUMMARY=paper/genesis25_cpu_gpu_extreme_5rep_summary.csv
-SPEEDUP=paper/genesis25_cpu_gpu_extreme_5rep_speedup.csv
+OUT=paper/data/genesis25_cpu_gpu_extreme_5rep.csv
+SUMMARY=paper/data/genesis25_cpu_gpu_extreme_5rep_summary.csv
+SPEEDUP=paper/data/genesis25_cpu_gpu_extreme_5rep_speedup.csv
 
 echo "benchmark,size_key,size_value,config,steps,replicate,mode,real_seconds,error_lines,exit_code" > "$OUT"
 
@@ -89,9 +89,9 @@ python3 - <<'PY'
 import csv
 from collections import defaultdict
 
-inp='paper/genesis25_cpu_gpu_extreme_5rep.csv'
-out='paper/genesis25_cpu_gpu_extreme_5rep_summary.csv'
-out_speed='paper/genesis25_cpu_gpu_extreme_5rep_speedup.csv'
+inp='paper/data/genesis25_cpu_gpu_extreme_5rep.csv'
+out='paper/data/genesis25_cpu_gpu_extreme_5rep_summary.csv'
+out_speed='paper/data/genesis25_cpu_gpu_extreme_5rep_speedup.csv'
 
 groups=defaultdict(list)
 errs=defaultdict(list)

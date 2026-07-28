@@ -14,7 +14,7 @@ source** — one with the OpenCL channel-update kernel compiled in (`USE_OPENCL=
 and one without. Using the X11-linked `genesis` binary as the CPU arm is invalid:
 it has per-element construction overhead from the GUI toolkit that scales with
 network size and is unrelated to GPU acceleration. Full investigation:
-`paper/x11_binary_confound_investigation.md`.
+`paper/docs/x11_binary_confound_investigation.md`.
 
 ---
 
@@ -108,7 +108,7 @@ source.
 ```bash
 LD_LIBRARY_PATH=/opt/rocm-6.3.1/lib \
 OCL_ICD_VENDORS=/run/host/etc/OpenCL/vendors \
-./paper/run_genesis25_multiloop_benchmark.sh 2000 5000 3
+./paper/scripts/run_genesis25_multiloop_benchmark.sh 2000 5000 3
 ```
 
 This compares `nxgenesis_nocl` (CPU) against `nxgenesis` with
@@ -245,26 +245,26 @@ Scripts are in `paper/`. Both use `nxgenesis_nocl` for the CPU arm and
 ### Extreme 5-rep (6 configs × 5 reps, ~20 min)
 
 ```bash
-./paper/run_genesis25_cpu_gpu_extreme_5rep.sh
+./paper/scripts/run_genesis25_cpu_gpu_extreme_5rep.sh
 ```
 
-Output: `paper/genesis25_cpu_gpu_extreme_5rep.csv`,
-        `paper/genesis25_cpu_gpu_extreme_5rep_summary.csv`,
-        `paper/genesis25_cpu_gpu_extreme_5rep_speedup.csv`
+Output: `paper/data/genesis25_cpu_gpu_extreme_5rep.csv`,
+        `paper/data/genesis25_cpu_gpu_extreme_5rep_summary.csv`,
+        `paper/data/genesis25_cpu_gpu_extreme_5rep_speedup.csv`
 
 ### Long-run 4 × 2h (reviewer stress test)
 
 ```bash
-./paper/run_genesis25_cpu_gpu_longrun_4x2h.sh
+./paper/scripts/run_genesis25_cpu_gpu_longrun_4x2h.sh
 ```
 
 Rerun a single session (e.g. session 2 only):
 ```bash
-START_SESSION=2 END_SESSION=2 ./paper/run_genesis25_cpu_gpu_longrun_4x2h.sh
+START_SESSION=2 END_SESSION=2 ./paper/scripts/run_genesis25_cpu_gpu_longrun_4x2h.sh
 ```
 
-Output: `paper/genesis25_cpu_gpu_longrun_raw.csv`,
-        `paper/genesis25_cpu_gpu_longrun_summary.csv`
+Output: `paper/data/genesis25_cpu_gpu_longrun_raw.csv`,
+        `paper/data/genesis25_cpu_gpu_longrun_summary.csv`
 
 ---
 

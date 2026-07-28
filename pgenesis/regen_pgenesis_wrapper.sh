@@ -9,7 +9,7 @@
 #   * runs under POSIX sh + sed (no csh needed to GENERATE the wrapper), and
 #   * leaves the path placeholders unsubstituted so the wrapper SELF-LOCATES
 #     relative to its own directory at run time -> portable across machines
-#     (laptop, RunPod, UMCS cluster) with no rebuild.
+#     (laptop, WarsawIQ, UMCS cluster) with no rebuild.
 #
 # The generated wrapper is still #!/bin/csh -f, so the RUN host needs csh/tcsh.
 # For a csh-free launch, use liquid/start.sh (direct mpirun) instead.

@@ -66,7 +66,7 @@ def aggregate(rows: list[Row]) -> tuple[list[int], list[float], list[float]]:
 
 
 def main() -> None:
-    root = Path(__file__).resolve().parent
+    root = Path(__file__).resolve().parent.parent
     data = root.parent / "experiments" / "data" / "construction_scaling_before_after.csv"
     figures = root / "figures"
     figures.mkdir(exist_ok=True)

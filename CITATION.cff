@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "GENESIS 2.5: opt-in OpenCL and CUDA acceleration for the GENESIS/PGENESIS compartmental neural simulator"
+type: software
+authors:
+  - family-names: Chlasta
+    given-names: Karol
+    email: karol@chlasta.pl
+    affiliation: "Kozminski University; WarsawIQ"
+  - family-names: Wójcik
+    given-names: "Grzegorz Marcin"
+    email: gmwojcik@umcs.edu.pl
+    affiliation: "Maria Curie-Skłodowska University in Lublin"
+repository-code: "https://github.com/WarsawIQ/genesis-2.5"
+license: GPL-2.0-or-later
+version: "2.5"
+date-released: "2026-07-24"
+keywords:
+  - GENESIS
+  - PGENESIS
+  - OpenCL
+  - CUDA
+  - GPU acceleration
+  - compartmental neural simulation
+  - Hines solver

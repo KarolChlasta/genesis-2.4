@@ -16,7 +16,7 @@ topologies to ~1e-7 V, and speed-swept with 10 replicates on UMCS A40/A100
 cluster nodes and a local AMD Radeon 890M integrated GPU (see "DONE" /
 "VALIDATED" section headings below for each milestone). For the headline
 numbers and how to reproduce them, see `paper/manuscript_softwarex_draft.tex`
-(Table 4, Fig. 4) and `paper/REPLICATION.md` rather than this log.
+(Table 4, Fig. 4) and `paper/docs/REPLICATION.md` rather than this log.
 
 Original status snapshot at the point this log was started, 2026-07-25:
 **per-tree kernel-entry protocol fully derived AND empirically validated

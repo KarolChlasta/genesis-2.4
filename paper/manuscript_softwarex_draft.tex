@@ -115,7 +115,7 @@ C5 & Software code languages, tools, and services used & C, OpenCL C, CUDA C++ (
 \hline
 C6 & Compilation requirements, operating environments \& dependencies & Linux x86\_64, GCC, GNU make, an OpenCL 1.2+ runtime (tested: ROCm 6.3.1 and Mesa rusticl) or a CUDA 12.x toolkit (tested: CUDA 12.8, \texttt{sm\_89} NVIDIA RTX~4090; \texttt{sm\_80} NVIDIA A100 and \texttt{sm\_86} NVIDIA A40 on the UMCS cluster) for the GPU backends, an MPI implementation for PGENESIS (MPICH/HYDRA or Open~MPI tested on the UMCS cluster) \\
 \hline
-C7 & If available Link to developer documentation/manual & \texttt{README.md} and \path{paper/REPLICATION.md} in the repository \\
+C7 & If available Link to developer documentation/manual & \texttt{README.md} and \path{paper/docs/REPLICATION.md} in the repository \\
 \hline
 C8 & Support email for questions & karol@chlasta.pl \\
 \hline
@@ -341,7 +341,7 @@ Table~\ref{tab:multiloop_fp32} and Fig.~\ref{fig:multiloop_speedup} report the r
 
 \textbf{Reproducing the PGENESIS scaling result.} The existing MPI path is unaffected; a strong-scaling sweep ($N=2400$ HH neurons, $P=1$--$24$ ranks, 12-core/24-thread host) gives near-ideal scaling at $P=2$ ($E_P=0.95$), an efficiency knee near $P\approx5$, and a recommended $P=4$--$8$ ($3.1$--$4.0\times$, 50--78\% efficiency) for this problem size.
 
-Full replication steps and raw data are in \path{paper/REPLICATION.md} and the self-contained \path{experiments/} package.
+Full replication steps and raw data are in \path{paper/docs/REPLICATION.md} and the self-contained \path{experiments/} package.
 
 \item Impact
 

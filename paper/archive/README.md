@@ -3,12 +3,12 @@
 Superseded material from earlier iterations of the GENESIS 2.5 benchmarking
 and manuscript work, kept for provenance rather than deleted. Nothing here is
 referenced by the current manuscript (`paper/manuscript_softwarex_draft.tex`)
-or by `paper/REPLICATION.md` — for reproducing the paper's results, start
-there instead.
+or by `paper/docs/REPLICATION.md` — for reproducing the paper's results,
+start there instead.
 
 Contents, roughly:
 
-- `manuscript_genesis_2_5_proposal.{md,tex}` — the original GENESIS 2.5
+- `manuscript_genesis_2_5_proposal.{md,tex,pdf}` — the original GENESIS 2.5
   proposal document, superseded by the SoftwareX manuscript.
 - `genesis25_*.csv`, `plot_genesis25_*.py`, `run_genesis25_ocl_multiloop_scaling.py`,
   `run_genesis25_cpu_scaling_dense_10rep.sh`, `ocl_benchmark_*.csv` — earlier,
@@ -21,7 +21,7 @@ Contents, roughly:
 - `figures/` — figures generated from the superseded data above.
 - `archive_confounded_runs/`, `reference_legacy/`, `profiling_runs/` —
   measurements later found to be confounded (see
-  `paper/x11_binary_confound_investigation.md`) or replaced by higher-replicate
+  `paper/docs/x11_binary_confound_investigation.md`) or replaced by higher-replicate
   reruns; kept as the historical trail, not as evidence for any claim in the
   paper.
 - `PLAN_gpu_rewrite.md`, `WEEKEND_PLAN.md`, `PUBLISH_CHECKLIST.md`,

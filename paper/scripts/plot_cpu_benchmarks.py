@@ -142,21 +142,25 @@ def plot_error_lines(path: Path, stats: list[ModelStats]) -> None:
 
 
 def main() -> None:
-    root = Path(__file__).resolve().parent
-    figures = root / "figures"
+    root = Path(__file__).resolve().parent.parent
+    data = root / "data"
+    # fig1 was dropped from the current manuscript and fig2/fig3 were never
+    # used in it (see paper/archive/README.md); write reproductions there,
+    # not into the live paper/figures/ used by manuscript_softwarex_draft.tex.
+    figures = root / "archive" / "figures"
     figures.mkdir(exist_ok=True)
 
-    cal8 = load_csv(root / "cal8_nxgenesis_benchmark.csv", "Cal8.g")
-    cal7 = load_csv(root / "cal7difshell_nxgenesis_benchmark.csv", "Cal7difshell.g")
+    cal8 = load_csv(data / "cal8_nxgenesis_benchmark.csv", "Cal8.g")
+    cal7 = load_csv(data / "cal7difshell_nxgenesis_benchmark.csv", "Cal7difshell.g")
     stats = [cal8, cal7]
 
-    save_summary_table(root / "table1_runtime_summary.csv", stats)
+    save_summary_table(data / "table1_runtime_summary.csv", stats)
     plot_mean_ci(figures / "fig1_mean_runtime_ci.png", stats)
     plot_boxplot(figures / "fig2_runtime_boxplot.png", stats)
     plot_error_lines(figures / "fig3_headless_error_lines.png", stats)
 
     print("Wrote:")
-    print(root / "table1_runtime_summary.csv")
+    print(data / "table1_runtime_summary.csv")
     print(figures / "fig1_mean_runtime_ci.png")
     print(figures / "fig2_runtime_boxplot.png")
     print(figures / "fig3_headless_error_lines.png")

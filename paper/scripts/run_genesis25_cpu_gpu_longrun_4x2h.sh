@@ -16,7 +16,7 @@
 # will add rows. Use session= and mode= columns to filter when aggregating.
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 CPU=genesis/src/nxgenesis_nocl
@@ -32,8 +32,8 @@ STEPS="${STEPS:-20000}"
 MAX_ITER_PER_SESSION="${MAX_ITER_PER_SESSION:-2000}"
 TIMEOUT_SINGLE="${TIMEOUT_SINGLE:-300}"
 
-RAW=paper/genesis25_cpu_gpu_longrun_raw.csv
-SUMMARY=paper/genesis25_cpu_gpu_longrun_summary.csv
+RAW=paper/data/genesis25_cpu_gpu_longrun_raw.csv
+SUMMARY=paper/data/genesis25_cpu_gpu_longrun_summary.csv
 
 # Write header only if file does not exist yet.
 if [[ ! -f "$RAW" ]]; then
@@ -94,8 +94,8 @@ done
 python3 - <<'PY'
 import csv, statistics
 
-raw = 'paper/genesis25_cpu_gpu_longrun_raw.csv'
-out = 'paper/genesis25_cpu_gpu_longrun_summary.csv'
+raw = 'paper/data/genesis25_cpu_gpu_longrun_raw.csv'
+out = 'paper/data/genesis25_cpu_gpu_longrun_summary.csv'
 
 rows = list(csv.DictReader(open(raw, newline='', encoding='utf-8')))
 

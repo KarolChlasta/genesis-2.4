@@ -2,7 +2,7 @@
 
 **Status: implemented and validated.** This backend is a faithful fp32 port
 of the OpenCL backend (`../opencl/`). It has been built and validated on an
-NVIDIA RTX 4090 (RunPod, `sm_89`) and, independently, on the UMCS "Lunar"
+NVIDIA RTX 4090 (WarsawIQ, `sm_89`) and, independently, on the UMCS "Lunar"
 cluster's A100 (`sm_80`) and A40 (`sm_86`) nodes: numerical parity with the
 fp64 CPU path to ~1e-7 V, and a 10-replicate step-phase speedup sweep for
 both the single-compartment multiloop kernel and the multi-compartment
@@ -10,7 +10,7 @@ both the single-compartment multiloop kernel and the multi-compartment
 covered by this doc — see
 [`../GPU_HINES_SOLVE_DESIGN.md`](../GPU_HINES_SOLVE_DESIGN.md)). Full numbers
 are in `paper/manuscript_softwarex_draft.tex` (Tables 3–4) and
-`paper/REPLICATION.md`; raw campaign data is in `cluster_bringup/logs/`.
+`paper/docs/REPLICATION.md`; raw campaign data is in `cluster_bringup/logs/`.
 
 ## Files
 - `cuda_channel.cuh` — device kernels (`cuda_chip_channel_update`,
@@ -26,7 +26,7 @@ are in `paper/manuscript_softwarex_draft.tex` (Tables 3–4) and
 `-DUSE_OPENCL` → `ocl_chip_update`, neither → pure CPU. The two accelerator
 paths are mutually exclusive; if both are defined CUDA wins.
 
-## Build (RunPod / any CUDA host)
+## Build (any CUDA host)
 
 1. Install the CUDA toolkit (nvcc). Confirm: `nvcc --version`, `nvidia-smi`.
 2. In `genesis/src`, build the headless binary with CUDA:
