@@ -1,0 +1,12 @@
+This repository is licensed under the GNU General Public License (GPL), version 2,
+or (at your option) any later version. The full text is in LICENSE.
+
+Portions of GENESIS distributed in library form are licensed under the GNU
+Lesser General Public License (LGPL), version 2.1 or later. The full text is
+in genesis/LGPLicense. See genesis/COPYRIGHT for the original notice covering
+the GENESIS 2.4 / PGENESIS 2.4 codebase (Copyright 1988-2001, California
+Institute of Technology).
+
+Code added in this repository for the GENESIS 2.5 proposal (OpenCL kernels,
+benchmark scripts, MPI scaling harness, paper/ artifacts) is distributed under
+the same GPL v2-or-later terms as the surrounding GENESIS program.

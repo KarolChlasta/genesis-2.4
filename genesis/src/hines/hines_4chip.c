@@ -1,0 +1,37 @@
+static char rcsid[] = "$Id: hines_4chip.c,v 1.1.1.1 2005/06/14 04:38:32 svitak Exp $";
+
+/* Version EDS21e 97/03/29, Erik De Schutter, Caltech & BBF-UIA 4/92-3/97 */
+
+/*
+** $Log: hines_4chip.c,v $
+** Revision 1.1.1.1  2005/06/14 04:38:32  svitak
+** Import from snapshot of CalTech CVS tree of June 8, 2005
+**
+** Revision 1.1  1997/05/28 23:11:50  dhb
+** Initial revision
+**
+*/
+
+/* Defines variables to create do_chip_hh4_update(hsolve) function in
+**  hines_chip.c
+*/
+
+#include "hines_ext.h"
+#define CHANMODE4
+#define SOLVEINTERPOL /* interpolation for tabchannels */
+#include "hines_chip.c"
+#undef CHANMODE4
+#undef SOLVEINTERPOL
+
+/*
+ * ocl_chip_update_dispatch — punkt wejscia dla chanmode 4/5
+ * Jesli skompilowano z -DUSE_OPENCL: uzywa GPU.
+ * W przeciwnym razie: standardowy CPU.
+ */
+#ifdef USE_OPENCL
+#include "opencl/ocl_hsolve.h"
+int ocl_chip_update_dispatch(Hsolve *hsolve)
+{
+    return ocl_chip_update(hsolve);
+}
+#endif

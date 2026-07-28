@@ -1,0 +1,3762 @@
+Terminals unused in grammar
+
+    SL
+    COMMAND
+    ARGUMENT
+    ARGLIST
+    LOCREF
+    ICAST
+    FCAST
+    SCAST
+
+
+Grammar
+
+    0 $accept: script $end
+
+    1 script: statement_list
+
+    2 statement_list: ε
+    3               | statement_list statement stmnt_terminator
+
+    4 stmnt_terminator: '\n'
+    5                 | ';'
+
+    6 statement: while_stmnt
+    7          | for_stmnt
+    8          | foreach_stmnt
+    9          | if_stmnt
+   10          | assign_stmnt
+   11          | include_stmnt
+   12          | endscript_marker
+   13          | cmd_stmnt
+   14          | func_call
+   15          | func_def
+   16          | ext_func
+   17          | decl_stmnt
+   18          | break_stmnt
+   19          | return_stmnt
+   20          | null_stmnt
+
+   21 endscript_marker: ENDSCRIPT
+
+   22 $@1: ε
+
+   23 while_stmnt: WHILE '(' expr ')' $@1 statement_list END
+
+   24 $@2: ε
+
+   25 for_stmnt: FOR '(' assign_stmnt ';' expr ';' assign_stmnt ')' $@2 statement_list END
+
+   26 $@3: ε
+
+   27 $@4: ε
+
+   28 foreach_stmnt: FOREACH VARREF '(' $@3 ws arg_list ws $@4 ')' statement_list END
+
+   29 $@5: ε
+
+   30 if_stmnt: IF '(' expr ')' $@5 statement_list else_clause END
+
+   31 else_clause: ε
+
+   32 $@6: ε
+
+   33 else_clause: ELSE $@6 statement_list
+
+   34 assign_stmnt: VARREF '=' expr
+
+   35 $@7: ε
+
+   36 include_hdr: INCLUDE $@7 ws LITERAL
+
+   37 include_stmnt: include_hdr WHITESPACE arg_list ws
+   38              | include_hdr ws
+
+   39 opt_node: ε
+   40         | LITERAL
+
+   41 $@8: ε
+
+   42 cmd_name: IDENT $@8 opt_node
+
+   43 $@9: ε
+
+   44 cmd_stmnt: cmd_name $@9 opt_arg_list ws
+   45          | cmd_name '(' optwslist func_call_list optwslist ')'
+
+   46 funcref: FUNCREF
+
+   47 func_call: funcref '(' optwslist func_call_list optwslist ')'
+
+   48 $@10: ε
+
+   49 func_call: funcref $@10 opt_arg_list ws
+
+   50 opt_arg_list: ε
+   51             | opt_arg_list wslist arg_component_list
+
+   52 arg_list: arg_component_list
+   53         | arg_list wslist arg_component_list
+
+   54 optwslist: ε
+   55          | wslist
+
+   56 wslist: WHITESPACE
+   57       | wslist WHITESPACE
+
+   58 func_call_list: arg_component_list
+   59               | func_call_list optwslist ',' optwslist arg_component_list
+
+   60 ws: ε
+   61   | WHITESPACE
+
+   62 arg_component_list: arg_component
+   63                   | arg_component_list arg_component
+
+   64 arg_component: LITERAL
+   65              | STRCONST
+   66              | DOLLARARG
+
+   67 $@11: ε
+
+   68 $@12: ε
+
+   69 arg_component: '{' $@11 expr $@12 '}'
+
+   70 ext_func: EXTERN IDENT
+   71         | EXTERN FUNCREF
+
+   72 func_hdr: FUNCTION IDENT
+   73         | FUNCTION FUNCREF
+
+   74 $@13: ε
+
+   75 $@14: ε
+
+   76 func_def: func_hdr $@13 func_args $@14 statement_list END
+
+   77 func_args: ε
+
+   78 $@15: ε
+
+   79 func_args: '(' $@15 func_arg_list ')'
+
+   80 func_arg_list: IDENT
+   81              | func_arg_list ',' IDENT
+
+   82 decl_type: INT
+   83          | FLOAT
+   84          | STR
+
+   85 decl_stmnt: decl_type decl_list
+
+   86 decl_list: decl_ident
+
+   87 $@16: ε
+
+   88 decl_list: decl_list ',' $@16 decl_ident
+
+   89 $@17: ε
+
+   90 decl_ident: IDENT $@17 init
+
+   91 init: ε
+   92     | '=' expr
+
+   93 break_stmnt: BREAK
+
+   94 return_stmnt: RETURN expr
+   95             | RETURN
+
+   96 null_stmnt: ε
+
+   97 expr: expr '|' expr
+   98     | expr '&' expr
+   99     | expr '^' expr
+  100     | '~' expr
+  101     | expr '+' expr
+  102     | expr '-' expr
+  103     | expr '*' expr
+  104     | expr '/' expr
+  105     | expr '%' expr
+  106     | '-' expr
+  107     | expr OR expr
+  108     | expr AND expr
+  109     | '!' expr
+  110     | expr LT expr
+  111     | expr LE expr
+  112     | expr GT expr
+  113     | expr GE expr
+  114     | expr EQ expr
+  115     | expr NE expr
+
+  116 $@18: ε
+
+  117 $@19: ε
+
+  118 expr: IDENT '(' $@18 optwslist func_call_list optwslist $@19 ')'
+
+  119 $@20: ε
+
+  120 $@21: ε
+
+  121 expr: FUNCREF '(' $@20 optwslist func_call_list optwslist $@21 ')'
+  122     | VARREF
+  123     | FUNCREF
+  124     | IDENT
+  125     | FLOATCONST
+  126     | INTCONST
+  127     | STRCONST
+  128     | DOLLARARG
+  129     | '{' expr '}'
+  130     | '(' expr ')'
+
+
+Terminals, with rules where they appear
+
+    $end (0) 0
+    '\n' (10) 4
+    '!' (33) 109
+    '%' (37) 105
+    '&' (38) 98
+    '(' (40) 23 25 28 30 45 47 79 118 121 130
+    ')' (41) 23 25 28 30 45 47 79 118 121 130
+    '*' (42) 103
+    '+' (43) 101
+    ',' (44) 59 81 88
+    '-' (45) 102 106
+    '/' (47) 104
+    ';' (59) 5 25
+    '=' (61) 34 92
+    '^' (94) 99
+    '{' (123) 69 129
+    '|' (124) 97
+    '}' (125) 69 129
+    '~' (126) 100
+    error (256)
+    LT (258) 110
+    LE (259) 111
+    GT (260) 112
+    GE (261) 113
+    EQ (262) 114
+    NE (263) 115
+    OR (264) 107
+    AND (265) 108
+    UMINUS (266)
+    WHILE (267) 23
+    IF (268) 30
+    ELSE (269) 33
+    FOR (270) 25
+    FOREACH (271) 28
+    END (272) 23 25 28 30 76
+    INCLUDE (273) 36
+    ENDSCRIPT (274) 21
+    BREAK (275) 93
+    INT (276) 82
+    FLOAT (277) 83
+    STR (278) 84
+    RETURN (279) 94 95
+    WHITESPACE (280) 37 56 57 61
+    FUNCTION (281) 72 73
+    INTCONST <str> (282) 126
+    DOLLARARG <str> (283) 66 128
+    FLOATCONST <str> (284) 125
+    STRCONST <str> (285) 65 127
+    LITERAL <str> (286) 36 40 64
+    IDENT <str> (287) 42 70 72 80 81 90 118 124
+    VARREF <str> (288) 28 34 122
+    FUNCREF <str> (289) 46 71 73 121 123
+    EXTERN <str> (290) 70 71
+    SL (291)
+    COMMAND (292)
+    ARGUMENT (293)
+    ARGLIST (294)
+    LOCREF (295)
+    ICAST (296)
+    FCAST (297)
+    SCAST (298)
+
+
+Nonterminals, with rules where they appear
+
+    $accept (62)
+        on left: 0
+    script <str> (63)
+        on left: 1
+        on right: 0
+    statement_list <str> (64)
+        on left: 2 3
+        on right: 1 3 23 25 28 30 33 76
+    stmnt_terminator <str> (65)
+        on left: 4 5
+        on right: 3
+    statement <str> (66)
+        on left: 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+        on right: 3
+    endscript_marker <str> (67)
+        on left: 21
+        on right: 12
+    while_stmnt <str> (68)
+        on left: 23
+        on right: 6
+    $@1 (69)
+        on left: 22
+        on right: 23
+    for_stmnt <str> (70)
+        on left: 25
+        on right: 7
+    $@2 (71)
+        on left: 24
+        on right: 25
+    foreach_stmnt <str> (72)
+        on left: 28
+        on right: 8
+    $@3 (73)
+        on left: 26
+        on right: 28
+    $@4 (74)
+        on left: 27
+        on right: 28
+    if_stmnt <str> (75)
+        on left: 30
+        on right: 9
+    $@5 (76)
+        on left: 29
+        on right: 30
+    else_clause <str> (77)
+        on left: 31 33
+        on right: 30
+    $@6 (78)
+        on left: 32
+        on right: 33
+    assign_stmnt <str> (79)
+        on left: 34
+        on right: 10 25
+    include_hdr <str> (80)
+        on left: 36
+        on right: 37 38
+    $@7 (81)
+        on left: 35
+        on right: 36
+    include_stmnt <str> (82)
+        on left: 37 38
+        on right: 11
+    opt_node <str> (83)
+        on left: 39 40
+        on right: 42
+    cmd_name <str> (84)
+        on left: 42
+        on right: 44 45
+    $@8 (85)
+        on left: 41
+        on right: 42
+    cmd_stmnt <str> (86)
+        on left: 44 45
+        on right: 13
+    $@9 (87)
+        on left: 43
+        on right: 44
+    funcref <str> (88)
+        on left: 46
+        on right: 47 49
+    func_call <str> (89)
+        on left: 47 49
+        on right: 14
+    $@10 (90)
+        on left: 48
+        on right: 49
+    opt_arg_list <str> (91)
+        on left: 50 51
+        on right: 44 49 51
+    arg_list <str> (92)
+        on left: 52 53
+        on right: 28 37 53
+    optwslist (93)
+        on left: 54 55
+        on right: 45 47 59 118 121
+    wslist (94)
+        on left: 56 57
+        on right: 51 53 55 57
+    func_call_list <str> (95)
+        on left: 58 59
+        on right: 45 47 59 118 121
+    ws (96)
+        on left: 60 61
+        on right: 28 36 37 38 44 49
+    arg_component_list <str> (97)
+        on left: 62 63
+        on right: 51 52 53 58 59 63
+    arg_component <str> (98)
+        on left: 64 65 66 69
+        on right: 62 63
+    $@11 (99)
+        on left: 67
+        on right: 69
+    $@12 (100)
+        on left: 68
+        on right: 69
+    ext_func <str> (101)
+        on left: 70 71
+        on right: 16
+    func_hdr <str> (102)
+        on left: 72 73
+        on right: 76
+    func_def <str> (103)
+        on left: 76
+        on right: 15
+    $@13 (104)
+        on left: 74
+        on right: 76
+    $@14 (105)
+        on left: 75
+        on right: 76
+    func_args <str> (106)
+        on left: 77 79
+        on right: 76
+    $@15 (107)
+        on left: 78
+        on right: 79
+    func_arg_list <str> (108)
+        on left: 80 81
+        on right: 79 81
+    decl_type <str> (109)
+        on left: 82 83 84
+        on right: 85
+    decl_stmnt <str> (110)
+        on left: 85
+        on right: 17
+    decl_list <str> (111)
+        on left: 86 88
+        on right: 85 88
+    $@16 (112)
+        on left: 87
+        on right: 88
+    decl_ident <str> (113)
+        on left: 90
+        on right: 86 88
+    $@17 (114)
+        on left: 89
+        on right: 90
+    init <str> (115)
+        on left: 91 92
+        on right: 90
+    break_stmnt <str> (116)
+        on left: 93
+        on right: 18
+    return_stmnt <str> (117)
+        on left: 94 95
+        on right: 19
+    null_stmnt <str> (118)
+        on left: 96
+        on right: 20
+    expr <expr> (119)
+        on left: 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 118 121 122 123 124 125 126 127 128 129 130
+        on right: 23 25 30 34 69 92 94 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 129 130
+    $@18 (120)
+        on left: 116
+        on right: 118
+    $@19 (121)
+        on left: 117
+        on right: 118
+    $@20 (122)
+        on left: 119
+        on right: 121
+    $@21 (123)
+        on left: 120
+        on right: 121
+
+
+State 0
+
+    0 $accept: • script $end
+
+    $default  reduce using rule 2 (statement_list)
+
+    script          go to state 1
+    statement_list  go to state 2
+
+
+State 1
+
+    0 $accept: script • $end
+
+    $end  shift, and go to state 3
+
+
+State 2
+
+    1 script: statement_list •
+    3 statement_list: statement_list • statement stmnt_terminator
+
+    WHILE      shift, and go to state 4
+    IF         shift, and go to state 5
+    FOR        shift, and go to state 6
+    FOREACH    shift, and go to state 7
+    INCLUDE    shift, and go to state 8
+    ENDSCRIPT  shift, and go to state 9
+    BREAK      shift, and go to state 10
+    INT        shift, and go to state 11
+    FLOAT      shift, and go to state 12
+    STR        shift, and go to state 13
+    RETURN     shift, and go to state 14
+    FUNCTION   shift, and go to state 15
+    IDENT      shift, and go to state 16
+    VARREF     shift, and go to state 17
+    FUNCREF    shift, and go to state 18
+    EXTERN     shift, and go to state 19
+
+    $end      reduce using rule 1 (script)
+    $default  reduce using rule 96 (null_stmnt)
+
+    statement         go to state 20
+    endscript_marker  go to state 21
+    while_stmnt       go to state 22
+    for_stmnt         go to state 23
+    foreach_stmnt     go to state 24
+    if_stmnt          go to state 25
+    assign_stmnt      go to state 26
+    include_hdr       go to state 27
+    include_stmnt     go to state 28
+    cmd_name          go to state 29
+    cmd_stmnt         go to state 30
+    funcref           go to state 31
+    func_call         go to state 32
+    ext_func          go to state 33
+    func_hdr          go to state 34
+    func_def          go to state 35
+    decl_type         go to state 36
+    decl_stmnt        go to state 37
+    break_stmnt       go to state 38
+    return_stmnt      go to state 39
+    null_stmnt        go to state 40
+
+
+State 3
+
+    0 $accept: script $end •
+
+    $default  accept
+
+
+State 4
+
+   23 while_stmnt: WHILE • '(' expr ')' $@1 statement_list END
+
+    '('  shift, and go to state 41
+
+
+State 5
+
+   30 if_stmnt: IF • '(' expr ')' $@5 statement_list else_clause END
+
+    '('  shift, and go to state 42
+
+
+State 6
+
+   25 for_stmnt: FOR • '(' assign_stmnt ';' expr ';' assign_stmnt ')' $@2 statement_list END
+
+    '('  shift, and go to state 43
+
+
+State 7
+
+   28 foreach_stmnt: FOREACH • VARREF '(' $@3 ws arg_list ws $@4 ')' statement_list END
+
+    VARREF  shift, and go to state 44
+
+
+State 8
+
+   36 include_hdr: INCLUDE • $@7 ws LITERAL
+
+    $default  reduce using rule 35 ($@7)
+
+    $@7  go to state 45
+
+
+State 9
+
+   21 endscript_marker: ENDSCRIPT •
+
+    $default  reduce using rule 21 (endscript_marker)
+
+
+State 10
+
+   93 break_stmnt: BREAK •
+
+    $default  reduce using rule 93 (break_stmnt)
+
+
+State 11
+
+   82 decl_type: INT •
+
+    $default  reduce using rule 82 (decl_type)
+
+
+State 12
+
+   83 decl_type: FLOAT •
+
+    $default  reduce using rule 83 (decl_type)
+
+
+State 13
+
+   84 decl_type: STR •
+
+    $default  reduce using rule 84 (decl_type)
+
+
+State 14
+
+   94 return_stmnt: RETURN • expr
+   95             | RETURN •
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    $default  reduce using rule 95 (return_stmnt)
+
+    expr  go to state 58
+
+
+State 15
+
+   72 func_hdr: FUNCTION • IDENT
+   73         | FUNCTION • FUNCREF
+
+    IDENT    shift, and go to state 59
+    FUNCREF  shift, and go to state 60
+
+
+State 16
+
+   42 cmd_name: IDENT • $@8 opt_node
+
+    $default  reduce using rule 41 ($@8)
+
+    $@8  go to state 61
+
+
+State 17
+
+   34 assign_stmnt: VARREF • '=' expr
+
+    '='  shift, and go to state 62
+
+
+State 18
+
+   46 funcref: FUNCREF •
+
+    $default  reduce using rule 46 (funcref)
+
+
+State 19
+
+   70 ext_func: EXTERN • IDENT
+   71         | EXTERN • FUNCREF
+
+    IDENT    shift, and go to state 63
+    FUNCREF  shift, and go to state 64
+
+
+State 20
+
+    3 statement_list: statement_list statement • stmnt_terminator
+
+    '\n'  shift, and go to state 65
+    ';'   shift, and go to state 66
+
+    stmnt_terminator  go to state 67
+
+
+State 21
+
+   12 statement: endscript_marker •
+
+    $default  reduce using rule 12 (statement)
+
+
+State 22
+
+    6 statement: while_stmnt •
+
+    $default  reduce using rule 6 (statement)
+
+
+State 23
+
+    7 statement: for_stmnt •
+
+    $default  reduce using rule 7 (statement)
+
+
+State 24
+
+    8 statement: foreach_stmnt •
+
+    $default  reduce using rule 8 (statement)
+
+
+State 25
+
+    9 statement: if_stmnt •
+
+    $default  reduce using rule 9 (statement)
+
+
+State 26
+
+   10 statement: assign_stmnt •
+
+    $default  reduce using rule 10 (statement)
+
+
+State 27
+
+   37 include_stmnt: include_hdr • WHITESPACE arg_list ws
+   38              | include_hdr • ws
+
+    WHITESPACE  shift, and go to state 68
+
+    $default  reduce using rule 60 (ws)
+
+    ws  go to state 69
+
+
+State 28
+
+   11 statement: include_stmnt •
+
+    $default  reduce using rule 11 (statement)
+
+
+State 29
+
+   44 cmd_stmnt: cmd_name • $@9 opt_arg_list ws
+   45          | cmd_name • '(' optwslist func_call_list optwslist ')'
+
+    '('  shift, and go to state 70
+
+    $default  reduce using rule 43 ($@9)
+
+    $@9  go to state 71
+
+
+State 30
+
+   13 statement: cmd_stmnt •
+
+    $default  reduce using rule 13 (statement)
+
+
+State 31
+
+   47 func_call: funcref • '(' optwslist func_call_list optwslist ')'
+   49          | funcref • $@10 opt_arg_list ws
+
+    '('  shift, and go to state 72
+
+    $default  reduce using rule 48 ($@10)
+
+    $@10  go to state 73
+
+
+State 32
+
+   14 statement: func_call •
+
+    $default  reduce using rule 14 (statement)
+
+
+State 33
+
+   16 statement: ext_func •
+
+    $default  reduce using rule 16 (statement)
+
+
+State 34
+
+   76 func_def: func_hdr • $@13 func_args $@14 statement_list END
+
+    $default  reduce using rule 74 ($@13)
+
+    $@13  go to state 74
+
+
+State 35
+
+   15 statement: func_def •
+
+    $default  reduce using rule 15 (statement)
+
+
+State 36
+
+   85 decl_stmnt: decl_type • decl_list
+
+    IDENT  shift, and go to state 75
+
+    decl_list   go to state 76
+    decl_ident  go to state 77
+
+
+State 37
+
+   17 statement: decl_stmnt •
+
+    $default  reduce using rule 17 (statement)
+
+
+State 38
+
+   18 statement: break_stmnt •
+
+    $default  reduce using rule 18 (statement)
+
+
+State 39
+
+   19 statement: return_stmnt •
+
+    $default  reduce using rule 19 (statement)
+
+
+State 40
+
+   20 statement: null_stmnt •
+
+    $default  reduce using rule 20 (statement)
+
+
+State 41
+
+   23 while_stmnt: WHILE '(' • expr ')' $@1 statement_list END
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 78
+
+
+State 42
+
+   30 if_stmnt: IF '(' • expr ')' $@5 statement_list else_clause END
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 79
+
+
+State 43
+
+   25 for_stmnt: FOR '(' • assign_stmnt ';' expr ';' assign_stmnt ')' $@2 statement_list END
+
+    VARREF  shift, and go to state 17
+
+    assign_stmnt  go to state 80
+
+
+State 44
+
+   28 foreach_stmnt: FOREACH VARREF • '(' $@3 ws arg_list ws $@4 ')' statement_list END
+
+    '('  shift, and go to state 81
+
+
+State 45
+
+   36 include_hdr: INCLUDE $@7 • ws LITERAL
+
+    WHITESPACE  shift, and go to state 82
+
+    $default  reduce using rule 60 (ws)
+
+    ws  go to state 83
+
+
+State 46
+
+  109 expr: '!' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 84
+
+
+State 47
+
+  106 expr: '-' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 85
+
+
+State 48
+
+  100 expr: '~' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 86
+
+
+State 49
+
+  126 expr: INTCONST •
+
+    $default  reduce using rule 126 (expr)
+
+
+State 50
+
+  128 expr: DOLLARARG •
+
+    $default  reduce using rule 128 (expr)
+
+
+State 51
+
+  125 expr: FLOATCONST •
+
+    $default  reduce using rule 125 (expr)
+
+
+State 52
+
+  127 expr: STRCONST •
+
+    $default  reduce using rule 127 (expr)
+
+
+State 53
+
+  118 expr: IDENT • '(' $@18 optwslist func_call_list optwslist $@19 ')'
+  124     | IDENT •
+
+    '('  shift, and go to state 87
+
+    $default  reduce using rule 124 (expr)
+
+
+State 54
+
+  122 expr: VARREF •
+
+    $default  reduce using rule 122 (expr)
+
+
+State 55
+
+  121 expr: FUNCREF • '(' $@20 optwslist func_call_list optwslist $@21 ')'
+  123     | FUNCREF •
+
+    '('  shift, and go to state 88
+
+    $default  reduce using rule 123 (expr)
+
+
+State 56
+
+  130 expr: '(' • expr ')'
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 89
+
+
+State 57
+
+  129 expr: '{' • expr '}'
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 90
+
+
+State 58
+
+   94 return_stmnt: RETURN expr •
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    LT   shift, and go to state 91
+    LE   shift, and go to state 92
+    GT   shift, and go to state 93
+    GE   shift, and go to state 94
+    EQ   shift, and go to state 95
+    NE   shift, and go to state 96
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    $default  reduce using rule 94 (return_stmnt)
+
+
+State 59
+
+   72 func_hdr: FUNCTION IDENT •
+
+    $default  reduce using rule 72 (func_hdr)
+
+
+State 60
+
+   73 func_hdr: FUNCTION FUNCREF •
+
+    $default  reduce using rule 73 (func_hdr)
+
+
+State 61
+
+   42 cmd_name: IDENT $@8 • opt_node
+
+    LITERAL  shift, and go to state 107
+
+    $default  reduce using rule 39 (opt_node)
+
+    opt_node  go to state 108
+
+
+State 62
+
+   34 assign_stmnt: VARREF '=' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 109
+
+
+State 63
+
+   70 ext_func: EXTERN IDENT •
+
+    $default  reduce using rule 70 (ext_func)
+
+
+State 64
+
+   71 ext_func: EXTERN FUNCREF •
+
+    $default  reduce using rule 71 (ext_func)
+
+
+State 65
+
+    4 stmnt_terminator: '\n' •
+
+    $default  reduce using rule 4 (stmnt_terminator)
+
+
+State 66
+
+    5 stmnt_terminator: ';' •
+
+    $default  reduce using rule 5 (stmnt_terminator)
+
+
+State 67
+
+    3 statement_list: statement_list statement stmnt_terminator •
+
+    $default  reduce using rule 3 (statement_list)
+
+
+State 68
+
+   37 include_stmnt: include_hdr WHITESPACE • arg_list ws
+   61 ws: WHITESPACE •
+
+    DOLLARARG  shift, and go to state 110
+    STRCONST   shift, and go to state 111
+    LITERAL    shift, and go to state 112
+    '{'        shift, and go to state 113
+
+    $default  reduce using rule 61 (ws)
+
+    arg_list            go to state 114
+    arg_component_list  go to state 115
+    arg_component       go to state 116
+
+
+State 69
+
+   38 include_stmnt: include_hdr ws •
+
+    $default  reduce using rule 38 (include_stmnt)
+
+
+State 70
+
+   45 cmd_stmnt: cmd_name '(' • optwslist func_call_list optwslist ')'
+
+    WHITESPACE  shift, and go to state 117
+
+    $default  reduce using rule 54 (optwslist)
+
+    optwslist  go to state 118
+    wslist     go to state 119
+
+
+State 71
+
+   44 cmd_stmnt: cmd_name $@9 • opt_arg_list ws
+
+    $default  reduce using rule 50 (opt_arg_list)
+
+    opt_arg_list  go to state 120
+
+
+State 72
+
+   47 func_call: funcref '(' • optwslist func_call_list optwslist ')'
+
+    WHITESPACE  shift, and go to state 117
+
+    $default  reduce using rule 54 (optwslist)
+
+    optwslist  go to state 121
+    wslist     go to state 119
+
+
+State 73
+
+   49 func_call: funcref $@10 • opt_arg_list ws
+
+    $default  reduce using rule 50 (opt_arg_list)
+
+    opt_arg_list  go to state 122
+
+
+State 74
+
+   76 func_def: func_hdr $@13 • func_args $@14 statement_list END
+
+    '('  shift, and go to state 123
+
+    $default  reduce using rule 77 (func_args)
+
+    func_args  go to state 124
+
+
+State 75
+
+   90 decl_ident: IDENT • $@17 init
+
+    $default  reduce using rule 89 ($@17)
+
+    $@17  go to state 125
+
+
+State 76
+
+   85 decl_stmnt: decl_type decl_list •
+   88 decl_list: decl_list • ',' $@16 decl_ident
+
+    ','  shift, and go to state 126
+
+    $default  reduce using rule 85 (decl_stmnt)
+
+
+State 77
+
+   86 decl_list: decl_ident •
+
+    $default  reduce using rule 86 (decl_list)
+
+
+State 78
+
+   23 while_stmnt: WHILE '(' expr • ')' $@1 statement_list END
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    LT   shift, and go to state 91
+    LE   shift, and go to state 92
+    GT   shift, and go to state 93
+    GE   shift, and go to state 94
+    EQ   shift, and go to state 95
+    NE   shift, and go to state 96
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+    ')'  shift, and go to state 127
+
+
+State 79
+
+   30 if_stmnt: IF '(' expr • ')' $@5 statement_list else_clause END
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    LT   shift, and go to state 91
+    LE   shift, and go to state 92
+    GT   shift, and go to state 93
+    GE   shift, and go to state 94
+    EQ   shift, and go to state 95
+    NE   shift, and go to state 96
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+    ')'  shift, and go to state 128
+
+
+State 80
+
+   25 for_stmnt: FOR '(' assign_stmnt • ';' expr ';' assign_stmnt ')' $@2 statement_list END
+
+    ';'  shift, and go to state 129
+
+
+State 81
+
+   28 foreach_stmnt: FOREACH VARREF '(' • $@3 ws arg_list ws $@4 ')' statement_list END
+
+    $default  reduce using rule 26 ($@3)
+
+    $@3  go to state 130
+
+
+State 82
+
+   61 ws: WHITESPACE •
+
+    $default  reduce using rule 61 (ws)
+
+
+State 83
+
+   36 include_hdr: INCLUDE $@7 ws • LITERAL
+
+    LITERAL  shift, and go to state 131
+
+
+State 84
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  109     | '!' expr •
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    $default  reduce using rule 109 (expr)
+
+
+State 85
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  106     | '-' expr •
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    $default  reduce using rule 106 (expr)
+
+
+State 86
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  100     | '~' expr •
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    $default  reduce using rule 100 (expr)
+
+
+State 87
+
+  118 expr: IDENT '(' • $@18 optwslist func_call_list optwslist $@19 ')'
+
+    $default  reduce using rule 116 ($@18)
+
+    $@18  go to state 132
+
+
+State 88
+
+  121 expr: FUNCREF '(' • $@20 optwslist func_call_list optwslist $@21 ')'
+
+    $default  reduce using rule 119 ($@20)
+
+    $@20  go to state 133
+
+
+State 89
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+  130     | '(' expr • ')'
+
+    LT   shift, and go to state 91
+    LE   shift, and go to state 92
+    GT   shift, and go to state 93
+    GE   shift, and go to state 94
+    EQ   shift, and go to state 95
+    NE   shift, and go to state 96
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+    ')'  shift, and go to state 134
+
+
+State 90
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+  129     | '{' expr • '}'
+
+    LT   shift, and go to state 91
+    LE   shift, and go to state 92
+    GT   shift, and go to state 93
+    GE   shift, and go to state 94
+    EQ   shift, and go to state 95
+    NE   shift, and go to state 96
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+    '}'  shift, and go to state 135
+
+
+State 91
+
+  110 expr: expr LT • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 136
+
+
+State 92
+
+  111 expr: expr LE • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 137
+
+
+State 93
+
+  112 expr: expr GT • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 138
+
+
+State 94
+
+  113 expr: expr GE • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 139
+
+
+State 95
+
+  114 expr: expr EQ • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 140
+
+
+State 96
+
+  115 expr: expr NE • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 141
+
+
+State 97
+
+  107 expr: expr OR • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 142
+
+
+State 98
+
+  108 expr: expr AND • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 143
+
+
+State 99
+
+  101 expr: expr '+' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 144
+
+
+State 100
+
+  102 expr: expr '-' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 145
+
+
+State 101
+
+   98 expr: expr '&' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 146
+
+
+State 102
+
+   97 expr: expr '|' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 147
+
+
+State 103
+
+   99 expr: expr '^' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 148
+
+
+State 104
+
+  103 expr: expr '*' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 149
+
+
+State 105
+
+  104 expr: expr '/' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 150
+
+
+State 106
+
+  105 expr: expr '%' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 151
+
+
+State 107
+
+   40 opt_node: LITERAL •
+
+    $default  reduce using rule 40 (opt_node)
+
+
+State 108
+
+   42 cmd_name: IDENT $@8 opt_node •
+
+    $default  reduce using rule 42 (cmd_name)
+
+
+State 109
+
+   34 assign_stmnt: VARREF '=' expr •
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    LT   shift, and go to state 91
+    LE   shift, and go to state 92
+    GT   shift, and go to state 93
+    GE   shift, and go to state 94
+    EQ   shift, and go to state 95
+    NE   shift, and go to state 96
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    $default  reduce using rule 34 (assign_stmnt)
+
+
+State 110
+
+   66 arg_component: DOLLARARG •
+
+    $default  reduce using rule 66 (arg_component)
+
+
+State 111
+
+   65 arg_component: STRCONST •
+
+    $default  reduce using rule 65 (arg_component)
+
+
+State 112
+
+   64 arg_component: LITERAL •
+
+    $default  reduce using rule 64 (arg_component)
+
+
+State 113
+
+   69 arg_component: '{' • $@11 expr $@12 '}'
+
+    $default  reduce using rule 67 ($@11)
+
+    $@11  go to state 152
+
+
+State 114
+
+   37 include_stmnt: include_hdr WHITESPACE arg_list • ws
+   53 arg_list: arg_list • wslist arg_component_list
+
+    WHITESPACE  shift, and go to state 153
+
+    $default  reduce using rule 60 (ws)
+
+    wslist  go to state 154
+    ws      go to state 155
+
+
+State 115
+
+   52 arg_list: arg_component_list •
+   63 arg_component_list: arg_component_list • arg_component
+
+    DOLLARARG  shift, and go to state 110
+    STRCONST   shift, and go to state 111
+    LITERAL    shift, and go to state 112
+    '{'        shift, and go to state 113
+
+    $default  reduce using rule 52 (arg_list)
+
+    arg_component  go to state 156
+
+
+State 116
+
+   62 arg_component_list: arg_component •
+
+    $default  reduce using rule 62 (arg_component_list)
+
+
+State 117
+
+   56 wslist: WHITESPACE •
+
+    $default  reduce using rule 56 (wslist)
+
+
+State 118
+
+   45 cmd_stmnt: cmd_name '(' optwslist • func_call_list optwslist ')'
+
+    DOLLARARG  shift, and go to state 110
+    STRCONST   shift, and go to state 111
+    LITERAL    shift, and go to state 112
+    '{'        shift, and go to state 113
+
+    func_call_list      go to state 157
+    arg_component_list  go to state 158
+    arg_component       go to state 116
+
+
+State 119
+
+   55 optwslist: wslist •
+   57 wslist: wslist • WHITESPACE
+
+    WHITESPACE  shift, and go to state 159
+
+    $default  reduce using rule 55 (optwslist)
+
+
+State 120
+
+   44 cmd_stmnt: cmd_name $@9 opt_arg_list • ws
+   51 opt_arg_list: opt_arg_list • wslist arg_component_list
+
+    WHITESPACE  shift, and go to state 153
+
+    $default  reduce using rule 60 (ws)
+
+    wslist  go to state 160
+    ws      go to state 161
+
+
+State 121
+
+   47 func_call: funcref '(' optwslist • func_call_list optwslist ')'
+
+    DOLLARARG  shift, and go to state 110
+    STRCONST   shift, and go to state 111
+    LITERAL    shift, and go to state 112
+    '{'        shift, and go to state 113
+
+    func_call_list      go to state 162
+    arg_component_list  go to state 158
+    arg_component       go to state 116
+
+
+State 122
+
+   49 func_call: funcref $@10 opt_arg_list • ws
+   51 opt_arg_list: opt_arg_list • wslist arg_component_list
+
+    WHITESPACE  shift, and go to state 153
+
+    $default  reduce using rule 60 (ws)
+
+    wslist  go to state 160
+    ws      go to state 163
+
+
+State 123
+
+   79 func_args: '(' • $@15 func_arg_list ')'
+
+    $default  reduce using rule 78 ($@15)
+
+    $@15  go to state 164
+
+
+State 124
+
+   76 func_def: func_hdr $@13 func_args • $@14 statement_list END
+
+    $default  reduce using rule 75 ($@14)
+
+    $@14  go to state 165
+
+
+State 125
+
+   90 decl_ident: IDENT $@17 • init
+
+    '='  shift, and go to state 166
+
+    $default  reduce using rule 91 (init)
+
+    init  go to state 167
+
+
+State 126
+
+   88 decl_list: decl_list ',' • $@16 decl_ident
+
+    $default  reduce using rule 87 ($@16)
+
+    $@16  go to state 168
+
+
+State 127
+
+   23 while_stmnt: WHILE '(' expr ')' • $@1 statement_list END
+
+    $default  reduce using rule 22 ($@1)
+
+    $@1  go to state 169
+
+
+State 128
+
+   30 if_stmnt: IF '(' expr ')' • $@5 statement_list else_clause END
+
+    $default  reduce using rule 29 ($@5)
+
+    $@5  go to state 170
+
+
+State 129
+
+   25 for_stmnt: FOR '(' assign_stmnt ';' • expr ';' assign_stmnt ')' $@2 statement_list END
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 171
+
+
+State 130
+
+   28 foreach_stmnt: FOREACH VARREF '(' $@3 • ws arg_list ws $@4 ')' statement_list END
+
+    WHITESPACE  shift, and go to state 82
+
+    $default  reduce using rule 60 (ws)
+
+    ws  go to state 172
+
+
+State 131
+
+   36 include_hdr: INCLUDE $@7 ws LITERAL •
+
+    $default  reduce using rule 36 (include_hdr)
+
+
+State 132
+
+  118 expr: IDENT '(' $@18 • optwslist func_call_list optwslist $@19 ')'
+
+    WHITESPACE  shift, and go to state 117
+
+    $default  reduce using rule 54 (optwslist)
+
+    optwslist  go to state 173
+    wslist     go to state 119
+
+
+State 133
+
+  121 expr: FUNCREF '(' $@20 • optwslist func_call_list optwslist $@21 ')'
+
+    WHITESPACE  shift, and go to state 117
+
+    $default  reduce using rule 54 (optwslist)
+
+    optwslist  go to state 174
+    wslist     go to state 119
+
+
+State 134
+
+  130 expr: '(' expr ')' •
+
+    $default  reduce using rule 130 (expr)
+
+
+State 135
+
+  129 expr: '{' expr '}' •
+
+    $default  reduce using rule 129 (expr)
+
+
+State 136
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  110     | expr LT expr •
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    LT  error (nonassociative)
+    LE  error (nonassociative)
+    GT  error (nonassociative)
+    GE  error (nonassociative)
+    EQ  error (nonassociative)
+    NE  error (nonassociative)
+
+    $default  reduce using rule 110 (expr)
+
+
+State 137
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  111     | expr LE expr •
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    LT  error (nonassociative)
+    LE  error (nonassociative)
+    GT  error (nonassociative)
+    GE  error (nonassociative)
+    EQ  error (nonassociative)
+    NE  error (nonassociative)
+
+    $default  reduce using rule 111 (expr)
+
+
+State 138
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  112     | expr GT expr •
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    LT  error (nonassociative)
+    LE  error (nonassociative)
+    GT  error (nonassociative)
+    GE  error (nonassociative)
+    EQ  error (nonassociative)
+    NE  error (nonassociative)
+
+    $default  reduce using rule 112 (expr)
+
+
+State 139
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  113     | expr GE expr •
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    LT  error (nonassociative)
+    LE  error (nonassociative)
+    GT  error (nonassociative)
+    GE  error (nonassociative)
+    EQ  error (nonassociative)
+    NE  error (nonassociative)
+
+    $default  reduce using rule 113 (expr)
+
+
+State 140
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  114     | expr EQ expr •
+  115     | expr • NE expr
+
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    LT  error (nonassociative)
+    LE  error (nonassociative)
+    GT  error (nonassociative)
+    GE  error (nonassociative)
+    EQ  error (nonassociative)
+    NE  error (nonassociative)
+
+    $default  reduce using rule 114 (expr)
+
+
+State 141
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+  115     | expr NE expr •
+
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    LT  error (nonassociative)
+    LE  error (nonassociative)
+    GT  error (nonassociative)
+    GE  error (nonassociative)
+    EQ  error (nonassociative)
+    NE  error (nonassociative)
+
+    $default  reduce using rule 115 (expr)
+
+
+State 142
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  107     | expr OR expr •
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    $default  reduce using rule 107 (expr)
+
+
+State 143
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  108     | expr AND expr •
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    $default  reduce using rule 108 (expr)
+
+
+State 144
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  101     | expr '+' expr •
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    $default  reduce using rule 101 (expr)
+
+
+State 145
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  102     | expr '-' expr •
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    $default  reduce using rule 102 (expr)
+
+
+State 146
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   98     | expr '&' expr •
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    $default  reduce using rule 98 (expr)
+
+
+State 147
+
+   97 expr: expr • '|' expr
+   97     | expr '|' expr •
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    $default  reduce using rule 97 (expr)
+
+
+State 148
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+   99     | expr '^' expr •
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    $default  reduce using rule 99 (expr)
+
+
+State 149
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  103     | expr '*' expr •
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    $default  reduce using rule 103 (expr)
+
+
+State 150
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  104     | expr '/' expr •
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    $default  reduce using rule 104 (expr)
+
+
+State 151
+
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  105     | expr '%' expr •
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    $default  reduce using rule 105 (expr)
+
+
+State 152
+
+   69 arg_component: '{' $@11 • expr $@12 '}'
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 175
+
+
+State 153
+
+   56 wslist: WHITESPACE •
+   61 ws: WHITESPACE •
+
+    '\n'      reduce using rule 61 (ws)
+    ';'       reduce using rule 61 (ws)
+    ')'       reduce using rule 61 (ws)
+    $default  reduce using rule 56 (wslist)
+
+
+State 154
+
+   53 arg_list: arg_list wslist • arg_component_list
+   57 wslist: wslist • WHITESPACE
+
+    WHITESPACE  shift, and go to state 159
+    DOLLARARG   shift, and go to state 110
+    STRCONST    shift, and go to state 111
+    LITERAL     shift, and go to state 112
+    '{'         shift, and go to state 113
+
+    arg_component_list  go to state 176
+    arg_component       go to state 116
+
+
+State 155
+
+   37 include_stmnt: include_hdr WHITESPACE arg_list ws •
+
+    $default  reduce using rule 37 (include_stmnt)
+
+
+State 156
+
+   63 arg_component_list: arg_component_list arg_component •
+
+    $default  reduce using rule 63 (arg_component_list)
+
+
+State 157
+
+   45 cmd_stmnt: cmd_name '(' optwslist func_call_list • optwslist ')'
+   59 func_call_list: func_call_list • optwslist ',' optwslist arg_component_list
+
+    WHITESPACE  shift, and go to state 117
+
+    $default  reduce using rule 54 (optwslist)
+
+    optwslist  go to state 177
+    wslist     go to state 119
+
+
+State 158
+
+   58 func_call_list: arg_component_list •
+   63 arg_component_list: arg_component_list • arg_component
+
+    DOLLARARG  shift, and go to state 110
+    STRCONST   shift, and go to state 111
+    LITERAL    shift, and go to state 112
+    '{'        shift, and go to state 113
+
+    $default  reduce using rule 58 (func_call_list)
+
+    arg_component  go to state 156
+
+
+State 159
+
+   57 wslist: wslist WHITESPACE •
+
+    $default  reduce using rule 57 (wslist)
+
+
+State 160
+
+   51 opt_arg_list: opt_arg_list wslist • arg_component_list
+   57 wslist: wslist • WHITESPACE
+
+    WHITESPACE  shift, and go to state 159
+    DOLLARARG   shift, and go to state 110
+    STRCONST    shift, and go to state 111
+    LITERAL     shift, and go to state 112
+    '{'         shift, and go to state 113
+
+    arg_component_list  go to state 178
+    arg_component       go to state 116
+
+
+State 161
+
+   44 cmd_stmnt: cmd_name $@9 opt_arg_list ws •
+
+    $default  reduce using rule 44 (cmd_stmnt)
+
+
+State 162
+
+   47 func_call: funcref '(' optwslist func_call_list • optwslist ')'
+   59 func_call_list: func_call_list • optwslist ',' optwslist arg_component_list
+
+    WHITESPACE  shift, and go to state 117
+
+    $default  reduce using rule 54 (optwslist)
+
+    optwslist  go to state 179
+    wslist     go to state 119
+
+
+State 163
+
+   49 func_call: funcref $@10 opt_arg_list ws •
+
+    $default  reduce using rule 49 (func_call)
+
+
+State 164
+
+   79 func_args: '(' $@15 • func_arg_list ')'
+
+    IDENT  shift, and go to state 180
+
+    func_arg_list  go to state 181
+
+
+State 165
+
+   76 func_def: func_hdr $@13 func_args $@14 • statement_list END
+
+    $default  reduce using rule 2 (statement_list)
+
+    statement_list  go to state 182
+
+
+State 166
+
+   92 init: '=' • expr
+
+    '!'         shift, and go to state 46
+    '-'         shift, and go to state 47
+    '~'         shift, and go to state 48
+    INTCONST    shift, and go to state 49
+    DOLLARARG   shift, and go to state 50
+    FLOATCONST  shift, and go to state 51
+    STRCONST    shift, and go to state 52
+    IDENT       shift, and go to state 53
+    VARREF      shift, and go to state 54
+    FUNCREF     shift, and go to state 55
+    '('         shift, and go to state 56
+    '{'         shift, and go to state 57
+
+    expr  go to state 183
+
+
+State 167
+
+   90 decl_ident: IDENT $@17 init •
+
+    $default  reduce using rule 90 (decl_ident)
+
+
+State 168
+
+   88 decl_list: decl_list ',' $@16 • decl_ident
+
+    IDENT  shift, and go to state 75
+
+    decl_ident  go to state 184
+
+
+State 169
+
+   23 while_stmnt: WHILE '(' expr ')' $@1 • statement_list END
+
+    $default  reduce using rule 2 (statement_list)
+
+    statement_list  go to state 185
+
+
+State 170
+
+   30 if_stmnt: IF '(' expr ')' $@5 • statement_list else_clause END
+
+    $default  reduce using rule 2 (statement_list)
+
+    statement_list  go to state 186
+
+
+State 171
+
+   25 for_stmnt: FOR '(' assign_stmnt ';' expr • ';' assign_stmnt ')' $@2 statement_list END
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    LT   shift, and go to state 91
+    LE   shift, and go to state 92
+    GT   shift, and go to state 93
+    GE   shift, and go to state 94
+    EQ   shift, and go to state 95
+    NE   shift, and go to state 96
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+    ';'  shift, and go to state 187
+
+
+State 172
+
+   28 foreach_stmnt: FOREACH VARREF '(' $@3 ws • arg_list ws $@4 ')' statement_list END
+
+    DOLLARARG  shift, and go to state 110
+    STRCONST   shift, and go to state 111
+    LITERAL    shift, and go to state 112
+    '{'        shift, and go to state 113
+
+    arg_list            go to state 188
+    arg_component_list  go to state 115
+    arg_component       go to state 116
+
+
+State 173
+
+  118 expr: IDENT '(' $@18 optwslist • func_call_list optwslist $@19 ')'
+
+    DOLLARARG  shift, and go to state 110
+    STRCONST   shift, and go to state 111
+    LITERAL    shift, and go to state 112
+    '{'        shift, and go to state 113
+
+    func_call_list      go to state 189
+    arg_component_list  go to state 158
+    arg_component       go to state 116
+
+
+State 174
+
+  121 expr: FUNCREF '(' $@20 optwslist • func_call_list optwslist $@21 ')'
+
+    DOLLARARG  shift, and go to state 110
+    STRCONST   shift, and go to state 111
+    LITERAL    shift, and go to state 112
+    '{'        shift, and go to state 113
+
+    func_call_list      go to state 190
+    arg_component_list  go to state 158
+    arg_component       go to state 116
+
+
+State 175
+
+   69 arg_component: '{' $@11 expr • $@12 '}'
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    LT   shift, and go to state 91
+    LE   shift, and go to state 92
+    GT   shift, and go to state 93
+    GE   shift, and go to state 94
+    EQ   shift, and go to state 95
+    NE   shift, and go to state 96
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    $default  reduce using rule 68 ($@12)
+
+    $@12  go to state 191
+
+
+State 176
+
+   53 arg_list: arg_list wslist arg_component_list •
+   63 arg_component_list: arg_component_list • arg_component
+
+    DOLLARARG  shift, and go to state 110
+    STRCONST   shift, and go to state 111
+    LITERAL    shift, and go to state 112
+    '{'        shift, and go to state 113
+
+    $default  reduce using rule 53 (arg_list)
+
+    arg_component  go to state 156
+
+
+State 177
+
+   45 cmd_stmnt: cmd_name '(' optwslist func_call_list optwslist • ')'
+   59 func_call_list: func_call_list optwslist • ',' optwslist arg_component_list
+
+    ')'  shift, and go to state 192
+    ','  shift, and go to state 193
+
+
+State 178
+
+   51 opt_arg_list: opt_arg_list wslist arg_component_list •
+   63 arg_component_list: arg_component_list • arg_component
+
+    DOLLARARG  shift, and go to state 110
+    STRCONST   shift, and go to state 111
+    LITERAL    shift, and go to state 112
+    '{'        shift, and go to state 113
+
+    $default  reduce using rule 51 (opt_arg_list)
+
+    arg_component  go to state 156
+
+
+State 179
+
+   47 func_call: funcref '(' optwslist func_call_list optwslist • ')'
+   59 func_call_list: func_call_list optwslist • ',' optwslist arg_component_list
+
+    ')'  shift, and go to state 194
+    ','  shift, and go to state 193
+
+
+State 180
+
+   80 func_arg_list: IDENT •
+
+    $default  reduce using rule 80 (func_arg_list)
+
+
+State 181
+
+   79 func_args: '(' $@15 func_arg_list • ')'
+   81 func_arg_list: func_arg_list • ',' IDENT
+
+    ')'  shift, and go to state 195
+    ','  shift, and go to state 196
+
+
+State 182
+
+    3 statement_list: statement_list • statement stmnt_terminator
+   76 func_def: func_hdr $@13 func_args $@14 statement_list • END
+
+    WHILE      shift, and go to state 4
+    IF         shift, and go to state 5
+    FOR        shift, and go to state 6
+    FOREACH    shift, and go to state 7
+    END        shift, and go to state 197
+    INCLUDE    shift, and go to state 8
+    ENDSCRIPT  shift, and go to state 9
+    BREAK      shift, and go to state 10
+    INT        shift, and go to state 11
+    FLOAT      shift, and go to state 12
+    STR        shift, and go to state 13
+    RETURN     shift, and go to state 14
+    FUNCTION   shift, and go to state 15
+    IDENT      shift, and go to state 16
+    VARREF     shift, and go to state 17
+    FUNCREF    shift, and go to state 18
+    EXTERN     shift, and go to state 19
+
+    $default  reduce using rule 96 (null_stmnt)
+
+    statement         go to state 20
+    endscript_marker  go to state 21
+    while_stmnt       go to state 22
+    for_stmnt         go to state 23
+    foreach_stmnt     go to state 24
+    if_stmnt          go to state 25
+    assign_stmnt      go to state 26
+    include_hdr       go to state 27
+    include_stmnt     go to state 28
+    cmd_name          go to state 29
+    cmd_stmnt         go to state 30
+    funcref           go to state 31
+    func_call         go to state 32
+    ext_func          go to state 33
+    func_hdr          go to state 34
+    func_def          go to state 35
+    decl_type         go to state 36
+    decl_stmnt        go to state 37
+    break_stmnt       go to state 38
+    return_stmnt      go to state 39
+    null_stmnt        go to state 40
+
+
+State 183
+
+   92 init: '=' expr •
+   97 expr: expr • '|' expr
+   98     | expr • '&' expr
+   99     | expr • '^' expr
+  101     | expr • '+' expr
+  102     | expr • '-' expr
+  103     | expr • '*' expr
+  104     | expr • '/' expr
+  105     | expr • '%' expr
+  107     | expr • OR expr
+  108     | expr • AND expr
+  110     | expr • LT expr
+  111     | expr • LE expr
+  112     | expr • GT expr
+  113     | expr • GE expr
+  114     | expr • EQ expr
+  115     | expr • NE expr
+
+    LT   shift, and go to state 91
+    LE   shift, and go to state 92
+    GT   shift, and go to state 93
+    GE   shift, and go to state 94
+    EQ   shift, and go to state 95
+    NE   shift, and go to state 96
+    OR   shift, and go to state 97
+    AND  shift, and go to state 98
+    '+'  shift, and go to state 99
+    '-'  shift, and go to state 100
+    '&'  shift, and go to state 101
+    '|'  shift, and go to state 102
+    '^'  shift, and go to state 103
+    '*'  shift, and go to state 104
+    '/'  shift, and go to state 105
+    '%'  shift, and go to state 106
+
+    $default  reduce using rule 92 (init)
+
+
+State 184
+
+   88 decl_list: decl_list ',' $@16 decl_ident •
+
+    $default  reduce using rule 88 (decl_list)
+
+
+State 185
+
+    3 statement_list: statement_list • statement stmnt_terminator
+   23 while_stmnt: WHILE '(' expr ')' $@1 statement_list • END
+
+    WHILE      shift, and go to state 4
+    IF         shift, and go to state 5
+    FOR        shift, and go to state 6
+    FOREACH    shift, and go to state 7
+    END        shift, and go to state 198
+    INCLUDE    shift, and go to state 8
+    ENDSCRIPT  shift, and go to state 9
+    BREAK      shift, and go to state 10
+    INT        shift, and go to state 11
+    FLOAT      shift, and go to state 12
+    STR        shift, and go to state 13
+    RETURN     shift, and go to state 14
+    FUNCTION   shift, and go to state 15
+    IDENT      shift, and go to state 16
+    VARREF     shift, and go to state 17
+    FUNCREF    shift, and go to state 18
+    EXTERN     shift, and go to state 19
+
+    $default  reduce using rule 96 (null_stmnt)
+
+    statement         go to state 20
+    endscript_marker  go to state 21
+    while_stmnt       go to state 22
+    for_stmnt         go to state 23
+    foreach_stmnt     go to state 24
+    if_stmnt          go to state 25
+    assign_stmnt      go to state 26
+    include_hdr       go to state 27
+    include_stmnt     go to state 28
+    cmd_name          go to state 29
+    cmd_stmnt         go to state 30
+    funcref           go to state 31
+    func_call         go to state 32
+    ext_func          go to state 33
+    func_hdr          go to state 34
+    func_def          go to state 35
+    decl_type         go to state 36
+    decl_stmnt        go to state 37
+    break_stmnt       go to state 38
+    return_stmnt      go to state 39
+    null_stmnt        go to state 40
+
+
+State 186
+
+    3 statement_list: statement_list • statement stmnt_terminator
+   30 if_stmnt: IF '(' expr ')' $@5 statement_list • else_clause END
+
+    WHILE      shift, and go to state 4
+    IF         shift, and go to state 5
+    ELSE       shift, and go to state 199
+    FOR        shift, and go to state 6
+    FOREACH    shift, and go to state 7
+    INCLUDE    shift, and go to state 8
+    ENDSCRIPT  shift, and go to state 9
+    BREAK      shift, and go to state 10
+    INT        shift, and go to state 11
+    FLOAT      shift, and go to state 12
+    STR        shift, and go to state 13
+    RETURN     shift, and go to state 14
+    FUNCTION   shift, and go to state 15
+    IDENT      shift, and go to state 16
+    VARREF     shift, and go to state 17
+    FUNCREF    shift, and go to state 18
+    EXTERN     shift, and go to state 19
+
+    END       reduce using rule 31 (else_clause)
+    $default  reduce using rule 96 (null_stmnt)
+
+    statement         go to state 20
+    endscript_marker  go to state 21
+    while_stmnt       go to state 22
+    for_stmnt         go to state 23
+    foreach_stmnt     go to state 24
+    if_stmnt          go to state 25
+    else_clause       go to state 200
+    assign_stmnt      go to state 26
+    include_hdr       go to state 27
+    include_stmnt     go to state 28
+    cmd_name          go to state 29
+    cmd_stmnt         go to state 30
+    funcref           go to state 31
+    func_call         go to state 32
+    ext_func          go to state 33
+    func_hdr          go to state 34
+    func_def          go to state 35
+    decl_type         go to state 36
+    decl_stmnt        go to state 37
+    break_stmnt       go to state 38
+    return_stmnt      go to state 39
+    null_stmnt        go to state 40
+
+
+State 187
+
+   25 for_stmnt: FOR '(' assign_stmnt ';' expr ';' • assign_stmnt ')' $@2 statement_list END
+
+    VARREF  shift, and go to state 17
+
+    assign_stmnt  go to state 201
+
+
+State 188
+
+   28 foreach_stmnt: FOREACH VARREF '(' $@3 ws arg_list • ws $@4 ')' statement_list END
+   53 arg_list: arg_list • wslist arg_component_list
+
+    WHITESPACE  shift, and go to state 153
+
+    $default  reduce using rule 60 (ws)
+
+    wslist  go to state 154
+    ws      go to state 202
+
+
+State 189
+
+   59 func_call_list: func_call_list • optwslist ',' optwslist arg_component_list
+  118 expr: IDENT '(' $@18 optwslist func_call_list • optwslist $@19 ')'
+
+    WHITESPACE  shift, and go to state 117
+
+    $default  reduce using rule 54 (optwslist)
+
+    optwslist  go to state 203
+    wslist     go to state 119
+
+
+State 190
+
+   59 func_call_list: func_call_list • optwslist ',' optwslist arg_component_list
+  121 expr: FUNCREF '(' $@20 optwslist func_call_list • optwslist $@21 ')'
+
+    WHITESPACE  shift, and go to state 117
+
+    $default  reduce using rule 54 (optwslist)
+
+    optwslist  go to state 204
+    wslist     go to state 119
+
+
+State 191
+
+   69 arg_component: '{' $@11 expr $@12 • '}'
+
+    '}'  shift, and go to state 205
+
+
+State 192
+
+   45 cmd_stmnt: cmd_name '(' optwslist func_call_list optwslist ')' •
+
+    $default  reduce using rule 45 (cmd_stmnt)
+
+
+State 193
+
+   59 func_call_list: func_call_list optwslist ',' • optwslist arg_component_list
+
+    WHITESPACE  shift, and go to state 117
+
+    $default  reduce using rule 54 (optwslist)
+
+    optwslist  go to state 206
+    wslist     go to state 119
+
+
+State 194
+
+   47 func_call: funcref '(' optwslist func_call_list optwslist ')' •
+
+    $default  reduce using rule 47 (func_call)
+
+
+State 195
+
+   79 func_args: '(' $@15 func_arg_list ')' •
+
+    $default  reduce using rule 79 (func_args)
+
+
+State 196
+
+   81 func_arg_list: func_arg_list ',' • IDENT
+
+    IDENT  shift, and go to state 207
+
+
+State 197
+
+   76 func_def: func_hdr $@13 func_args $@14 statement_list END •
+
+    $default  reduce using rule 76 (func_def)
+
+
+State 198
+
+   23 while_stmnt: WHILE '(' expr ')' $@1 statement_list END •
+
+    $default  reduce using rule 23 (while_stmnt)
+
+
+State 199
+
+   33 else_clause: ELSE • $@6 statement_list
+
+    $default  reduce using rule 32 ($@6)
+
+    $@6  go to state 208
+
+
+State 200
+
+   30 if_stmnt: IF '(' expr ')' $@5 statement_list else_clause • END
+
+    END  shift, and go to state 209
+
+
+State 201
+
+   25 for_stmnt: FOR '(' assign_stmnt ';' expr ';' assign_stmnt • ')' $@2 statement_list END
+
+    ')'  shift, and go to state 210
+
+
+State 202
+
+   28 foreach_stmnt: FOREACH VARREF '(' $@3 ws arg_list ws • $@4 ')' statement_list END
+
+    $default  reduce using rule 27 ($@4)
+
+    $@4  go to state 211
+
+
+State 203
+
+   59 func_call_list: func_call_list optwslist • ',' optwslist arg_component_list
+  118 expr: IDENT '(' $@18 optwslist func_call_list optwslist • $@19 ')'
+
+    ','  shift, and go to state 193
+
+    $default  reduce using rule 117 ($@19)
+
+    $@19  go to state 212
+
+
+State 204
+
+   59 func_call_list: func_call_list optwslist • ',' optwslist arg_component_list
+  121 expr: FUNCREF '(' $@20 optwslist func_call_list optwslist • $@21 ')'
+
+    ','  shift, and go to state 193
+
+    $default  reduce using rule 120 ($@21)
+
+    $@21  go to state 213
+
+
+State 205
+
+   69 arg_component: '{' $@11 expr $@12 '}' •
+
+    $default  reduce using rule 69 (arg_component)
+
+
+State 206
+
+   59 func_call_list: func_call_list optwslist ',' optwslist • arg_component_list
+
+    DOLLARARG  shift, and go to state 110
+    STRCONST   shift, and go to state 111
+    LITERAL    shift, and go to state 112
+    '{'        shift, and go to state 113
+
+    arg_component_list  go to state 214
+    arg_component       go to state 116
+
+
+State 207
+
+   81 func_arg_list: func_arg_list ',' IDENT •
+
+    $default  reduce using rule 81 (func_arg_list)
+
+
+State 208
+
+   33 else_clause: ELSE $@6 • statement_list
+
+    $default  reduce using rule 2 (statement_list)
+
+    statement_list  go to state 215
+
+
+State 209
+
+   30 if_stmnt: IF '(' expr ')' $@5 statement_list else_clause END •
+
+    $default  reduce using rule 30 (if_stmnt)
+
+
+State 210
+
+   25 for_stmnt: FOR '(' assign_stmnt ';' expr ';' assign_stmnt ')' • $@2 statement_list END
+
+    $default  reduce using rule 24 ($@2)
+
+    $@2  go to state 216
+
+
+State 211
+
+   28 foreach_stmnt: FOREACH VARREF '(' $@3 ws arg_list ws $@4 • ')' statement_list END
+
+    ')'  shift, and go to state 217
+
+
+State 212
+
+  118 expr: IDENT '(' $@18 optwslist func_call_list optwslist $@19 • ')'
+
+    ')'  shift, and go to state 218
+
+
+State 213
+
+  121 expr: FUNCREF '(' $@20 optwslist func_call_list optwslist $@21 • ')'
+
+    ')'  shift, and go to state 219
+
+
+State 214
+
+   59 func_call_list: func_call_list optwslist ',' optwslist arg_component_list •
+   63 arg_component_list: arg_component_list • arg_component
+
+    DOLLARARG  shift, and go to state 110
+    STRCONST   shift, and go to state 111
+    LITERAL    shift, and go to state 112
+    '{'        shift, and go to state 113
+
+    $default  reduce using rule 59 (func_call_list)
+
+    arg_component  go to state 156
+
+
+State 215
+
+    3 statement_list: statement_list • statement stmnt_terminator
+   33 else_clause: ELSE $@6 statement_list •
+
+    WHILE      shift, and go to state 4
+    IF         shift, and go to state 5
+    FOR        shift, and go to state 6
+    FOREACH    shift, and go to state 7
+    INCLUDE    shift, and go to state 8
+    ENDSCRIPT  shift, and go to state 9
+    BREAK      shift, and go to state 10
+    INT        shift, and go to state 11
+    FLOAT      shift, and go to state 12
+    STR        shift, and go to state 13
+    RETURN     shift, and go to state 14
+    FUNCTION   shift, and go to state 15
+    IDENT      shift, and go to state 16
+    VARREF     shift, and go to state 17
+    FUNCREF    shift, and go to state 18
+    EXTERN     shift, and go to state 19
+
+    END       reduce using rule 33 (else_clause)
+    $default  reduce using rule 96 (null_stmnt)
+
+    statement         go to state 20
+    endscript_marker  go to state 21
+    while_stmnt       go to state 22
+    for_stmnt         go to state 23
+    foreach_stmnt     go to state 24
+    if_stmnt          go to state 25
+    assign_stmnt      go to state 26
+    include_hdr       go to state 27
+    include_stmnt     go to state 28
+    cmd_name          go to state 29
+    cmd_stmnt         go to state 30
+    funcref           go to state 31
+    func_call         go to state 32
+    ext_func          go to state 33
+    func_hdr          go to state 34
+    func_def          go to state 35
+    decl_type         go to state 36
+    decl_stmnt        go to state 37
+    break_stmnt       go to state 38
+    return_stmnt      go to state 39
+    null_stmnt        go to state 40
+
+
+State 216
+
+   25 for_stmnt: FOR '(' assign_stmnt ';' expr ';' assign_stmnt ')' $@2 • statement_list END
+
+    $default  reduce using rule 2 (statement_list)
+
+    statement_list  go to state 220
+
+
+State 217
+
+   28 foreach_stmnt: FOREACH VARREF '(' $@3 ws arg_list ws $@4 ')' • statement_list END
+
+    $default  reduce using rule 2 (statement_list)
+
+    statement_list  go to state 221
+
+
+State 218
+
+  118 expr: IDENT '(' $@18 optwslist func_call_list optwslist $@19 ')' •
+
+    $default  reduce using rule 118 (expr)
+
+
+State 219
+
+  121 expr: FUNCREF '(' $@20 optwslist func_call_list optwslist $@21 ')' •
+
+    $default  reduce using rule 121 (expr)
+
+
+State 220
+
+    3 statement_list: statement_list • statement stmnt_terminator
+   25 for_stmnt: FOR '(' assign_stmnt ';' expr ';' assign_stmnt ')' $@2 statement_list • END
+
+    WHILE      shift, and go to state 4
+    IF         shift, and go to state 5
+    FOR        shift, and go to state 6
+    FOREACH    shift, and go to state 7
+    END        shift, and go to state 222
+    INCLUDE    shift, and go to state 8
+    ENDSCRIPT  shift, and go to state 9
+    BREAK      shift, and go to state 10
+    INT        shift, and go to state 11
+    FLOAT      shift, and go to state 12
+    STR        shift, and go to state 13
+    RETURN     shift, and go to state 14
+    FUNCTION   shift, and go to state 15
+    IDENT      shift, and go to state 16
+    VARREF     shift, and go to state 17
+    FUNCREF    shift, and go to state 18
+    EXTERN     shift, and go to state 19
+
+    $default  reduce using rule 96 (null_stmnt)
+
+    statement         go to state 20
+    endscript_marker  go to state 21
+    while_stmnt       go to state 22
+    for_stmnt         go to state 23
+    foreach_stmnt     go to state 24
+    if_stmnt          go to state 25
+    assign_stmnt      go to state 26
+    include_hdr       go to state 27
+    include_stmnt     go to state 28
+    cmd_name          go to state 29
+    cmd_stmnt         go to state 30
+    funcref           go to state 31
+    func_call         go to state 32
+    ext_func          go to state 33
+    func_hdr          go to state 34
+    func_def          go to state 35
+    decl_type         go to state 36
+    decl_stmnt        go to state 37
+    break_stmnt       go to state 38
+    return_stmnt      go to state 39
+    null_stmnt        go to state 40
+
+
+State 221
+
+    3 statement_list: statement_list • statement stmnt_terminator
+   28 foreach_stmnt: FOREACH VARREF '(' $@3 ws arg_list ws $@4 ')' statement_list • END
+
+    WHILE      shift, and go to state 4
+    IF         shift, and go to state 5
+    FOR        shift, and go to state 6
+    FOREACH    shift, and go to state 7
+    END        shift, and go to state 223
+    INCLUDE    shift, and go to state 8
+    ENDSCRIPT  shift, and go to state 9
+    BREAK      shift, and go to state 10
+    INT        shift, and go to state 11
+    FLOAT      shift, and go to state 12
+    STR        shift, and go to state 13
+    RETURN     shift, and go to state 14
+    FUNCTION   shift, and go to state 15
+    IDENT      shift, and go to state 16
+    VARREF     shift, and go to state 17
+    FUNCREF    shift, and go to state 18
+    EXTERN     shift, and go to state 19
+
+    $default  reduce using rule 96 (null_stmnt)
+
+    statement         go to state 20
+    endscript_marker  go to state 21
+    while_stmnt       go to state 22
+    for_stmnt         go to state 23
+    foreach_stmnt     go to state 24
+    if_stmnt          go to state 25
+    assign_stmnt      go to state 26
+    include_hdr       go to state 27
+    include_stmnt     go to state 28
+    cmd_name          go to state 29
+    cmd_stmnt         go to state 30
+    funcref           go to state 31
+    func_call         go to state 32
+    ext_func          go to state 33
+    func_hdr          go to state 34
+    func_def          go to state 35
+    decl_type         go to state 36
+    decl_stmnt        go to state 37
+    break_stmnt       go to state 38
+    return_stmnt      go to state 39
+    null_stmnt        go to state 40
+
+
+State 222
+
+   25 for_stmnt: FOR '(' assign_stmnt ';' expr ';' assign_stmnt ')' $@2 statement_list END •
+
+    $default  reduce using rule 25 (for_stmnt)
+
+
+State 223
+
+   28 foreach_stmnt: FOREACH VARREF '(' $@3 ws arg_list ws $@4 ')' statement_list END •
+
+    $default  reduce using rule 28 (foreach_stmnt)

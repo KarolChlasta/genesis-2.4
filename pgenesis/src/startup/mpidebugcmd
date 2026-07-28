@@ -1,0 +1,1 @@
+/home/griffi/.local/bin/mpirun -np $num_nodes $exec $nargv
