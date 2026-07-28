@@ -1,0 +1,20 @@
+===== PARITY CHECK  81010914144d  2026-07-27 19:41:20 UTC =====
+NVIDIA GeForce RTX 4090, 8.9, 570.195.03
+CUDA_HOME=/usr/local/cuda-12.8  script=genesis/Scripts/benchmark/hh1952_ap_verify.g  (N=8 steps=200)
+
+----- CPU (fp64) -----
+completed 10 steps in 0.000000 cpu seconds
+completed 200 steps in 0.000000 cpu seconds
+NEURONS_AGREE: YES (spread < 1e-6 V)
+RESULT_VM= -0.02143485882
+
+----- CUDA (fp32, GENESIS_CUDA_MULTILOOP=210) -----
+CUDA: device: NVIDIA GeForce RTX 4090 (sm_89, 128 SMs)
+CUDA MULTILOOP: 210 steps | kernel 0.3 ms | total 0.3 ms | 1.365 us/step
+NEURONS_AGREE: YES (spread < 1e-6 V)
+RESULT_VM= -0.02143492922
+
+CPU  RESULT_VM = -0.02143485882
+CUDA RESULT_VM = -0.02143492922
+|CPU-CUDA|     = 7.040e-08 V
+PARITY: PASS

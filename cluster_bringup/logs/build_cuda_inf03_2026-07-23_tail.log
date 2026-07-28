@@ -1,0 +1,6 @@
+make[2]: Nothing to be done for 'default'.
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/par'
+Non-X Libs Compiled
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X  sim/simlib.o sys/utillib.o ss/ss.o shell/shelllib.o par/parlib.o buffer/buflib.o segment/seglib.o hh/hhlib.o device/devlib.o out/outlib.o olf/olflib.o tools/toollib.o concen/conclib.o hines/hineslib.o user/userlib.o param/paramlib.o pore/porelib.o oldconn/axon/axonlib.o oldconn/synapse/synlib.o oldconn/personal/perlib.o oldconn/sim/simconnlib.o oldconn/tools/toolconnlib.o diskio/interface/netcdf/netcdflib.o diskio/interface/netcdf/netcdf-3.4/src/libsrc/libnetcdf.a diskio/interface/FMT1/FMT1lib.o diskio/diskiolib.o kinetics/kinlib.o chemesis/chemlib.o newconn/newconnlib.o nxloadlib.o /storage2/home/kchlasta/genesis-2.5/locallib/libfl.a  -lm sprng/lib/liblfg.a -lncurses -ltinfo -lOpenCL -L/storage/opt/cuda/cuda-12.8/lib64 -lcudart -lstdc++ -o nxgenesis
+Non-X GENESIS Compiled -- All Done
+make[1]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src'

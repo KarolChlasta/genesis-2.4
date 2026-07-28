@@ -1,0 +1,65 @@
+# GENESIS 2.5 cluster environment recon — inf03 (A100)
+# Captured 2026-07-23 from laptop via miranda (lunar.umcs.eu). Karol Chlasta.
+
+== NODE: inf03  2026-07-23 22:41:20 ==
+-- CPU --
+nproc=128
+CPU(s):              128
+Thread(s) per core:  2
+Socket(s):           2
+Model name:          Intel(R) Xeon(R) Platinum 8358 CPU @ 2.60GHz
+-- MEM --
+              total        used        free      shared  buff/cache   available
+Mem:          250Gi       1.6Gi       245Gi       125Mi       3.6Gi       247Gi
+-- GPU --
+name, compute_cap, memory.total [MiB], driver_version
+NVIDIA A100-PCIE-40GB, 8.0, 40960 MiB, 595.71.05
+-- nvcc --
+nvcc not on PATH
+-- modules (cuda/mpi/gcc) --
+mpi/mpich-x86_64  mpi/openmpi-x86_64  pmi/pmix-x86_64  
+-- /storage/opt --
+adf
+adf2014.09
+adf2014.10
+anaconda3
+cmake-3.17.0
+COOLFluiD
+cuda
+gdal-2.2.2
+hdf5_parallel
+intel
+intel2016
+intel2020
+julia-1.11.3
+lammps
+mathematica
+matlab
+mpich-3.4.2
+nag
+nvidia
+nvidia-2022
+nvidia-2024
+nvidia-2024-2411
+nvidia-2025-259
+oneapi-2021
+oneapi-2023
+oneapi-2024
+oneapi-2025
+parametis-4.0.3
+ParaView
+pgi
+proj-5.0.1
+qchem43
+root
+saga
+Wolfram
+-- build deps --
+gcc      /usr/bin/gcc
+g++      /usr/bin/g++
+make     /usr/bin/make
+flex     /usr/bin/flex
+bison    /usr/bin/bison
+mpirun    MISSING
+mpicc     MISSING
+git      /usr/bin/git

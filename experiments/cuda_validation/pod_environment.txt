@@ -1,0 +1,122 @@
+### GENESIS 2.5 CUDA pod environment — collected Sat Jul  4 16:14:29 UTC 2026
+
+## OS
+PRETTY_NAME="Ubuntu 24.04.3 LTS"
+VERSION="24.04.3 LTS (Noble Numbat)"
+
+## CPU
+CPU(s):                               32
+Model name:                           AMD Ryzen 9 9950X 16-Core Processor
+Thread(s) per core:                   2
+Core(s) per socket:                   16
+CPU(s) scaling MHz:                   28%
+CPU max MHz:                          5752.0000
+CPU min MHz:                          600.0000
+Flags:                                fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx_vnni avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd cppc amd_ibpb_ret arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid bus_lock_detect movdiri movdir64b overflow_recov succor smca fsrm avx512_vp2intersect flush_l1d
+nproc: 32
+
+## MEM
+               total        used        free      shared  buff/cache   available
+Mem:           123Gi        13Gi        30Gi        19Mi        80Gi       109Gi
+
+## GPU (nvidia-smi)
+Sat Jul  4 16:14:29 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 570.195.03             Driver Version: 570.195.03     CUDA Version: 12.8     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4090        On  |   00000000:01:00.0 Off |                  Off |
+|  0%   27C    P8             19W /  450W |       1MiB /  24564MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+
+## GPU details
+Driver Version                            : 570.195.03
+CUDA Version                              : 12.8
+    Product Name                          : NVIDIA GeForce RTX 4090
+    Product Architecture                  : Ada Lovelace
+    VBIOS Version                         : 95.02.3C.00.EB
+        Bus Id                            : 00000000:01:00.0
+        Memory                            : 0 %
+            SRAM SM                       : N/A
+        Current Power Limit               : 450.00 W
+        Requested Power Limit             : 450.00 W
+        Default Power Limit               : 450.00 W
+        Min Power Limit                   : 150.00 W
+        Max Power Limit                   : 450.00 W
+        Current Power Limit               : N/A
+        Requested Power Limit             : N/A
+        Default Power Limit               : N/A
+        Min Power Limit                   : N/A
+        Max Power Limit                   : N/A
+        SM                                : 210 MHz
+        Memory                            : 405 MHz
+        Memory                            : N/A
+        Memory                            : N/A
+        Memory                            : N/A
+    Max Clocks
+        SM                                : 3105 MHz
+        Memory                            : 10501 MHz
+
+## nvcc
+Built on Fri_Feb_21_20:23:50_PST_2025
+Cuda compilation tools, release 12.8, V12.8.93
+Build cuda_12.8.r12.8/compiler.35583870_0
+
+## gcc / make / ld
+gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
+GNU Make 4.3
+GNU ld (GNU Binutils for Ubuntu) 2.42
+
+## CUDA install
+lrwxrwxrwx 1 root root 22 Mar 10  2025 /usr/local/cuda -> /etc/alternatives/cuda
+
+## OpenCL loader
+lrwxrwxrwx 1 root root    18 Apr 18  2024 /usr/lib/x86_64-linux-gnu/libOpenCL.so -> libOpenCL.so.1.0.0
+lrwxrwxrwx 1 root root    18 Apr 18  2024 /usr/lib/x86_64-linux-gnu/libOpenCL.so.1 -> libOpenCL.so.1.0.0
+-rw-r--r-- 1 root root 73384 Apr 18  2024 /usr/lib/x86_64-linux-gnu/libOpenCL.so.1.0.0
+
+## relevant packages
+bison 2:3.8.2+dfsg-1build2
+cuda-cccl-12-8 12.8.90-1
+cuda-command-line-tools-12-8 12.8.1-1
+cuda-compat-12-8 575.57.08-0ubuntu1
+cuda-compiler-12-8 12.8.1-1
+cuda-crt-12-8 12.8.93-1
+cuda-cudart-12-8 12.8.90-1
+cuda-cudart-dev-12-8 12.8.90-1
+cuda-cuobjdump-12-8 12.8.90-1
+cuda-cupti-12-8 12.8.90-1
+cuda-cupti-dev-12-8 12.8.90-1
+cuda-cuxxfilt-12-8 12.8.90-1
+cuda-driver-dev-12-8 12.8.90-1
+cuda-gdb-12-8 12.8.90-1
+cuda-libraries-12-8 12.8.1-1
+cuda-libraries-dev-12-8 12.8.1-1
+cuda-minimal-build-12-8 12.8.1-1
+cuda-nsight-compute-12-8 12.8.1-1
+cuda-nvcc-12-8 12.8.93-1
+cuda-nvdisasm-12-8 12.8.90-1
+cuda-nvml-dev-12-8 12.8.90-1
+cuda-nvprof-12-8 12.8.90-1
+cuda-nvprune-12-8 12.8.90-1
+cuda-nvrtc-12-8 12.8.93-1
+cuda-nvrtc-dev-12-8 12.8.93-1
+
+## result files on pod
+-rw-r--r-- 1 root root 22658 Jul  4 15:34 /root/validate.log
+none
+
+## repo commit on pod
+4ef393851419cd2463a3888a9f5bad17afa83d0f

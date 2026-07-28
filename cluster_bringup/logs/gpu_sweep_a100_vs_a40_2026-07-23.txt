@@ -1,0 +1,36 @@
+### A100 (inf03) ###
+== CUDA kernel us/step sweep on inf03 (NCOMP=16) ==
+  comps=3200    (N=200   x 16)  kernel = 3.253 us/step
+  comps=12800   (N=800   x 16)  kernel = 3.239 us/step
+  comps=51200   (N=3200  x 16)  kernel = 8.007 us/step
+  comps=204800  (N=12800 x 16)  kernel = ERR us/step
+### A40 (inf02) ###
+== CUDA kernel us/step sweep on inf02 (NCOMP=16) ==
+  comps=3200    (N=200   x 16)  kernel = 1.440 us/step
+  comps=12800   (N=800   x 16)  kernel = 2.415 us/step
+  comps=51200   (N=3200  x 16)  kernel = 5.304 us/step
+  comps=204800  (N=12800 x 16)  kernel = ERR us/step
+
+--- CORRECTION (Karol Chlasta, 2026-07-24) ---
+The "us/step" kernel numbers above are real dispatch-throughput measurements and
+stand as raw data. BUT the "speedup vs 1 CPU core" comparison below is INVALID:
+cuda_chip_channel_multiloop has no axial/Hines coupling between compartments (see
+genesis/src/hines/cuda/cuda_channel.cuh header comment -- "single-compartment
+only ... NOT valid for multi-compartment trees"), so at NCOMP=16 the GPU kernel
+computed 16x uncoupled point-neurons per "cell", not the coupled cable the CPU
+(chanmode 1, real Hines solver) computed. Do not use the "~91x"/"~206x" figures
+below as a validated multicompartment speedup. See BENCHMARK_NOTES.md correction.
+Kernel throughput numbers themselves (us/step) remain valid as raw dispatch data.
+
+--- analysis (Karol Chlasta, 2026-07-23) ---
+Metric: CUDA multiloop kernel self-report (us/step), NCOMP=16, one hsolve.
+CPU (chanmode 1) reference at 3200 comps = 297 us/step (subtraction method).
+Speedup vs 1 CPU core at 3200 comps: A100 ~91x, A40 ~206x.
+A40 < A100 (faster) at all reached sizes: this fp32 element-wise Hines/channel
+kernel does not use the A100's HBM2e/FP64/tensor advantages, while the A40 has a
+higher clock and more CUDA cores. A100 was under-utilised (flat ~3.25 us/step to
+12800 comps). A100 would need much larger models to pull ahead, but GENESIS SLI
+construction is O(N) serial (N=12800 timed out >120s) and blocks large-N runs.
+H200 (Hopper, HBM3e) would mainly help at true scale / if FP64 or bandwidth-bound.
+Next: measure CPU at larger sizes (speedup grows, CPU is O(comps)/step); reps+CI;
+address construction cost (procedural/runtime build) to reach large models.

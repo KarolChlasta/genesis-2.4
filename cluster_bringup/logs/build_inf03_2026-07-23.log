@@ -1,0 +1,550 @@
+SRC=/storage2/home/kchlasta/genesis-2.5/cluster_bringup/../genesis/src
+CUDA_HOME=/storage/opt/cuda/cuda-12.8
+CC=/usr/bin/gcc
+ARCH=sm_80
+== building CPU reference (nxgenesis_nocl) ==
+make[1]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src'
+cd sys
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sys'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -I. -I.. -I../shell -I../ss gcmalloc.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -I. -I.. -I../shell -I../ss getopt.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -I. -I.. -I../shell -I../ss hash.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -I. -I.. -I../shell -I../ss jump.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -I. -I.. -I../shell -I../ss popen.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -I. -I.. -I../shell -I../ss proc.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -I. -I.. -I../shell -I../ss rstats.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -I. -I.. -I../shell -I../ss signal.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -I. -I.. -I../shell -I../ss system.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -I. -I.. -I../shell -I../ss system_deps.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -I. -I.. -I../shell -I../ss segv.c -c 
+ld  -r -o utillib.o gcmalloc.o getopt.o hash.o jump.o popen.o proc.o rstats.o signal.o system.o system_deps.o segv.o  
+no lib ordering needed for utillib.o
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DBSD -o code_lib code_lib.c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DBSD -o code_func code_func.c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DBSD gcmalloc.o  -o code_sym code_sym.c
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sys'
+cd ss
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/ss'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -I. -I../sys -I../shell -DBSD -DLinux  eval.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -I. -I../sys -I../shell -DBSD -DLinux  parse.c -c
+flex -l script.l
+script.l:165: warning, rule cannot be matched
+script.l:178: warning, rule cannot be matched
+gcc -c -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -I. -I../sys -I../shell -DBSD -DLinux  y.tab.c
+mv y.tab.o script.o
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -I. -I../sys -I../shell -DBSD -DLinux  strsave.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -I. -I../sys -I../shell -DBSD -DLinux  symtab.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -I. -I../sys -I../shell -DBSD -DLinux  yyless.c -c
+ld  -r -o ss.o eval.o parse.o script.o strsave.o symtab.o yyless.o
+no lib ordering needed for ss.o
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/ss'
+cd shell
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/shell'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_argv.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_batch.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_convert.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_char.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_debug.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_edit.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_env.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_error.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_esc.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_exec.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_func.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_hash.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_history.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_info.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_io.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_job.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_lib.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_load.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_log.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_misc.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_numeric.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_ops.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_prompt.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_script.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_setup.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_sh.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_status.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_string.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_sys.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_tty.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim null_startup.c -c 
+ld  -r -o shelllib-codeg.o shell_argv.o shell_batch.o shell_convert.o shell_char.o shell_debug.o shell_edit.o shell_env.o shell_error.o shell_esc.o shell_exec.o shell_func.o shell_hash.o shell_history.o shell_info.o shell_io.o shell_job.o shell_lib.o shell_load.o shell_log.o shell_misc.o shell_numeric.o shell_ops.o shell_prompt.o shell_script.o shell_setup.o shell_sh.o shell_status.o shell_string.o shell_sys.o shell_tty.o  null_startup.o
+no lib ordering needed for shelllib-codeg.o
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/shell'
+cd sys
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sys'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux -I. -I.. -I../shell -I../ss code_g.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -DBSD -DLinux  code_g.o ../ss/ss.o ../shell/shelllib-codeg.o utillib.o -lfl -lncurses -ltinfo -lOpenCL -lfl  -lm -lncurses -o code_g
+/usr/bin/ld: cannot find -lfl
+/usr/bin/ld: cannot find -lfl
+collect2: error: ld returned 1 exit status
+make[2]: *** [Makefile:154: code_g] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sys'
+code_g Compiled
+make[1]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src'
+make[1]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src'
+cd sys
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sys'
+make[2]: Nothing to be done for 'default'.
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sys'
+cd ss
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/ss'
+make[2]: Nothing to be done for 'default'.
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/ss'
+cd shell
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/shell'
+../sys/code_g shelllib.g shell_ext.h shell -novar
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:194: shell_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -DNEW -DNLIST_BUG -DTERMIO -DDONT_USE_SIGIO -I. -I.. -I../sys -I../ss -I../sim shell_g@.c -c 
+gcc: error: shell_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:189: shell_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/shell'
+cd sim
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sim'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_access.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_action.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_address.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_attach.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_base.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_bindings.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_buffer.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_call.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_check.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_class.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_clock.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_copy.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_create.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_current.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_delete.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_detach.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_dump.c -c 
+sim_dump.c: In function ‘DumpMessages’:
+sim_dump.c:1077:17: warning: cast to pointer from integer of different size [-Wint-to-pointer-cast]
+    entry.data = (char *)i;
+                 ^
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_element.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_elemlist.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_estack.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_event.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_extfields.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_extobject.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_fieldlist.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_fields.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_file.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_find.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_get.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_hash.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_help.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_index.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_intgrt.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_item.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_list.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_main.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_malloc.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_markers.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_mask.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_map.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_method.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_move.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_msg.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_name.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_notes.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_object.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_ops.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_position.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_random.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_reset.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_response.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_save.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_sched.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_set.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_simulate.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_stack.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_status.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_show.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_step.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_strings.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_tform.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_tree.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_tstack.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_valid.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_value.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par sim_quit.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par nsim_wildcard.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par basic_d@.c -c 
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par basic_f@.c -c 
+../sys/code_g simlib.g sim_ext.h basic
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:270: basic_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../shell -I../sprng/include -I../par basic_g@.c -c 
+gcc: error: basic_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:262: basic_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sim'
+cd sprng
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng'
+(LIB=`pwd`/lib; export LIB; cd SRC; make CC="gcc" LD="ld" AR="ar" RANLIB="ranlib" CPP="cpp -P" YACC="bison -y -Wno-yacc" LEX="flex -l" LEXLIB="-lfl" SPRNG_LIB="lfg" LIB_DIR='$(LIB)' TMPDIR="/tmp" LDFLAGS="" OS="BSD" PLAT="Linux" INSTALLDIR="/storage2/home/kchlasta/genesis-2.5/genesis/src/.." CFLAGS_IN=""; cd ..)
+make[3]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/SRC'
+make[4]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/SRC/lfg'
+(cd ..; make sprng_common)
+make[5]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/SRC'
+gcc -c   fwrap_mpi.c
+gcc -c   cputime.c
+gcc -c  makeseed.c
+gcc -c  store.c
+gcc -c  simple_mpi.c
+gcc -c  memory.c
+gcc -c  communicate.c
+gcc -c  checkid.c
+make[5]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/SRC'
+make CC="gcc" CFLAGS_IN="" SPRNG_LIB="lfg" LIB_DIR='$(LIB)' PLAT=Linux /storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/lib/liblfg.a
+make[5]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/SRC/lfg'
+gcc -c     lfg.c -I..
+ar rv /storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/lib/liblfg.a lfg.o ../fwrap_mpi.o  ../cputime.o ../makeseed.o   ../simple_mpi.o ../memory.o  ../communicate.o  ../checkid.o ../store.o
+ar: creating /storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/lib/liblfg.a
+a - lfg.o
+a - ../fwrap_mpi.o
+a - ../cputime.o
+a - ../makeseed.o
+a - ../simple_mpi.o
+a - ../memory.o
+a - ../communicate.o
+a - ../checkid.o
+a - ../store.o
+ranlib /storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/lib/liblfg.a
+make[5]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/SRC/lfg'
+(cd ..; make timesprng_exec TIMESPRNG_LIB=lfg)
+make[5]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/SRC'
+gcc -c  timing.c
+gcc  -o ../timelfg timing.o -L/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/lib\
+	-llfg 
+make[5]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/SRC'
+(cd ..; make checksprng_exec CHECKSPRNG_LIB=lfg)
+make[5]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/SRC'
+gcc -c  check_gen.c
+gcc  -o ../check.clfg check_gen.o \
+	-L/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/lib -llfg 
+gcc -c  check_gen_simple.c
+gcc  -o ../check_sim.clfg check_gen_simple.o \
+	-L/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/lib -llfg 
+gcc -c  check_gen_ptr.c
+gcc  -o ../check_ptr.clfg check_gen_ptr.o \
+	-L/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/lib -llfg 
+make[5]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/SRC'
+cp lfg.data ../../.
+make[4]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/SRC/lfg'
+make[3]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng/SRC'
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/sprng'
+cd newconn
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/newconn'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -DNDEBUG  -I. -I../sys -I../ss -I../sim -I../shell -I../hines -I../segment newconn_d@.c -c 
+../sys/code_g newconnlib.g newconn_ext.h newconn
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:210: newconn_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -DNDEBUG  -I. -I../sys -I../ss -I../sim -I../shell -I../hines -I../segment newconn_g@.c -c 
+gcc: error: newconn_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:207: newconn_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/newconn'
+cd oldconn
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/oldconn'
+cd ./axon
+make[3]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/oldconn/axon'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../../sim -I../../ss -I../../sys -I../../shell axon_d@.c -c 
+../../sys/code_g axonlib.g axon_ext.h axon
+make[3]: ../../sys/code_g: Command not found
+make[3]: [Makefile:149: axon_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../../sim -I../../ss -I../../sys -I../../shell axon_g@.c -c 
+gcc: error: axon_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[3]: *** [Makefile:141: axon_g@.o] Error 1
+make[3]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/oldconn/axon'
+cd ./synapse
+make[3]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/oldconn/synapse'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../../sim -I../../ss -I../../sys -I../../shell -I../../include synapse_d@.c -c 
+../../sys/code_g synlib.g syn_ext.h synapse
+make[3]: ../../sys/code_g: Command not found
+make[3]: [Makefile:135: synapse_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../../sim -I../../ss -I../../sys -I../../shell -I../../include synapse_g@.c -c 
+gcc: error: synapse_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[3]: *** [Makefile:127: synapse_g@.o] Error 1
+make[3]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/oldconn/synapse'
+cd ./personal
+make[3]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/oldconn/personal'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../../sys -I../../sim -I../../shell personal_d@.c -c 
+../../sys/code_g perlib.g per_ext.h personal
+make[3]: ../../sys/code_g: Command not found
+make[3]: [Makefile:152: personal_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../../sys -I../../sim -I../../shell personal_g@.c -c 
+gcc: error: personal_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[3]: *** [Makefile:149: personal_g@.o] Error 1
+make[3]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/oldconn/personal'
+cd ./sim
+make[3]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/oldconn/sim'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../../sim -I../../ss -I../../sys -I../../shell -I../../include simconn_d@.c -c 
+../../sys/code_g simconnlib.g simconn_ext.h simconn
+make[3]: ../../sys/code_g: Command not found
+make[3]: [Makefile:140: simconn_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../../sim -I../../ss -I../../sys -I../../shell -I../../include simconn_g@.c -c 
+gcc: error: simconn_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[3]: *** [Makefile:132: simconn_g@.o] Error 1
+make[3]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/oldconn/sim'
+cd ./tools
+make[3]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/oldconn/tools'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sim -I../../sys -I../../shell -I../../sim -I../../ss -I../../segment -I../../hh -I../../buffer -I../../olf  -I../../concen -I../../newconn toolconn_d@.c -c 
+../../sys/code_g toolconnlib.g toolconn_ext.h toolconn
+make[3]: ../../sys/code_g: Command not found
+make[3]: [Makefile:104: toolconn_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sim -I../../sys -I../../shell -I../../sim -I../../ss -I../../segment -I../../hh -I../../buffer -I../../olf  -I../../concen -I../../newconn toolconn_g@.c -c 
+gcc: error: toolconn_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[3]: *** [Makefile:99: toolconn_g@.o] Error 1
+make[3]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/oldconn/tools'
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/oldconn'
+cd buffer
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/buffer'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sys -I../ss -I../sim -I../shell buffer_d@.c -c 
+../sys/code_g buflib.g buf_ext.h buffer
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:149: buffer_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sys -I../ss -I../sim -I../shell buffer_g@.c -c 
+gcc: error: buffer_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:146: buffer_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/buffer'
+cd concen
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/concen'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sim -I../shell -I../ss -I../sys concen_d@.c -c 
+../sys/code_g conclib.g conc_ext.h concen
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:149: concen_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sim -I../shell -I../ss -I../sys concen_g@.c -c 
+gcc: error: concen_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:144: concen_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/concen'
+cd device
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/device'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sys -I../ss -I../sim -I../shell -I../segment -I../hines devices_d@.c -c 
+../sys/code_g devlib.g dev_ext.h devices
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:169: devices_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sys -I../ss -I../sim -I../shell -I../segment -I../hines devices_g@.c -c 
+gcc: error: devices_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:166: devices_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/device'
+cd hh
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/hh'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sys -I../ss -I../sim -I../shell hh_d@.c -c 
+../sys/code_g hhlib.g hh_ext.h hh
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:147: hh_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sys -I../ss -I../sim -I../shell hh_g@.c -c 
+gcc: error: hh_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:144: hh_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/hh'
+cd hines
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/hines'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sim -I../ss -I../shell -I../segment -I../olf -I../concen -I../device -I../newconn -I../sys hines_d@.c -c 
+../sys/code_g hineslib.g hines_ext.h hines
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:189: hines_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sim -I../ss -I../shell -I../segment -I../olf -I../concen -I../device -I../newconn -I../sys hines_g@.c -c 
+gcc: error: hines_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:184: hines_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/hines'
+cd olf
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/olf'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sim -I../shell -I../ss -I../sys olf_d@.c -c 
+../sys/code_g olflib.g olf_ext.h olf
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:169: olf_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sim -I../shell -I../ss -I../sys olf_g@.c -c 
+gcc: error: olf_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:162: olf_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/olf'
+cd out
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/out'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sim -I../ss -I../sys -I../shell output_d@.c -c 
+../sys/code_g outlib.g out_ext.h output
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:166: output_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sim -I../ss -I../sys -I../shell output_g@.c -c 
+gcc: error: output_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:159: output_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/out'
+cd segment
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/segment'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sys -I../ss -I../sim -I../shell segment_d@.c -c 
+../sys/code_g seglib.g seg_ext.h segment
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:172: segment_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sys -I../ss -I../sim -I../shell segment_g@.c -c 
+gcc: error: segment_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:169: segment_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/segment'
+cd tools
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/tools'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sys -I../shell -I../sim -I../ss -I../segment -I../hh -I../buffer -I../olf  -I../concen -I../newconn -I../hines -I../device tools_d@.c -c 
+../sys/code_g toollib.g tool_ext.h tools
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:173: tools_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sys -I../shell -I../sim -I../ss -I../segment -I../hh -I../buffer -I../olf  -I../concen -I../newconn -I../hines -I../device tools_g@.c -c 
+gcc: error: tools_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:168: tools_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/tools'
+cd user
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/user'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sys -I../ss -I../sim -I../shell user_d@.c -c 
+../sys/code_g userlib.g user_ext.h user
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:138: user_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sys -I../ss -I../sim -I../shell user_g@.c -c 
+gcc: error: user_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:135: user_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/user'
+cd param
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/param'
+cpp -P -I. -I../sys -I../ss -I../sim -I../shell -I../olf param_struct.h > /tmp/param_struct.h
+../sys/code_sym /tmp/param_struct.h param \
+  -I param_ext.h -NI -o param_d@.c
+rm /tmp/param_struct.h
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../sim -I../shell -I../olf param_d@.c -c 
+../sys/code_g paramlib.g param_ext.h param
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:99: param_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I. -I../sys -I../ss -I../sim -I../shell -I../olf param_g@.c -c 
+gcc: error: param_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:102: param_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/param'
+cd pore
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/pore'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../ss -I../sim -I../shell -I../sys  pore_d@.c -c 
+../sys/code_g porelib.g pore_ext.h pore
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:129: pore_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../ss -I../sim -I../shell -I../sys  pore_g@.c -c 
+gcc: error: pore_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:124: pore_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/pore'
+cd convert
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/convert'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I../sys convert.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I../sys output.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I../sys mapcommand.c -c
+flex -l script.l
+gcc -c -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux  -I../sys y.tab.c
+mv y.tab.o script.o
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I../sys strsave.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I../sys symtab.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux -I../sys convert.o output.o mapcommand.o script.o strsave.o symtab.o ../sys/getopt.o ../sys/gcmalloc.o -lfl  -o convert
+/usr/bin/ld: cannot find -lfl
+collect2: error: ld returned 1 exit status
+make[2]: *** [Makefile:115: convert] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/convert'
+cd diskio
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/diskio'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -I. -I../sim -I../sys -I../ss -I../shell  -Iinterface -Iinterface/netcdf -Iinterface/FMT1 gen_diskio.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -I. -I../sim -I../sys -I../ss -I../shell  -Iinterface -Iinterface/netcdf -Iinterface/FMT1 gen_variable.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -I. -I../sim -I../sys -I../ss -I../shell  -Iinterface -Iinterface/netcdf -Iinterface/FMT1 gen_metadata.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -I. -I../sim -I../sys -I../ss -I../shell  -Iinterface -Iinterface/netcdf -Iinterface/FMT1 diskio_utilfunc.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -I. -I../sim -I../sys -I../ss -I../shell  -Iinterface -Iinterface/netcdf -Iinterface/FMT1 copyrights.c -c
+cd interface
+make[3]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/diskio/interface'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -Inetcdf -IFMT1 absff_diskio.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -Inetcdf -IFMT1 absff_metadata.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -Inetcdf -IFMT1 absff_variable.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -Inetcdf -IFMT1 absff_utilfunc.c -c
+ld  -r -o fflib.o absff_diskio.o absff_metadata.o absff_variable.o absff_utilfunc.o 
+make[3]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/diskio/interface'
+cpp -P -I. -I../sim -I../sys -I../ss -I../shell  diskio_struct.h > /tmp/diskio_struct.h
+../sys/code_sym /tmp/diskio_struct.h diskio \
+  -I diskio_ext.h -NI -o diskio_d@.c
+rm /tmp/diskio_struct.h
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -I. -I../sim -I../sys -I../ss -I../shell  -Iinterface -Iinterface/netcdf -Iinterface/FMT1 diskio_d@.c -c
+../sys/code_g diskiolib.g diskio_ext.h diskio \
+-cstartup copyright_fileformats
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:108: diskio_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -I. -I../sim -I../sys -I../ss -I../shell  -Iinterface -Iinterface/netcdf -Iinterface/FMT1 diskio_g@.c -c
+gcc: error: diskio_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:153: diskio_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/diskio'
+cd kinetics
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/kinetics'
+cpp -P -I. -I../ss -I../sys -I../shell -I../sim -I../sprng/include -I../Xodus kin_struct.h > /tmp/kin_struct.h
+../sys/code_sym /tmp/kin_struct.h kin \
+  -I kin_ext.h -NI -o kin_d@.c
+rm /tmp/kin_struct.h
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux  -I. -I../ss -I../sys -I../shell -I../sim -I../sprng/include -I../Xodus kin_d@.c -c 
+../sys/code_g kinlib.g kin_ext.h kin \
+-cstartup copyleft_kin
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:181: kin_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DBSD -DLinux  -I. -I../ss -I../sys -I../shell -I../sim -I../sprng/include -I../Xodus kin_g@.c -c 
+gcc: error: kin_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:178: kin_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/kinetics'
+cd chemesis
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/chemesis'
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sim -I../shell -I../ss -I../sys chem_d@.c -c 
+../sys/code_g chemlib.g chem_ext.h chem
+make[2]: ../sys/code_g: Command not found
+make[2]: [Makefile:52: chem_g@.c] Error 127 (ignored)
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89 -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-strict-prototypes -I/usr/lib/x86_64-linux-gnu/include -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -DLinux -I. -I../sim -I../shell -I../ss -I../sys chem_g@.c -c 
+gcc: error: chem_g@.c: No such file or directory
+gcc: fatal error: no input files
+compilation terminated.
+make[2]: *** [Makefile:47: chem_g@.o] Error 1
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/chemesis'
+cd par
+make[2]: Entering directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/par'
+gcc  -DBSD -DLinux  -I. par.c -c
+ld  -r -o parlib.o par.o
+make[2]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src/par'
+Non-X Libs Compiled
+make[1]: *** No rule to make target 'sim/simlib.o', needed by 'nxgenesis'.  Stop.
+make[1]: Leaving directory '/storage2/home/kchlasta/genesis-2.5/genesis/src'
+make: *** [Makefile:1479: nxdefault] Error 2

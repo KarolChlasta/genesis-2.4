@@ -1,0 +1,21 @@
+# GENESIS 2.5 toolchain probe — inf03 (CUDA versions, MPI, gcc)
+# Captured 2026-07-23. Karol Chlasta.
+
+== toolchain probe on inf03  2026-07-23 22:41:21 ==
+--- /storage/opt/cuda/cuda-13.0 ---
+Cuda compilation tools, release 13.0, V13.0.88
+--- /storage/opt/cuda/cuda-12.8 ---
+Cuda compilation tools, release 12.8, V12.8.61
+--- /storage/opt/cuda/cuda-12.1 ---
+Cuda compilation tools, release 12.1, V12.1.66
+--- /storage/opt/cuda/cuda-11.7 ---
+Cuda compilation tools, release 11.7, V11.7.64
+--- MPI: module load mpi/mpich-x86_64 ---
+/usr/lib64/mpich/bin/mpirun
+HYDRA build details:
+/usr/lib64/mpich/bin/mpicc
+gcc -O2 -g -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong -grecord-gcc-switches -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -m64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -Wl,-z,relro -Wl,-z,now -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -I/usr/include/mpich-x86_64 -L/usr/lib64/mpich/lib -Wl,-rpath -Wl,/usr/lib64/mpich/lib -Wl,--enable-new-dtags -lmpi
+MPI_HOME=/usr/lib64/mpich
+--- MPI: openmpi ---
+/usr/lib64/openmpi/bin/mpirun
+mpirun (Open MPI) 4.1.1

@@ -1,0 +1,24 @@
+GENESIS 2.5 — multicompartment HH compute speedup, first measurement
+Node: inf03 (NVIDIA A100-PCIE-40GB, sm_80), CUDA 12.8, gcc 8.5, commit c874274+
+Date: 2026-07-23. Karol Chlasta.
+
+*** CORRECTED 2026-07-24: INVALID RESULT, do not cite the 96x figure below. ***
+*** cuda_chip_channel_multiloop has no axial/Hines coupling between            ***
+*** compartments (see cuda_channel.cuh header: "single-compartment only ...    ***
+*** NOT valid for multi-compartment trees"). The CPU arm (chanmode 1) solved   ***
+*** the real coupled 16-compartment cable; the CUDA arm (chanmode 4 multiloop) ***
+*** computed 16 uncoupled point-neurons instead -- a different computation, so ***
+*** this is not a valid CPU-vs-GPU comparison. See BENCHMARK_NOTES.md.         ***
+
+Workload: N=200 neurons, NCOMP=16 (3200 compartments), single hsolve, Na+K per compartment.
+Method: two-step-count subtraction (S1=5000, S2=25000; construction cancels).
+
+CPU (chanmode 1, fp64, nxgenesis_nocl): dwall=5.947 s / 20000 steps = 297.4 us/step
+CUDA (chanmode 4, A100, nxgenesis):     dwall=0.062 s / 20000 steps = 3.1 us/step
+CUDA kernel self-report (S2):           25010 steps, kernel 59.5 ms = 2.378 us/step
+
+COMPUTE SPEEDUP (CPU/CUDA) = ~96x   (consistent with Arbor ~200x/GPU literature)
+
+Caveats: single measurement, one size, A100 only. Full campaign (reps+CI,
+NCOMP/N sweep, A40 vs A100) pending. Earlier single-compartment "no speedup"
+was confounded by an argv bug (N_STEPS not read) + a non-compute-bound workload.

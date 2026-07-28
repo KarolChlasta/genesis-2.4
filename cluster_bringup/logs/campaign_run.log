@@ -1,0 +1,584 @@
+Weekend campaign on rtx4090_runpod (NVIDIA GeForce RTX 4090) -> /root/genesis-2.4/cluster_bringup/logs/weekend_campaign_rtx4090_runpod_20260727_194140.csv
+  rep=1 linear-chain CPU n=100 -> 6.369745714e-05 s/step
+  rep=1 linear-chain GPU n=100 -> 0.0007963665185 s/step
+  rep=1 branching CPU n=100 -> 6.053766147e-05 s/step
+  rep=1 branching GPU n=100 -> 0.0006355239522 s/step
+  rep=1 linear-chain CPU n=500 -> 0.0003444768843 s/step
+  rep=1 linear-chain GPU n=500 -> 0.0006286792102 s/step
+  rep=1 branching CPU n=500 -> 0.0003363646922 s/step
+  rep=1 branching GPU n=500 -> 0.000652204312 s/step
+  rep=1 linear-chain CPU n=1000 -> 0.0006985141408 s/step
+  rep=1 linear-chain GPU n=1000 -> 0.0007414944825 s/step
+  rep=1 branching CPU n=1000 -> 0.0006742326986 s/step
+  rep=1 branching GPU n=1000 -> 0.0006600095403 s/step
+  rep=1 linear-chain CPU n=2000 -> 0.001758895176 s/step
+  rep=1 linear-chain GPU n=2000 -> 0.000713487821 s/step
+  rep=1 branching CPU n=2000 -> 0.00249635861 s/step
+  rep=1 branching GPU n=2000 -> 0.0006998242367 s/step
+  rep=1 linear-chain CPU n=3000 -> 0.005449630533 s/step
+  rep=1 linear-chain GPU n=3000 -> 0.0007974973747 s/step
+  rep=1 branching CPU n=3000 -> 0.005849563508 s/step
+  rep=1 branching GPU n=3000 -> 0.0007928158556 s/step
+  rep=1 linear-chain CPU n=5000 -> 0.0127542214 s/step
+  rep=1 linear-chain GPU n=5000 -> 0.001596671749 s/step
+  rep=1 branching CPU n=5000 -> 0.01337874478 s/step
+  rep=1 branching GPU n=5000 -> 0.001555591822 s/step
+  rep=1 linear-chain CPU n=7000 -> 0.01869710142 s/step
+  rep=1 linear-chain GPU n=7000 -> 0.001625400782 s/step
+  rep=1 branching CPU n=7000 -> 0.01921418147 s/step
+  rep=1 branching GPU n=7000 -> 0.001558949595 s/step
+  rep=1 linear-chain CPU n=10000 -> 0.02694524201 s/step
+  rep=1 linear-chain GPU n=10000 -> 0.001622403752 s/step
+  rep=1 branching CPU n=10000 -> 0.02830648856 s/step
+  rep=1 branching GPU n=10000 -> 0.001693911038 s/step
+  rep=1 linear-chain CPU n=15000 -> 0.0410609332 s/step
+  rep=1 linear-chain GPU n=15000 -> 0.001743099635 s/step
+  rep=1 branching CPU n=15000 -> 0.04335920594 s/step
+  rep=1 branching GPU n=15000 -> 0.001760021665 s/step
+  rep=1 linear-chain CPU n=20000 -> 0.0560935584 s/step
+  rep=1 linear-chain GPU n=20000 -> 0.001817871901 s/step
+  rep=1 branching CPU n=20000 -> 0.05798326839 s/step
+  rep=1 branching GPU n=20000 -> 0.001840383085 s/step
+  rep=1 linear-chain CPU n=30000 -> 0.08461862911 s/step
+  rep=1 linear-chain GPU n=30000 -> 0.001991902563 s/step
+  rep=1 branching CPU n=30000 -> 0.09074813669 s/step
+  rep=1 branching GPU n=30000 -> 0.001988424496 s/step
+  rep=1 linear-chain CPU n=40000 -> 0.1149367766 s/step
+  rep=1 linear-chain GPU n=40000 -> 0.002220719104 s/step
+  rep=1 branching CPU n=40000 -> 0.1203634782 s/step
+  rep=1 branching GPU n=40000 -> 0.002290132642 s/step
+  rep=1 linear-chain CPU n=50000 -> 0.1446313164 s/step
+  rep=1 linear-chain GPU n=50000 -> 0.002397905155 s/step
+  rep=1 branching CPU n=50000 -> 0.1498592897 s/step
+  rep=1 branching GPU n=50000 -> 0.002463687279 s/step
+  rep=2 linear-chain CPU n=100 -> 6.369746157e-05 s/step
+  rep=2 linear-chain GPU n=100 -> 0.0006943742434 s/step
+  rep=2 branching CPU n=100 -> 9.758193933e-05 s/step
+  rep=2 branching GPU n=100 -> 0.0006505378655 s/step
+  rep=2 linear-chain CPU n=500 -> 0.00034644994 s/step
+  rep=2 linear-chain GPU n=500 -> 0.0006738246197 s/step
+  rep=2 branching CPU n=500 -> 0.0003338389099 s/step
+  rep=2 branching GPU n=500 -> 0.0006357369678 s/step
+  rep=2 linear-chain CPU n=1000 -> 0.0007023551634 s/step
+  rep=2 linear-chain GPU n=1000 -> 0.000631958672 s/step
+  rep=2 branching CPU n=1000 -> 0.0006740076911 s/step
+  rep=2 branching GPU n=1000 -> 0.0006418431799 s/step
+  rep=2 linear-chain CPU n=2000 -> 0.001847210243 s/step
+  rep=2 linear-chain GPU n=2000 -> 0.0007191545907 s/step
+  rep=2 branching CPU n=2000 -> 0.002075630994 s/step
+  rep=2 branching GPU n=2000 -> 0.0007660440036 s/step
+  rep=2 linear-chain CPU n=3000 -> 0.005809951964 s/step
+  rep=2 linear-chain GPU n=3000 -> 0.0007993366037 s/step
+  rep=2 branching CPU n=3000 -> 0.006622328645 s/step
+  rep=2 branching GPU n=3000 -> 0.0008209268962 s/step
+  rep=2 linear-chain CPU n=5000 -> 0.01280178157 s/step
+  rep=2 linear-chain GPU n=5000 -> 0.001633726467 s/step
+  rep=2 branching CPU n=5000 -> 0.01351946917 s/step
+  rep=2 branching GPU n=5000 -> 0.001605435529 s/step
+  rep=2 linear-chain CPU n=7000 -> 0.01830371293 s/step
+  rep=2 linear-chain GPU n=7000 -> 0.001628789306 s/step
+  rep=2 branching CPU n=7000 -> 0.01962238875 s/step
+  rep=2 branching GPU n=7000 -> 0.001605300334 s/step
+  rep=2 linear-chain CPU n=10000 -> 0.02721085115 s/step
+  rep=2 linear-chain GPU n=10000 -> 0.001721423323 s/step
+  rep=2 branching CPU n=10000 -> 0.02836423787 s/step
+  rep=2 branching GPU n=10000 -> 0.001699167761 s/step
+  rep=2 linear-chain CPU n=15000 -> 0.04169659181 s/step
+  rep=2 linear-chain GPU n=15000 -> 0.001754262502 s/step
+  rep=2 branching CPU n=15000 -> 0.04317023537 s/step
+  rep=2 branching GPU n=15000 -> 0.001802906394 s/step
+  rep=2 linear-chain CPU n=20000 -> 0.05738602552 s/step
+  rep=2 linear-chain GPU n=20000 -> 0.00185020268 s/step
+  rep=2 branching CPU n=20000 -> 0.05938516964 s/step
+  rep=2 branching GPU n=20000 -> 0.001884948124 s/step
+  rep=2 linear-chain CPU n=30000 -> 0.09021949768 s/step
+  rep=2 linear-chain GPU n=30000 -> 0.002021944116 s/step
+  rep=2 branching CPU n=30000 -> 0.08989374854 s/step
+  rep=2 branching GPU n=30000 -> 0.001945272088 s/step
+  rep=2 linear-chain CPU n=40000 -> 0.1156605721 s/step
+  rep=2 linear-chain GPU n=40000 -> 0.002192723887 s/step
+  rep=2 branching CPU n=40000 -> 0.121402229 s/step
+  rep=2 branching GPU n=40000 -> 0.002168394625 s/step
+  rep=2 linear-chain CPU n=50000 -> 0.1457238978 s/step
+  rep=2 linear-chain GPU n=50000 -> 0.002320762656 s/step
+  rep=2 branching CPU n=50000 -> 0.1538002188 s/step
+  rep=2 branching GPU n=50000 -> 0.002421997623 s/step
+  rep=3 linear-chain CPU n=100 -> 6.459614794e-05 s/step
+  rep=3 linear-chain GPU n=100 -> 0.0006459089972 s/step
+  rep=3 branching CPU n=100 -> 6.090936118e-05 s/step
+  rep=3 branching GPU n=100 -> 0.0006662786717 s/step
+  rep=3 linear-chain CPU n=500 -> 0.0003455907106 s/step
+  rep=3 linear-chain GPU n=500 -> 0.000646659519 s/step
+  rep=3 branching CPU n=500 -> 0.0003372625226 s/step
+  rep=3 branching GPU n=500 -> 0.000675933063 s/step
+  rep=3 linear-chain CPU n=1000 -> 0.0006942511314 s/step
+  rep=3 linear-chain GPU n=1000 -> 0.0006776882779 s/step
+  rep=3 branching CPU n=1000 -> 0.0006776669905 s/step
+  rep=3 branching GPU n=1000 -> 0.0006486483983 s/step
+  rep=3 linear-chain CPU n=2000 -> 0.001801899501 s/step
+  rep=3 linear-chain GPU n=2000 -> 0.0007940652825 s/step
+  rep=3 branching CPU n=2000 -> 0.001939120463 s/step
+  rep=3 branching GPU n=2000 -> 0.0007380269823 s/step
+  rep=3 linear-chain CPU n=3000 -> 0.005530451025 s/step
+  rep=3 linear-chain GPU n=3000 -> 0.0008521847782 s/step
+  rep=3 branching CPU n=3000 -> 0.006135277521 s/step
+  rep=3 branching GPU n=3000 -> 0.0008165142366 s/step
+  rep=3 linear-chain CPU n=5000 -> 0.0126500845 s/step
+  rep=3 linear-chain GPU n=5000 -> 0.001521921564 s/step
+  rep=3 branching CPU n=5000 -> 0.01343231743 s/step
+  rep=3 branching GPU n=5000 -> 0.00158300901 s/step
+  rep=3 linear-chain CPU n=7000 -> 0.01871557236 s/step
+  rep=3 linear-chain GPU n=7000 -> 0.001565748182 s/step
+  rep=3 branching CPU n=7000 -> 0.01952421665 s/step
+  rep=3 branching GPU n=7000 -> 0.001565994864 s/step
+  rep=3 linear-chain CPU n=10000 -> 0.02794417468 s/step
+  rep=3 linear-chain GPU n=10000 -> 0.001667360149 s/step
+  rep=3 branching CPU n=10000 -> 0.02836622975 s/step
+  rep=3 branching GPU n=10000 -> 0.001620112089 s/step
+  rep=3 linear-chain CPU n=15000 -> 0.04139526107 s/step
+  rep=3 linear-chain GPU n=15000 -> 0.001780591092 s/step
+  rep=3 branching CPU n=15000 -> 0.04485884146 s/step
+  rep=3 branching GPU n=15000 -> 0.001800071245 s/step
+  rep=3 linear-chain CPU n=20000 -> 0.05639232289 s/step
+  rep=3 linear-chain GPU n=20000 -> 0.001812387326 s/step
+  rep=3 branching CPU n=20000 -> 0.06088915305 s/step
+  rep=3 branching GPU n=20000 -> 0.00192352005 s/step
+  rep=3 linear-chain CPU n=30000 -> 0.08731021881 s/step
+  rep=3 linear-chain GPU n=30000 -> 0.002020821788 s/step
+  rep=3 branching CPU n=30000 -> 0.09108395143 s/step
+  rep=3 branching GPU n=30000 -> 0.001980728588 s/step
+  rep=3 linear-chain CPU n=40000 -> 0.1174787001 s/step
+  rep=3 linear-chain GPU n=40000 -> 0.002256369455 s/step
+  rep=3 branching CPU n=40000 -> 0.121174925 s/step
+  rep=3 branching GPU n=40000 -> 0.002298334783 s/step
+  rep=3 linear-chain CPU n=50000 -> 0.1480555448 s/step
+  rep=3 linear-chain GPU n=50000 -> 0.002390541001 s/step
+  rep=3 branching CPU n=50000 -> 0.1509545933 s/step
+  rep=3 branching GPU n=50000 -> 0.002483032508 s/step
+  rep=4 linear-chain CPU n=100 -> 6.392440271e-05 s/step
+  rep=4 linear-chain GPU n=100 -> 0.0006370595523 s/step
+  rep=4 branching CPU n=100 -> 6.126259409e-05 s/step
+  rep=4 branching GPU n=100 -> 0.0006605347707 s/step
+  rep=4 linear-chain CPU n=500 -> 0.0003458873857 s/step
+  rep=4 linear-chain GPU n=500 -> 0.0006787972081 s/step
+  rep=4 branching CPU n=500 -> 0.0003428114667 s/step
+  rep=4 branching GPU n=500 -> 0.0006906393028 s/step
+  rep=4 linear-chain CPU n=1000 -> 0.0006998041556 s/step
+  rep=4 linear-chain GPU n=1000 -> 0.0006898120755 s/step
+  rep=4 branching CPU n=1000 -> 0.0006817948251 s/step
+  rep=4 branching GPU n=1000 -> 0.0006812158795 s/step
+  rep=4 linear-chain CPU n=2000 -> 0.00241535675 s/step
+  rep=4 linear-chain GPU n=2000 -> 0.0007521288736 s/step
+  rep=4 branching CPU n=2000 -> 0.002365984945 s/step
+  rep=4 branching GPU n=2000 -> 0.0007824556459 s/step
+  rep=4 linear-chain CPU n=3000 -> 0.005728846505 s/step
+  rep=4 linear-chain GPU n=3000 -> 0.0008033504798 s/step
+  rep=4 branching CPU n=3000 -> 0.006389305137 s/step
+  rep=4 branching GPU n=3000 -> 0.0008028619346 s/step
+  rep=4 linear-chain CPU n=5000 -> 0.01275348555 s/step
+  rep=4 linear-chain GPU n=5000 -> 0.001535894383 s/step
+  rep=4 branching CPU n=5000 -> 0.01340356957 s/step
+  rep=4 branching GPU n=5000 -> 0.001664558595 s/step
+  rep=4 linear-chain CPU n=7000 -> 0.01873150522 s/step
+  rep=4 linear-chain GPU n=7000 -> 0.001566211608 s/step
+  rep=4 branching CPU n=7000 -> 0.01947259469 s/step
+  rep=4 branching GPU n=7000 -> 0.001570508426 s/step
+  rep=4 linear-chain CPU n=10000 -> 0.0273264148 s/step
+  rep=4 linear-chain GPU n=10000 -> 0.001686651463 s/step
+  rep=4 branching CPU n=10000 -> 0.02871403261 s/step
+  rep=4 branching GPU n=10000 -> 0.001609192111 s/step
+  rep=4 linear-chain CPU n=15000 -> 0.04138915756 s/step
+  rep=4 linear-chain GPU n=15000 -> 0.001731330698 s/step
+  rep=4 branching CPU n=15000 -> 0.04381849549 s/step
+  rep=4 branching GPU n=15000 -> 0.001750066199 s/step
+  rep=4 linear-chain CPU n=20000 -> 0.05653725537 s/step
+  rep=4 linear-chain GPU n=20000 -> 0.001864287799 s/step
+  rep=4 branching CPU n=20000 -> 0.0623752594 s/step
+  rep=4 branching GPU n=20000 -> 0.001811295748 s/step
+  rep=4 linear-chain CPU n=30000 -> 0.0853377689 s/step
+  rep=4 linear-chain GPU n=30000 -> 0.001922323352 s/step
+  rep=4 branching CPU n=30000 -> 0.08889346556 s/step
+  rep=4 branching GPU n=30000 -> 0.002079916813 s/step
+  rep=4 linear-chain CPU n=40000 -> 0.1142989592 s/step
+  rep=4 linear-chain GPU n=40000 -> 0.002170256051 s/step
+  rep=4 branching CPU n=40000 -> 0.1201874646 s/step
+  rep=4 branching GPU n=40000 -> 0.002224758538 s/step
+  rep=4 linear-chain CPU n=50000 -> 0.1442432837 s/step
+  rep=4 linear-chain GPU n=50000 -> 0.002392568913 s/step
+  rep=4 branching CPU n=50000 -> 0.1497747941 s/step
+  rep=4 branching GPU n=50000 -> 0.00247815739 s/step
+  rep=5 linear-chain CPU n=100 -> 6.318401457e-05 s/step
+  rep=5 linear-chain GPU n=100 -> 0.0006595098547 s/step
+  rep=5 branching CPU n=100 -> 6.265359088e-05 s/step
+  rep=5 branching GPU n=100 -> 0.0006301517997 s/step
+  rep=5 linear-chain CPU n=500 -> 0.000345373473 s/step
+  rep=5 linear-chain GPU n=500 -> 0.0006312783275 s/step
+  rep=5 branching CPU n=500 -> 0.0003351602171 s/step
+  rep=5 branching GPU n=500 -> 0.0006484910136 s/step
+  rep=5 linear-chain CPU n=1000 -> 0.0006969490931 s/step
+  rep=5 linear-chain GPU n=1000 -> 0.0006660928329 s/step
+  rep=5 branching CPU n=1000 -> 0.0006734984971 s/step
+  rep=5 branching GPU n=1000 -> 0.0006601102295 s/step
+  rep=5 linear-chain CPU n=2000 -> 0.001795088251 s/step
+  rep=5 linear-chain GPU n=2000 -> 0.0007293318709 s/step
+  rep=5 branching CPU n=2000 -> 0.001959926316 s/step
+  rep=5 branching GPU n=2000 -> 0.0007051335204 s/step
+  rep=5 linear-chain CPU n=3000 -> 0.005011416049 s/step
+  rep=5 linear-chain GPU n=3000 -> 0.0007981213785 s/step
+  rep=5 branching CPU n=3000 -> 0.005763539814 s/step
+  rep=5 branching GPU n=3000 -> 0.000795736696 s/step
+  rep=5 linear-chain CPU n=5000 -> 0.01270175089 s/step
+  rep=5 linear-chain GPU n=5000 -> 0.00153194842 s/step
+  rep=5 branching CPU n=5000 -> 0.01340366494 s/step
+  rep=5 branching GPU n=5000 -> 0.001587674564 s/step
+  rep=5 linear-chain CPU n=7000 -> 0.01857846217 s/step
+  rep=5 linear-chain GPU n=7000 -> 0.00168996521 s/step
+  rep=5 branching CPU n=7000 -> 0.01932221543 s/step
+  rep=5 branching GPU n=7000 -> 0.001549533958 s/step
+  rep=5 linear-chain CPU n=10000 -> 0.02719200524 s/step
+  rep=5 linear-chain GPU n=10000 -> 0.001633418148 s/step
+  rep=5 branching CPU n=10000 -> 0.02824555094 s/step
+  rep=5 branching GPU n=10000 -> 0.001611277867 s/step
+  rep=5 linear-chain CPU n=15000 -> 0.04169810035 s/step
+  rep=5 linear-chain GPU n=15000 -> 0.001696180214 s/step
+  rep=5 branching CPU n=15000 -> 0.04359624603 s/step
+  rep=5 branching GPU n=15000 -> 0.001737441393 s/step
+  rep=5 linear-chain CPU n=20000 -> 0.0572024042 s/step
+  rep=5 linear-chain GPU n=20000 -> 0.001810968329 s/step
+  rep=5 branching CPU n=20000 -> 0.05866707022 s/step
+  rep=5 branching GPU n=20000 -> 0.001825618067 s/step
+  rep=5 linear-chain CPU n=30000 -> 0.08574653105 s/step
+  rep=5 linear-chain GPU n=30000 -> 0.002023565634 s/step
+  rep=5 branching CPU n=30000 -> 0.09007228505 s/step
+  rep=5 branching GPU n=30000 -> 0.002025415681 s/step
+  rep=5 linear-chain CPU n=40000 -> 0.1134598212 s/step
+  rep=5 linear-chain GPU n=40000 -> 0.002252436091 s/step
+  rep=5 branching CPU n=40000 -> 0.1219775287 s/step
+  rep=5 branching GPU n=40000 -> 0.002211870524 s/step
+  rep=5 linear-chain CPU n=50000 -> 0.1448727521 s/step
+  rep=5 linear-chain GPU n=50000 -> 0.002327581698 s/step
+  rep=5 branching CPU n=50000 -> 0.149957917 s/step
+  rep=5 branching GPU n=50000 -> 0.002406066656 s/step
+  rep=6 linear-chain CPU n=100 -> 6.337761879e-05 s/step
+  rep=6 linear-chain GPU n=100 -> 0.0006559687711 s/step
+  rep=6 branching CPU n=100 -> 6.143186862e-05 s/step
+  rep=6 branching GPU n=100 -> 0.0006269452118 s/step
+  rep=6 linear-chain CPU n=500 -> 0.000343509728 s/step
+  rep=6 linear-chain GPU n=500 -> 0.0006325309475 s/step
+  rep=6 branching CPU n=500 -> 0.0003352561877 s/step
+  rep=6 branching GPU n=500 -> 0.0006439139446 s/step
+  rep=6 linear-chain CPU n=1000 -> 0.000708473935 s/step
+  rep=6 linear-chain GPU n=1000 -> 0.0006656567256 s/step
+  rep=6 branching CPU n=1000 -> 0.0006777320589 s/step
+  rep=6 branching GPU n=1000 -> 0.0006782755965 s/step
+  rep=6 linear-chain CPU n=2000 -> 0.001746883846 s/step
+  rep=6 linear-chain GPU n=2000 -> 0.0007362595626 s/step
+  rep=6 branching CPU n=2000 -> 0.001999103455 s/step
+  rep=6 branching GPU n=2000 -> 0.0007108681259 s/step
+  rep=6 linear-chain CPU n=3000 -> 0.00512332746 s/step
+  rep=6 linear-chain GPU n=3000 -> 0.0007986812364 s/step
+  rep=6 branching CPU n=3000 -> 0.005698707558 s/step
+  rep=6 branching GPU n=3000 -> 0.0008449550895 s/step
+  rep=6 linear-chain CPU n=5000 -> 0.01264346188 s/step
+  rep=6 linear-chain GPU n=5000 -> 0.001541824232 s/step
+  rep=6 branching CPU n=5000 -> 0.01354189027 s/step
+  rep=6 branching GPU n=5000 -> 0.001564796675 s/step
+  rep=6 linear-chain CPU n=7000 -> 0.01857186014 s/step
+  rep=6 linear-chain GPU n=7000 -> 0.001592289589 s/step
+  rep=6 branching CPU n=7000 -> 0.01971923655 s/step
+  rep=6 branching GPU n=7000 -> 0.001556006074 s/step
+  rep=6 linear-chain CPU n=10000 -> 0.02721681595 s/step
+  rep=6 linear-chain GPU n=10000 -> 0.001604572887 s/step
+  rep=6 branching CPU n=10000 -> 0.02814807458 s/step
+  rep=6 branching GPU n=10000 -> 0.001635461504 s/step
+  rep=6 linear-chain CPU n=15000 -> 0.04146449349 s/step
+  rep=6 linear-chain GPU n=15000 -> 0.001774512773 s/step
+  rep=6 branching CPU n=15000 -> 0.04317871874 s/step
+  rep=6 branching GPU n=15000 -> 0.001779011163 s/step
+  rep=6 linear-chain CPU n=20000 -> 0.05602797595 s/step
+  rep=6 linear-chain GPU n=20000 -> 0.001855230602 s/step
+  rep=6 branching CPU n=20000 -> 0.05820257013 s/step
+  rep=6 branching GPU n=20000 -> 0.001798384433 s/step
+  rep=6 linear-chain CPU n=30000 -> 0.08479608189 s/step
+  rep=6 linear-chain GPU n=30000 -> 0.001993464204 s/step
+  rep=6 branching CPU n=30000 -> 0.08860406876 s/step
+  rep=6 branching GPU n=30000 -> 0.002034005252 s/step
+  rep=6 linear-chain CPU n=40000 -> 0.1159076604 s/step
+  rep=6 linear-chain GPU n=40000 -> 0.002184354446 s/step
+  rep=6 branching CPU n=40000 -> 0.1198419831 s/step
+  rep=6 branching GPU n=40000 -> 0.002221288058 s/step
+  rep=6 linear-chain CPU n=50000 -> 0.1434554794 s/step
+  rep=6 linear-chain GPU n=50000 -> 0.002412861586 s/step
+  rep=6 branching CPU n=50000 -> 0.1497799787 s/step
+  rep=6 branching GPU n=50000 -> 0.002447235042 s/step
+  rep=7 linear-chain CPU n=100 -> 6.331454608e-05 s/step
+  rep=7 linear-chain GPU n=100 -> 0.0006294017037 s/step
+  rep=7 branching CPU n=100 -> 6.379859877e-05 s/step
+  rep=7 branching GPU n=100 -> 0.0006338846825 s/step
+  rep=7 linear-chain CPU n=500 -> 0.0003410663988 s/step
+  rep=7 linear-chain GPU n=500 -> 0.000656292623 s/step
+  rep=7 branching CPU n=500 -> 0.0003358046923 s/step
+  rep=7 branching GPU n=500 -> 0.0006786500414 s/step
+  rep=7 linear-chain CPU n=1000 -> 0.0006963644709 s/step
+  rep=7 linear-chain GPU n=1000 -> 0.0006860105764 s/step
+  rep=7 branching CPU n=1000 -> 0.0006748430786 s/step
+  rep=7 branching GPU n=1000 -> 0.0006520959593 s/step
+  rep=7 linear-chain CPU n=2000 -> 0.001818697935 s/step
+  rep=7 linear-chain GPU n=2000 -> 0.0007385224104 s/step
+  rep=7 branching CPU n=2000 -> 0.001899037049 s/step
+  rep=7 branching GPU n=2000 -> 0.0007486406536 s/step
+  rep=7 linear-chain CPU n=3000 -> 0.005168817725 s/step
+  rep=7 linear-chain GPU n=3000 -> 0.0007986097109 s/step
+  rep=7 branching CPU n=3000 -> 0.005782714912 s/step
+  rep=7 branching GPU n=3000 -> 0.0009276774668 s/step
+  rep=7 linear-chain CPU n=5000 -> 0.01265531887 s/step
+  rep=7 linear-chain GPU n=5000 -> 0.001574464684 s/step
+  rep=7 branching CPU n=5000 -> 0.01354663264 s/step
+  rep=7 branching GPU n=5000 -> 0.001612495834 s/step
+  rep=7 linear-chain CPU n=7000 -> 0.01865695823 s/step
+  rep=7 linear-chain GPU n=7000 -> 0.001597110927 s/step
+  rep=7 branching CPU n=7000 -> 0.01941919327 s/step
+  rep=7 branching GPU n=7000 -> 0.001697599481 s/step
+  rep=7 linear-chain CPU n=10000 -> 0.0281723651 s/step
+  rep=7 linear-chain GPU n=10000 -> 0.001649354398 s/step
+  rep=7 branching CPU n=10000 -> 0.02842601429 s/step
+  rep=7 branching GPU n=10000 -> 0.001701400632 s/step
+  rep=7 linear-chain CPU n=15000 -> 0.04204592271 s/step
+  rep=7 linear-chain GPU n=15000 -> 0.00177075172 s/step
+  rep=7 branching CPU n=15000 -> 0.04327544733 s/step
+  rep=7 branching GPU n=15000 -> 0.00182273117 s/step
+  rep=7 linear-chain CPU n=20000 -> 0.05899707187 s/step
+  rep=7 linear-chain GPU n=20000 -> 0.001795188676 s/step
+  rep=7 branching CPU n=20000 -> 0.06119847731 s/step
+  rep=7 branching GPU n=20000 -> 0.001833883605 s/step
+  rep=7 linear-chain CPU n=30000 -> 0.08388232318 s/step
+  rep=7 linear-chain GPU n=30000 -> 0.001990255307 s/step
+  rep=7 branching CPU n=30000 -> 0.09091359919 s/step
+  rep=7 branching GPU n=30000 -> 0.001997946203 s/step
+  rep=7 linear-chain CPU n=40000 -> 0.1138832699 s/step
+  rep=7 linear-chain GPU n=40000 -> 0.002170227468 s/step
+  rep=7 branching CPU n=40000 -> 0.1200019663 s/step
+  rep=7 branching GPU n=40000 -> 0.002230239998 s/step
+  rep=7 linear-chain CPU n=50000 -> 0.1452348016 s/step
+  rep=7 linear-chain GPU n=50000 -> 0.002443514629 s/step
+  rep=7 branching CPU n=50000 -> 0.1496906974 s/step
+  rep=7 branching GPU n=50000 -> 0.002443201975 s/step
+  rep=8 linear-chain CPU n=100 -> 6.371086818e-05 s/step
+  rep=8 linear-chain GPU n=100 -> 0.0006619340607 s/step
+  rep=8 branching CPU n=100 -> 6.188743615e-05 s/step
+  rep=8 branching GPU n=100 -> 0.0006385871342 s/step
+  rep=8 linear-chain CPU n=500 -> 0.0003477191641 s/step
+  rep=8 linear-chain GPU n=500 -> 0.0006987907347 s/step
+  rep=8 branching CPU n=500 -> 0.0003407965104 s/step
+  rep=8 branching GPU n=500 -> 0.000646772413 s/step
+  rep=8 linear-chain CPU n=1000 -> 0.0006982991383 s/step
+  rep=8 linear-chain GPU n=1000 -> 0.0006469036142 s/step
+  rep=8 branching CPU n=1000 -> 0.0006886315488 s/step
+  rep=8 branching GPU n=1000 -> 0.0006491766799 s/step
+  rep=8 linear-chain CPU n=2000 -> 0.002202556814 s/step
+  rep=8 linear-chain GPU n=2000 -> 0.0007525050924 s/step
+  rep=8 branching CPU n=2000 -> 0.002748548417 s/step
+  rep=8 branching GPU n=2000 -> 0.0007422246394 s/step
+  rep=8 linear-chain CPU n=3000 -> 0.006860618364 s/step
+  rep=8 linear-chain GPU n=3000 -> 0.0008401745842 s/step
+  rep=8 branching CPU n=3000 -> 0.009133438837 s/step
+  rep=8 branching GPU n=3000 -> 0.0008139828131 s/step
+  rep=8 linear-chain CPU n=5000 -> 0.01446410743 s/step
+  rep=8 linear-chain GPU n=5000 -> 0.001560314542 s/step
+  rep=8 branching CPU n=5000 -> 0.01359703649 s/step
+  rep=8 branching GPU n=5000 -> 0.001567973603 s/step
+  rep=8 linear-chain CPU n=7000 -> 0.01880674796 s/step
+  rep=8 linear-chain GPU n=7000 -> 0.00170582411 s/step
+  rep=8 branching CPU n=7000 -> 0.01973778768 s/step
+  rep=8 branching GPU n=7000 -> 0.001663752578 s/step
+  rep=8 linear-chain CPU n=10000 -> 0.02723864642 s/step
+  rep=8 linear-chain GPU n=10000 -> 0.001612639021 s/step
+  rep=8 branching CPU n=10000 -> 0.02836119045 s/step
+  rep=8 branching GPU n=10000 -> 0.001799446209 s/step
+  rep=8 linear-chain CPU n=15000 -> 0.04217316021 s/step
+  rep=8 linear-chain GPU n=15000 -> 0.001734676415 s/step
+  rep=8 branching CPU n=15000 -> 0.04483882731 s/step
+  rep=8 branching GPU n=15000 -> 0.001798776063 s/step
+  rep=8 linear-chain CPU n=20000 -> 0.05701808496 s/step
+  rep=8 linear-chain GPU n=20000 -> 0.00187983987 s/step
+  rep=8 branching CPU n=20000 -> 0.05891750076 s/step
+  rep=8 branching GPU n=20000 -> 0.001834486967 s/step
+  rep=8 linear-chain CPU n=30000 -> 0.08666940169 s/step
+  rep=8 linear-chain GPU n=30000 -> 0.002091355893 s/step
+  rep=8 branching CPU n=30000 -> 0.08972103812 s/step
+  rep=8 branching GPU n=30000 -> 0.001955315471 s/step
+  rep=8 linear-chain CPU n=40000 -> 0.1202446417 s/step
+  rep=8 linear-chain GPU n=40000 -> 0.002181158147 s/step
+  rep=8 branching CPU n=40000 -> 0.1194412925 s/step
+  rep=8 branching GPU n=40000 -> 0.002184962007 s/step
+  rep=8 linear-chain CPU n=50000 -> 0.1434822949 s/step
+  rep=8 linear-chain GPU n=50000 -> 0.002418546514 s/step
+  rep=8 branching CPU n=50000 -> 0.1485658299 s/step
+  rep=8 branching GPU n=50000 -> 0.002239490775 s/step
+  rep=9 linear-chain CPU n=100 -> 6.283903938e-05 s/step
+  rep=9 linear-chain GPU n=100 -> 0.000703060556 s/step
+  rep=9 branching CPU n=100 -> 6.080158942e-05 s/step
+  rep=9 branching GPU n=100 -> 0.0006303004566 s/step
+  rep=9 linear-chain CPU n=500 -> 0.0003447310556 s/step
+  rep=9 linear-chain GPU n=500 -> 0.0006432487142 s/step
+  rep=9 branching CPU n=500 -> 0.0003346662791 s/step
+  rep=9 branching GPU n=500 -> 0.0006339208711 s/step
+  rep=9 linear-chain CPU n=1000 -> 0.0006950232245 s/step
+  rep=9 linear-chain GPU n=1000 -> 0.0006402259781 s/step
+  rep=9 branching CPU n=1000 -> 0.0006761713397 s/step
+  rep=9 branching GPU n=1000 -> 0.0006498273639 s/step
+  rep=9 linear-chain CPU n=2000 -> 0.001789830554 s/step
+  rep=9 linear-chain GPU n=2000 -> 0.0007167365579 s/step
+  rep=9 branching CPU n=2000 -> 0.002291812499 s/step
+  rep=9 branching GPU n=2000 -> 0.0007732494246 s/step
+  rep=9 linear-chain CPU n=3000 -> 0.005288725808 s/step
+  rep=9 linear-chain GPU n=3000 -> 0.0008148002483 s/step
+  rep=9 branching CPU n=3000 -> 0.005691361427 s/step
+  rep=9 branching GPU n=3000 -> 0.0008096995098 s/step
+  rep=9 linear-chain CPU n=5000 -> 0.012668045 s/step
+  rep=9 linear-chain GPU n=5000 -> 0.001647955044 s/step
+  rep=9 branching CPU n=5000 -> 0.01320814978 s/step
+  rep=9 branching GPU n=5000 -> 0.001636644656 s/step
+  rep=9 linear-chain CPU n=7000 -> 0.01872205951 s/step
+  rep=9 linear-chain GPU n=7000 -> 0.001581132141 s/step
+  rep=9 branching CPU n=7000 -> 0.01933980422 s/step
+  rep=9 branching GPU n=7000 -> 0.001643482528 s/step
+  rep=9 linear-chain CPU n=10000 -> 0.02711268338 s/step
+  rep=9 linear-chain GPU n=10000 -> 0.001696036621 s/step
+  rep=9 branching CPU n=10000 -> 0.02825798121 s/step
+  rep=9 branching GPU n=10000 -> 0.001664012806 s/step
+  rep=9 linear-chain CPU n=15000 -> 0.04183707671 s/step
+  rep=9 linear-chain GPU n=15000 -> 0.001745957813 s/step
+  rep=9 branching CPU n=15000 -> 0.04358814846 s/step
+  rep=9 branching GPU n=15000 -> 0.001780590144 s/step
+  rep=9 linear-chain CPU n=20000 -> 0.05611263188 s/step
+  rep=9 linear-chain GPU n=20000 -> 0.001827899841 s/step
+  rep=9 branching CPU n=20000 -> 0.05788594159 s/step
+  rep=9 branching GPU n=20000 -> 0.001856886257 s/step
+  rep=9 linear-chain CPU n=30000 -> 0.08557951667 s/step
+  rep=9 linear-chain GPU n=30000 -> 0.002028304203 s/step
+  rep=9 branching CPU n=30000 -> 0.0904967308 s/step
+  rep=9 branching GPU n=30000 -> 0.001960205219 s/step
+  rep=9 linear-chain CPU n=40000 -> 0.1142346295 s/step
+  rep=9 linear-chain GPU n=40000 -> 0.002158616348 s/step
+  rep=9 branching CPU n=40000 -> 0.1205632296 s/step
+  rep=9 branching GPU n=40000 -> 0.002291014791 s/step
+  rep=9 linear-chain CPU n=50000 -> 0.1439820203 s/step
+  rep=9 linear-chain GPU n=50000 -> 0.002357606725 s/step
+  rep=9 branching CPU n=50000 -> 0.1497981505 s/step
+  rep=9 branching GPU n=50000 -> 0.002430531924 s/step
+  rep=10 linear-chain CPU n=100 -> 6.343367997e-05 s/step
+  rep=10 linear-chain GPU n=100 -> 0.0006632379833 s/step
+  rep=10 branching CPU n=100 -> 6.09232911e-05 s/step
+  rep=10 branching GPU n=100 -> 0.0006817176228 s/step
+  rep=10 linear-chain CPU n=500 -> 0.0003462303962 s/step
+  rep=10 linear-chain GPU n=500 -> 0.0006456387894 s/step
+  rep=10 branching CPU n=500 -> 0.0003347959547 s/step
+  rep=10 branching GPU n=500 -> 0.0006386606466 s/step
+  rep=10 linear-chain CPU n=1000 -> 0.0007210077274 s/step
+  rep=10 linear-chain GPU n=1000 -> 0.0006410454001 s/step
+  rep=10 branching CPU n=1000 -> 0.0006738411529 s/step
+  rep=10 branching GPU n=1000 -> 0.000650530273 s/step
+  rep=10 linear-chain CPU n=2000 -> 0.00176014957 s/step
+  rep=10 linear-chain GPU n=2000 -> 0.0007681740182 s/step
+  rep=10 branching CPU n=2000 -> 0.002142983391 s/step
+  rep=10 branching GPU n=2000 -> 0.0007562065408 s/step
+  rep=10 linear-chain CPU n=3000 -> 0.005266139621 s/step
+  rep=10 linear-chain GPU n=3000 -> 0.0008560718525 s/step
+  rep=10 branching CPU n=3000 -> 0.006151946386 s/step
+  rep=10 branching GPU n=3000 -> 0.0008458751298 s/step
+  rep=10 linear-chain CPU n=5000 -> 0.01266063777 s/step
+  rep=10 linear-chain GPU n=5000 -> 0.001626316932 s/step
+  rep=10 branching CPU n=5000 -> 0.01337255348 s/step
+  rep=10 branching GPU n=5000 -> 0.001542864875 s/step
+  rep=10 linear-chain CPU n=7000 -> 0.01845658042 s/step
+  rep=10 linear-chain GPU n=7000 -> 0.001614787226 s/step
+  rep=10 branching CPU n=7000 -> 0.01924092119 s/step
+  rep=10 branching GPU n=7000 -> 0.001587883586 s/step
+  rep=10 linear-chain CPU n=10000 -> 0.02717045871 s/step
+  rep=10 linear-chain GPU n=10000 -> 0.001694791154 s/step
+  rep=10 branching CPU n=10000 -> 0.02809570269 s/step
+  rep=10 branching GPU n=10000 -> 0.001672245427 s/step
+  rep=10 linear-chain CPU n=15000 -> 0.04167256355 s/step
+  rep=10 linear-chain GPU n=15000 -> 0.001775322177 s/step
+  rep=10 branching CPU n=15000 -> 0.04321202365 s/step
+  rep=10 branching GPU n=15000 -> 0.001804136417 s/step
+  rep=10 linear-chain CPU n=20000 -> 0.05617255731 s/step
+  rep=10 linear-chain GPU n=20000 -> 0.001861626181 s/step
+  rep=10 branching CPU n=20000 -> 0.05884860212 s/step
+  rep=10 branching GPU n=20000 -> 0.001897285201 s/step
+  rep=10 linear-chain CPU n=30000 -> 0.08536267714 s/step
+  rep=10 linear-chain GPU n=30000 -> 0.001935063573 s/step
+  rep=10 branching CPU n=30000 -> 0.08932021748 s/step
+  rep=10 branching GPU n=30000 -> 0.001966667582 s/step
+  rep=10 linear-chain CPU n=40000 -> 0.1138942025 s/step
+  rep=10 linear-chain GPU n=40000 -> 0.002267262611 s/step
+  rep=10 branching CPU n=40000 -> 0.1195615075 s/step
+  rep=10 branching GPU n=40000 -> 0.002256166393 s/step
+  rep=10 linear-chain CPU n=50000 -> 0.1439004811 s/step
+  rep=10 linear-chain GPU n=50000 -> 0.002400703593 s/step
+  rep=10 branching CPU n=50000 -> 0.148457059 s/step
+  rep=10 branching GPU n=50000 -> 0.002473510937 s/step
+Done -> /root/genesis-2.4/cluster_bringup/logs/weekend_campaign_rtx4090_runpod_20260727_194140.csv
+CUDA single-compartment campaign on rtx4090_runpod (NVIDIA GeForce RTX 4090) -> /root/genesis-2.4/cluster_bringup/logs/cuda_singlecomp_campaign_rtx4090_runpod_20260727_210047.csv
+  rep=1 CPU n=500 -> 0.336211s
+  rep=1 GPU n=500 -> 0.048200s
+  rep=1 CPU n=5000 -> 3.361377s
+  rep=1 GPU n=5000 -> 0.048200s
+  rep=1 CPU n=50000 -> 33.509596s
+  rep=1 GPU n=50000 -> 0.196400s
+  rep=2 CPU n=500 -> 0.332268s
+  rep=2 GPU n=500 -> 0.044800s
+  rep=2 CPU n=5000 -> 3.389875s
+  rep=2 GPU n=5000 -> 0.048200s
+  rep=2 CPU n=50000 -> 33.707137s
+  rep=2 GPU n=50000 -> 0.191400s
+  rep=3 CPU n=500 -> 0.334318s
+  rep=3 GPU n=500 -> 0.044700s
+  rep=3 CPU n=5000 -> 3.386999s
+  rep=3 GPU n=5000 -> 0.048100s
+  rep=3 CPU n=50000 -> 35.452949s
+  rep=3 GPU n=50000 -> 0.195200s
+  rep=4 CPU n=500 -> 0.333044s
+  rep=4 GPU n=500 -> 0.044800s
+  rep=4 CPU n=5000 -> 3.401581s
+  rep=4 GPU n=5000 -> 0.048200s
+  rep=4 CPU n=50000 -> 33.659314s
+  rep=4 GPU n=50000 -> 0.194500s
+  rep=5 CPU n=500 -> 0.337008s
+  rep=5 GPU n=500 -> 0.044800s
+  rep=5 CPU n=5000 -> 3.372555s
+  rep=5 GPU n=5000 -> 0.048100s
+  rep=5 CPU n=50000 -> 33.565415s
+  rep=5 GPU n=50000 -> 0.191200s
+  rep=6 CPU n=500 -> 0.335151s
+  rep=6 GPU n=500 -> 0.044800s
+  rep=6 CPU n=5000 -> 3.379463s
+  rep=6 GPU n=5000 -> 0.048200s
+  rep=6 CPU n=50000 -> 33.695214s
+  rep=6 GPU n=50000 -> 0.195500s
+  rep=7 CPU n=500 -> 0.341238s
+  rep=7 GPU n=500 -> 0.044700s
+  rep=7 CPU n=5000 -> 3.419878s
+  rep=7 GPU n=5000 -> 0.048200s
+  rep=7 CPU n=50000 -> 34.036508s
+  rep=7 GPU n=50000 -> 0.195100s
+  rep=8 CPU n=500 -> 0.335905s
+  rep=8 GPU n=500 -> 0.044800s
+  rep=8 CPU n=5000 -> 3.387669s
+  rep=8 GPU n=5000 -> 0.048200s
+  rep=8 CPU n=50000 -> 34.172018s
+  rep=8 GPU n=50000 -> 0.195200s
+  rep=9 CPU n=500 -> 0.334658s
+  rep=9 GPU n=500 -> 0.044700s
+  rep=9 CPU n=5000 -> 3.346768s
+  rep=9 GPU n=5000 -> 0.048200s
+  rep=9 CPU n=50000 -> 33.537682s
+  rep=9 GPU n=50000 -> 0.195500s
+  rep=10 CPU n=500 -> 0.335426s
+  rep=10 GPU n=500 -> 0.044700s
+  rep=10 CPU n=5000 -> 3.402411s
+  rep=10 GPU n=5000 -> 0.048200s
+  rep=10 CPU n=50000 -> 33.512064s
+  rep=10 GPU n=50000 -> 0.195500s
+Done -> /root/genesis-2.4/cluster_bringup/logs/cuda_singlecomp_campaign_rtx4090_runpod_20260727_210047.csv

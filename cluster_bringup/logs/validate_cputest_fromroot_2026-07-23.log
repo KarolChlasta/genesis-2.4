@@ -1,0 +1,27 @@
+Starting Genesis
+Executable:         /storage2/home/kchlasta/genesis-2.5/./genesis/src/nxgenesis_nocl
+The diskio library uses the netcdf-version 3.4 library, which is provided
+"as is" under the terms of distribution and usage by UCAR/Unidata.
+Please see src/diskio/interface/netcdf/netcdf-3.4/copyright.html
+for the full notice.
+
+The kinetics library is copylefted under the LGPL, see kinetics/COPYRIGHT.
+
+Simulation Script:  genesis/Scripts/benchmark/hh1952_ap_verify.g
+=== HH1952 AP Verify N= 8  steps= 200  ===
+/library
+/
+changing clock [0] from 1 to 1e-05
+time = 0.000000 ; step = 0          
+time = 0.000100 ; step = 10          
+completed 10 steps in 0.000005 cpu seconds
+time = 0.002100 ; step = 210          
+completed 200 steps in 0.000051 cpu seconds
+
+--- Vm after  200  steps (+ 10 warmup) ---
+cell0 Vm      =  -0.02143485882
+min   Vm      =  -0.02143485882
+max   Vm      =  -0.02143485882
+spread(max-min)=  0
+NEURONS_AGREE: YES (spread < 1e-6 V)
+RESULT_VM= -0.02143485882

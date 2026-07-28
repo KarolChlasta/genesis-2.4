@@ -1,0 +1,60 @@
+make[2]: Leaving directory '/root/genesis-2.4/genesis/src/diskio/interface/netcdf/netcdf-3.4/src'
+make[1]: Leaving directory '/root/genesis-2.4/genesis/src/diskio/interface/netcdf/netcdf-3.4/src'
+touch netcdflib
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89   -Wno-implicit-function-declaration -Wno-int-conversion   -Wno-incompatible-pointer-types -Wno-strict-prototypes -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -Inetcdf-3.4/src/libsrc -I.. netcdf_diskio.c -c
+netcdf_diskio.c: In function ‘Netcdf_IsA’:
+netcdf_diskio.c:109:17: warning: ignoring return value of ‘system’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  109 |                 system(cmd);
+      |                 ^~~~~~~~~~~
+netcdf_diskio.c: In function ‘Netcdf_OpenFile’:
+netcdf_diskio.c:609:41: warning: ignoring return value of ‘system’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  609 |                                         system(cmd);
+      |                                         ^~~~~~~~~~~
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89   -Wno-implicit-function-declaration -Wno-int-conversion   -Wno-incompatible-pointer-types -Wno-strict-prototypes -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -Inetcdf-3.4/src/libsrc -I.. netcdf_variable.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89   -Wno-implicit-function-declaration -Wno-int-conversion   -Wno-incompatible-pointer-types -Wno-strict-prototypes -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -Inetcdf-3.4/src/libsrc -I.. netcdf_metadata.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89   -Wno-implicit-function-declaration -Wno-int-conversion   -Wno-incompatible-pointer-types -Wno-strict-prototypes -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -Inetcdf-3.4/src/libsrc -I.. netcdf_utilfunc.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89   -Wno-implicit-function-declaration -Wno-int-conversion   -Wno-incompatible-pointer-types -Wno-strict-prototypes -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -Inetcdf-3.4/src/libsrc -I.. netcdf_copyright.c -c
+ld  -r -o netcdflib.o netcdf_diskio.o netcdf_variable.o netcdf_metadata.o netcdf_utilfunc.o netcdf_copyright.o
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89   -Wno-implicit-function-declaration -Wno-int-conversion   -Wno-incompatible-pointer-types -Wno-strict-prototypes -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -I.. FMT1_diskio.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89   -Wno-implicit-function-declaration -Wno-int-conversion   -Wno-incompatible-pointer-types -Wno-strict-prototypes -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -I.. FMT1_variable.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89   -Wno-implicit-function-declaration -Wno-int-conversion   -Wno-incompatible-pointer-types -Wno-strict-prototypes -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -I.. FMT1_metadata.c -c
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89   -Wno-implicit-function-declaration -Wno-int-conversion   -Wno-incompatible-pointer-types -Wno-strict-prototypes -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -I.. FMT1_utilfunc.c -c
+FMT1_utilfunc.c: In function ‘FMT1_FillIndexedAttrName’:
+FMT1_utilfunc.c:130:28: warning: ‘__builtin___sprintf_chk’ may write a terminating nul past the end of the destination [-Wformat-overflow=]
+  130 |         sprintf(locbuf, "%d", attrnum);
+      |                            ^
+In file included from /usr/include/stdio.h:980,
+                 from FMT1_utilfunc.c:1:
+In function ‘sprintf’,
+    inlined from ‘FMT1_FillIndexedAttrName’ at FMT1_utilfunc.c:130:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:30:10: note: ‘__builtin___sprintf_chk’ output between 2 and 11 bytes into a destination of size 10
+   30 |   return __builtin___sprintf_chk (__s, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   31 |                                   __glibc_objsize (__s), __fmt,
+      |                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   32 |                                   __va_arg_pack ());
+      |                                   ~~~~~~~~~~~~~~~~~
+FMT1_utilfunc.c: In function ‘FMT1_FillIndexedVarName’:
+FMT1_utilfunc.c:148:28: warning: ‘__builtin___sprintf_chk’ may write a terminating nul past the end of the destination [-Wformat-overflow=]
+  148 |         sprintf(locbuf, "%d", varnum);
+      |                            ^
+In function ‘sprintf’,
+    inlined from ‘FMT1_FillIndexedVarName’ at FMT1_utilfunc.c:148:9:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:30:10: note: ‘__builtin___sprintf_chk’ output between 2 and 11 bytes into a destination of size 10
+   30 |   return __builtin___sprintf_chk (__s, __USE_FORTIFY_LEVEL - 1,
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   31 |                                   __glibc_objsize (__s), __fmt,
+      |                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   32 |                                   __va_arg_pack ());
+      |                                   ~~~~~~~~~~~~~~~~~
+gcc -O2 -D__NO_MATH_INLINES -DLONGWORDS -std=gnu89   -Wno-implicit-function-declaration -Wno-int-conversion   -Wno-incompatible-pointer-types -Wno-strict-prototypes -Dnetcdf -DFMT1 -DINCSPRNG -DNO_X -I.. FMT1_libfuncs.c -c
+ld  -r -o FMT1lib.o FMT1_diskio.o FMT1_variable.o FMT1_metadata.o FMT1_utilfunc.o FMT1_libfuncs.o 
+  diskio libs OK ✓
+
+==== [phase 4] build nxgenesis_nocl (fp64 CPU baseline) ====
+make[2]: Leaving directory '/root/genesis-2.4/genesis/src/par'
+Non-X Libs Compiled
+make[1]: *** No rule to make target 'sim/simlib.o', needed by 'nxgenesis'.  Stop.
+make[1]: Leaving directory '/root/genesis-2.4/genesis/src'
+make: *** [Makefile:1479: nxdefault] Error 2
+FATAL: nxgenesis (CPU) did not build

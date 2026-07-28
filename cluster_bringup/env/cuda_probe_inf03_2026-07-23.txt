@@ -1,0 +1,43 @@
+# GENESIS 2.5 CUDA/module probe — inf03 (A100)
+# Captured 2026-07-23. Karol Chlasta.
+
+== CUDA/module probe on inf03  2026-07-23 22:39:46 ==
+-- full 'module avail' --
+------------------------ /usr/share/Modules/modulefiles ------------------------
+dot  module-git  module-info  modules  null  use.own  
+---------------------------- /usr/share/modulefiles ----------------------------
+mpi/mpich-x86_64  mpi/openmpi-x86_64  pmi/pmix-x86_64  
+-- /storage/opt/cuda --
+total 72
+drwxrwxr-x 18 3000  500 4096 Jan 26 11:35 .
+drwxr-xr-x 37 3000 root 4096 Mar 31 12:25 ..
+drwxr-xr-x 20 root root 4096 Mar 23  2020 cuda-10.2
+drwxr-xr-x  3 root root 4096 Mar 23  2020 cuda-10.2_samples
+drwxr-xr-x 17 root root 4096 Dec 21  2020 cuda-11.2
+drwxr-xr-x  3 root root 4096 Dec 21  2020 cuda-11.2_samples
+drwxr-xr-x 16 root root 4096 Jan 28  2022 cuda-11.6
+drwxr-xr-x 15 root root 4096 Apr 14  2023 cuda-11.7
+drwxr-xr-x 17 root root 4096 Apr 14  2023 cuda-12.1
+drwxr-xr-x 17 root root 4096 Jan 30  2025 cuda-12.8
+drwxr-xr-x 17 root root 4096 Sep 11  2025 cuda-13.0
+drwxr-xr-x 16 root root 4096 Jan 26 11:36 cuda-13.1
+drwxrwxr-x 17 3000  500 4096 Feb  4  2019 cuda-8.0
+drwxrwxr-x  3 3000  500 4096 May 15  2017 cuda-8.0_samples
+drwxr-xr-x 18 root root 4096 Feb 11  2019 cuda-9.0
+drwxrwxr-x  3 3000  500 4096 Feb  1  2019 cuda-9.0_samples
+drwxr-xr-x 18 root root 4096 Feb 11  2019 cuda-9.2
+drwxrwxr-x  3 3000  500 4096 Feb 11  2019 cuda-9.2_samples
+-- nvcc binaries under /storage/opt --
+/storage/opt/cuda/cuda-13.0/bin/nvcc
+/storage/opt/cuda/cuda-12.8/bin/nvcc
+/storage/opt/cuda/cuda-10.2/bin/nvcc
+/storage/opt/cuda/cuda-11.2/bin/nvcc
+/storage/opt/cuda/cuda-9.2/bin/nvcc
+/storage/opt/cuda/cuda-11.7/bin/nvcc
+/storage/opt/cuda/cuda-8.0/bin/nvcc
+/storage/opt/cuda/cuda-11.6/bin/nvcc
+/storage/opt/cuda/cuda-9.0/bin/nvcc
+/storage/opt/cuda/cuda-12.1/bin/nvcc
+-- cuda/nvidia versions --
+-- gcc/mpi versions --
+gcc (GCC) 8.5.0 20210514 (Red Hat 8.5.0-28)
