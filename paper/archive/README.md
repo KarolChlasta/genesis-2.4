@@ -28,5 +28,8 @@ Contents, roughly:
   `STATUS.html`, `gpu_acceleration_attempt.md`, `reviewer_reproduction_longrun.md`,
   `benchmark_run_protocol.md` — planning and status notes from earlier phases
   of the project.
-- `opencl_probe`/`opencl_probe.c`, `nxgenesis_opencl_benchmark_*` — one-off
-  diagnostic tooling used while bringing up the OpenCL backend.
+- `opencl_probe`/`opencl_probe.c`, `nxgenesis_opencl_benchmark_*`,
+  `ocl_test.g` — one-off diagnostic tooling and manual smoke tests used
+  while bringing up the OpenCL backend, superseded by
+  `cluster_bringup/20_validate.sh` and the formal benchmark scripts in
+  `genesis/Scripts/benchmark/`.
