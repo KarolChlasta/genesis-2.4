@@ -190,7 +190,16 @@ the `BRANCH_LEN=1`+tree-0 leading-opcode case (narrow, undocumented on real
 models); the kernel currently only runs on the OpenCL backend -- CUDA port
 not yet started.
 
-## FOUND 2026-07-25: reproducible GPU driver hang at large ncompts (local iGPU), unresolved -- hard safety cap added
+## FOUND 2026-07-25: GPU driver hang at large ncompts -- laptop iGPU only, does NOT affect datacenter GPUs
+
+> **Resolved as platform-specific.** The section below records the investigation
+> as it stood on the laptop, where the root cause was never identified. The
+> next section ("CONFIRMED iGPU-SPECIFIC") settles it: the exact configuration
+> that hung the Radeon 890M ran correctly on an A40, and larger ones did too.
+> This is an artefact of an integrated GPU that also drives the display, not a
+> limitation of the tree-elimination kernel. The cap is a laptop safety net,
+> not a design constraint -- set `GENESIS_OCL_TREE_MAX_NCOMPTS=0` on dedicated
+> hardware.
 
 While measuring speed (see below), `ocl_multiloop_dispatch_tree` triggered
 `amdgpu: The CS has cancelled because the context is lost. This context is

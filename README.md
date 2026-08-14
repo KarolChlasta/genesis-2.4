@@ -146,7 +146,7 @@ A few environment variables control dispatch at run time:
 |---|---|
 | `GENESIS_OCL_MULTILOOP=<K>` | Batch `K` steps into one OpenCL dispatch instead of one per step |
 | `GENESIS_CUDA_MULTILOOP=<K>` | Same, CUDA |
-| `GENESIS_OCL_TREE_MAX_NCOMPTS=<N>` | Safety cap on compartments sent to the tree-elimination kernel — some integrated GPUs hang past ~22,000-24,000; set `0` on hardware that doesn't need it |
+| `GENESIS_OCL_TREE_MAX_NCOMPTS=<N>` | Safety cap for laptop integrated GPUs, which can hang past ~22,000-24,000 compartments when the same chip also drives the display. Confirmed not to affect dedicated GPUs (verified on A40 well beyond that size), so set `0` on any datacenter or desktop card |
 
 The kernel-selection logic is in the manuscript's "Software architecture"
 section; the derivation of `hines_tree_eliminate` itself, including the
