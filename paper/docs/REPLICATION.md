@@ -58,7 +58,7 @@ row is written incrementally, so it is interrupt-safe.
 Build with `make USE_CUDA=1 CUDA_HOME=/usr/local/cuda` and see
 `genesis/src/hines/cuda/BUILD_CUDA.md`. **Validated on an NVIDIA RTX 4090**
 (sm_89, CUDA 12.8): compiles, dispatches on the GPU, matches fp64 CPU to 7e-8 V,
-and reaches 5–132× step-phase speedup (N=500–50000). Full results and the exact
+and reaches 7–174× step-phase speedup (N=500–50000, 10 replicates). Full results and the exact
 pod recipe: `experiments/cuda_validation/`. Automated bring-up:
 `genesis/src/hines/cuda/runpod_validate.sh`.
 

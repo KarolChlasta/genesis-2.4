@@ -54,7 +54,7 @@ speedup figures below were measured on those and are not touched by this.
 
 For single-compartment (isopotential) networks, a batched multi-step
 "multiloop" kernel gets up to ~18x on an integrated AMD Radeon 890M and
-5-132x on an RTX 4090, matching the fp64 CPU reference to about 1e-7 V.
+7-174x on an RTX 4090, matching the fp64 CPU reference to about 1e-7 V.
 
 That kernel updates each compartment independently, which is only correct
 for isopotential cells. Real dendritic trees need the Hines tridiagonal

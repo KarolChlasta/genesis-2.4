@@ -1,5 +1,15 @@
 # CUDA backend validation — WarsawIQ NVIDIA RTX 4090
 
+> **Superseded for speedup figures.** The correctness result below still stands,
+> but the speedup numbers (5×→51×→132×) come from a single run that timed the
+> GPU arm with `clock_gettime` around the kernel and the CPU arm with GENESIS's
+> own `{cpu}` step-loop timer. The campaign that the manuscript reports uses one
+> definition for both arms (total wall time per run) over 10 replicates, and
+> gives **7.4× / 70.3× / 174.2×** at N = 500 / 5000 / 50000 — see
+> `cluster_bringup/logs/cuda_singlecomp_campaign_wiq_RTX4090_20260727_210047.csv`.
+> Quote those, not these. The two sets are not comparable because the timing
+> definition differs, not because the hardware or the kernel changed.
+
 Date: 2026-07-04. First validation of the GENESIS 2.5 CUDA backend on real
 NVIDIA hardware (previously code-only / unvalidated).
 
