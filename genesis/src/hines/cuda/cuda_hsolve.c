@@ -52,12 +52,19 @@ static int cuda_multiloop_called = 0;
 static int cuda_disabled         = 0;
 static int cuda_chip_uploaded    = 0;
 
-/* Same sentinel-aware walk as opencl/ocl_hsolve.c build_comp_index(). */
-static void build_comp_index(Hsolve *hsolve, int **out_opstart, int **out_chipstart)
+/* Same sentinel-aware walk as opencl/ocl_hsolve.c build_comp_index(), and the
+   same cpu_only[] marking: compartments using opcodes the kernel does not
+   implement (SPIKE_OP, synchan, GHK, concentrations) must not be dispatched to
+   the GPU. The kernel silently ignores unknown opcodes WITHOUT skipping their
+   operands, so the ops[] stream desynchronises from the first such opcode and
+   every later chip read lands on a wrong index -- silently wrong results. */
+static void build_comp_index(Hsolve *hsolve, int **out_opstart,
+                             int **out_chipstart, int **out_cpu_only)
 {
     int n = hsolve->ncompts;
     int *opstart   = (int *)malloc(n * sizeof(int));
     int *chipstart = (int *)malloc(n * sizeof(int));
+    int *cpu_only  = (int *)calloc(n, sizeof(int));
     int op_i = 1, chip_i = 0, c;
 
     for (c = 0; c < n; c++) {
@@ -72,8 +79,10 @@ static void build_comp_index(Hsolve *hsolve, int **out_opstart, int **out_chipst
                 case CHAN_OP:    chip_i++;             break;
                 case ADD_CURR_OP:                      break;
                 case IPOL1V_OP:  op_i += 2; chip_i++;  break;
-                case SPIKE_OP:   op_i += 2; chip_i++;  break;
-                default:                               break;
+                case SPIKE_OP:   op_i += 2; chip_i++;
+                    cpu_only[c] = 1;                   break;
+                default:
+                    cpu_only[c] = 1;                   break;
             }
         }
         chip_i += 2;
@@ -81,6 +90,7 @@ static void build_comp_index(Hsolve *hsolve, int **out_opstart, int **out_chipst
     }
     *out_opstart   = opstart;
     *out_chipstart = chipstart;
+    *out_cpu_only  = cpu_only;
 }
 
 int cuda_init(Hsolve *hsolve)
@@ -91,7 +101,8 @@ int cuda_init(Hsolve *hsolve)
     int nt  = (hsolve->xdivs > 0 && hsolve->ncols > 0)
               ? (hsolve->xdivs + 2) * hsolve->ncols : 1;
     int nx  = (hsolve->xdivs > 0) ? hsolve->xdivs + 2 : 1;
-    int *opstart = NULL, *chipstart = NULL;
+    int *opstart = NULL, *chipstart = NULL, *cpu_only = NULL;
+    int unsup, ci;
     const char *env;
 
     if (n <= 0 || nc <= 0 || no <= 0) {
@@ -99,7 +110,25 @@ int cuda_init(Hsolve *hsolve)
         return -1;
     }
 
-    build_comp_index(hsolve, &opstart, &chipstart);
+    build_comp_index(hsolve, &opstart, &chipstart, &cpu_only);
+
+    /* Refuse the GPU path when any compartment needs an opcode the kernel does
+       not implement; the caller sets cuda_disabled and falls back to the CPU
+       solver for the rest of the run. Checked before cuda_backend_init() so no
+       device resources are allocated on the refusal path. */
+    unsup = 0;
+    for (ci = 0; ci < n; ci++)
+        if (cpu_only[ci]) unsup++;
+    if (unsup > 0) {
+        fprintf(stderr,
+            "CUDA: %d of %d compartments use opcodes not implemented by the "
+            "kernel (SPIKE_OP/synchan/GHK/concentrations); acceleration "
+            "disabled for this hsolve, computing on CPU.\n", unsup, n);
+        free(opstart); free(chipstart); free(cpu_only);
+        return -1;
+    }
+    free(cpu_only);
+
     if (cuda_backend_init(n, nc, no, hsolve->ncols, hsolve->xdivs,
                           hsolve->xmin, hsolve->invdx,
                           hsolve->ops,

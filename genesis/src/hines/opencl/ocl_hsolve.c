@@ -227,6 +227,7 @@ int ocl_init(Hsolve *hsolve)
     float fxmin  = (float)hsolve->xmin;
     float finvdx = (float)hsolve->invdx;
     int *opstart, *chipstart, *cpu_only;
+    int unsup, ci;
     cl_mem buf_opstart, buf_chipstart;
     /* dummy tablica gdy brak tabeli — kernel nie bedzie jej uzywac */
     float dummy = 0.0f;
@@ -235,6 +236,36 @@ int ocl_init(Hsolve *hsolve)
     if (n <= 0 || nc <= 0 || no <= 0) {
         fprintf(stderr, "OCL: hsolve nie zainicjalizowany (n=%d nc=%d no=%d)\n",
                 n, nc, no);
+        return -1;
+    }
+
+    /* Indeksy budujemy PRZED alokacja buforow, bo cpu_only[] decyduje o tym,
+       czy w ogole wolno uzyc GPU dla tego hsolve — odmowa na tym etapie nie
+       zostawia zadnych zasobow do zwolnienia.
+
+       build_comp_index() oznacza kompartmenty uzywajace operacji spoza
+       zestawu kernela (SPIKE_OP, synchan, GHK, koncentracje). Kernel tych
+       opkodow nie zna i — co gorsza — nie przeskakuje ich operandow: od
+       pierwszego takiego opkodu strumien ops[] rozjezdza sie, kolejne
+       odczyty chipow trafiaja w zle indeksy i wynik jest cicho bledny
+       (Vm rozbiega sie juz w kroku 0, bez zadnego komunikatu).
+
+       Maska byla dotad liczona i zwalniana bez uzycia, przez co ten blad
+       byl niewidoczny dla wszystkich modeli walidacyjnych — zadny z nich
+       nie uzywa synaps ani spike'ow. Dopoki kernel nie obsluguje tych
+       opkodow, calosc hsolve liczymy na CPU. */
+    build_comp_index(hsolve, &opstart, &chipstart, &cpu_only);
+    unsup = 0;
+    for (ci = 0; ci < n; ci++)
+        if (cpu_only[ci]) unsup++;
+    if (unsup > 0) {
+        fprintf(stderr,
+            "OCL: %d z %d kompartmentow uzywa operacji nieobslugiwanych przez "
+            "kernel (SPIKE_OP/synchan/GHK/koncentracje); akceleracja wylaczona "
+            "dla tego hsolve, obliczenia na CPU.\n", unsup, n);
+        free(cpu_only);
+        free(chipstart);
+        free(opstart);
         return -1;
     }
 
@@ -261,9 +292,8 @@ int ocl_init(Hsolve *hsolve)
     ocl_state.f_chip    = (float *)malloc(nc*sizeof(float));
     ocl_state.f_results = (float *)malloc(n*2*sizeof(float));
 
-    /* buduj indeksy i uploaduj dane statyczne (tabele, ops) — tylko raz */
-    build_comp_index(hsolve, &opstart, &chipstart, &cpu_only);
-
+    /* indeksy zbudowane wyzej (przed alokacja buforow); tu tylko upload —
+       dane statyczne, wysylane tylko raz */
     buf_opstart = clCreateBuffer(ocl_state.context,
                       CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                       n*sizeof(int), opstart, &err);
