@@ -17,35 +17,60 @@
 #include "cuda_hsolve.h"
 
 /* implemented in cuda_backend.cu */
-extern int  cuda_backend_init(int ncompts, int nchips, int nops, int ncols, int xdivs,
+extern void *cuda_backend_init(int ncompts, int nchips, int nops, int ncols, int xdivs,
                               double xmin, double invdx,
                               const int *ops,
                               const double *tablist, int ntab,
                               const double *xvals, int nx,
                               const int *opstart, const int *chipstart);
-extern int  cuda_backend_perstep(const double *vm, double *results_out);
-extern int  cuda_backend_upload_chip(const double *chip);
-extern int  cuda_backend_multiloop(double *vm_io, double *chip_io,
+extern int  cuda_backend_perstep(void *sth, const double *vm, double *results_out);
+extern int  cuda_backend_upload_chip(void *sth, const double *chip);
+extern int  cuda_backend_multiloop(void *sth, double *vm_io, double *chip_io,
                                    double *results_out, int nsteps);
-extern void cuda_backend_sync_chip(double *chip_out);
-extern int  cuda_backend_chip_on_gpu(void);
-extern int  cuda_backend_initialized(void);
-extern void cuda_backend_cleanup(void);
+extern void cuda_backend_sync_chip(void *sth, double *chip_out);
+extern int  cuda_backend_chip_on_gpu(void *sth);
+extern int  cuda_backend_initialized(void *sth);
+extern void cuda_backend_cleanup(void *sth);
 
 /* GENESIS 2.5 GPU-solve (Karol Chlasta, 2026-07-25): real multicompartment
 ** tree elimination -- see GPU_HINES_SOLVE_DESIGN.md and the matching
 ** functions in opencl/ocl_hsolve.c, which this mirrors exactly. */
-extern int  cuda_backend_tree_init(int n_trees, int nfuncs, int nravals,
+extern int  cuda_backend_tree_init(void *sth, int n_trees, int nfuncs, int nravals,
                                    const int *funcs, const double *ravals,
                                    const int *fwd_seg_start, const int *bwd_seg_start,
                                    const int *fwd_root_row, const int *fwd_raval_start,
                                    const int *bwd_raval_start);
-extern int  cuda_backend_tree_ready(void);
-extern int  cuda_backend_multiloop_tree(double *vm_io, double *chip_io,
+extern int  cuda_backend_tree_ready(void *sth);
+extern int  cuda_backend_multiloop_tree(void *sth, double *vm_io, double *chip_io,
                                         double *results_out, int nsteps);
 
 /* GENESIS CPU fallback (in hines_4chip.c) */
 extern int do_chip_hh4_update(Hsolve *hsolve);
+
+
+/* Registry of live per-hsolve accelerator states.
+**
+** cuda_cleanup() is registered with atexit() and therefore receives no Hsolve,
+** but the device state is now owned per solver -- the one-solver-per-cell idiom
+** (`call solver DUPLICATE`) creates thousands of them. Keeping the handles in a
+** list here is what lets the exit path release them all. Registration is O(1)
+** and the list is walked exactly once, at process exit. */
+typedef struct cuda_state_node {
+    void *handle;
+    struct cuda_state_node *next;
+} CudaStateNode;
+
+static CudaStateNode *cuda_states = NULL;
+static int cuda_atexit_registered = 0;
+
+static void cuda_state_register(void *handle)
+{
+    CudaStateNode *n = (CudaStateNode *)malloc(sizeof(CudaStateNode));
+    if (!n) return;              /* losing a handle leaks; it must not crash */
+    n->handle = handle;
+    n->next   = cuda_states;
+    cuda_states = n;
+}
 
 static int cuda_multiloop_total  = 0;
 static int cuda_multiloop_called = 0;
@@ -129,15 +154,17 @@ int cuda_init(Hsolve *hsolve)
     }
     free(cpu_only);
 
-    if (cuda_backend_init(n, nc, no, hsolve->ncols, hsolve->xdivs,
+    hsolve->accel_state = cuda_backend_init(n, nc, no, hsolve->ncols, hsolve->xdivs,
                           hsolve->xmin, hsolve->invdx,
                           hsolve->ops,
                           hsolve->tablist, nt,
                           hsolve->xvals, nx,
-                          opstart, chipstart) != 0) {
+                                            opstart, chipstart);
+    if (!hsolve->accel_state) {
         free(opstart); free(chipstart);
         return -1;
     }
+    cuda_state_register(hsolve->accel_state);
     free(opstart); free(chipstart);
 
     /* Same env var as the OpenCL path so benchmarks/scripts are unchanged;
@@ -150,13 +177,19 @@ int cuda_init(Hsolve *hsolve)
             printf("CUDA: multiloop mode -- %d steps per dispatch\n", cuda_multiloop_total);
     }
 
-    atexit(cuda_cleanup);
+    /* cuda_init now runs once per hsolve, and the one-solver-per-cell idiom
+    ** creates thousands of them; atexit() only guarantees 32 registrations, so
+    ** register the exit hook exactly once. */
+    if (!cuda_atexit_registered) {
+        atexit(cuda_cleanup);
+        cuda_atexit_registered = 1;
+    }
     return 0;
 }
 
 int cuda_chip_update(Hsolve *hsolve)
 {
-    if (!cuda_backend_initialized()) {
+    if (!cuda_backend_initialized(hsolve->accel_state)) {
         if (cuda_disabled)
             return do_chip_hh4_update(hsolve);
         if (cuda_init(hsolve) != 0) {
@@ -199,8 +232,8 @@ int cuda_chip_update(Hsolve *hsolve)
                 cuda_multiloop_total = 0;
                 return do_chip_hh4_update(hsolve);
             }
-            if (!cuda_backend_tree_ready()) {
-                if (cuda_backend_tree_init(hsolve->n_trees, hsolve->nfuncs, hsolve->nravals,
+            if (!cuda_backend_tree_ready(hsolve->accel_state)) {
+                if (cuda_backend_tree_init(hsolve->accel_state, hsolve->n_trees, hsolve->nfuncs, hsolve->nravals,
                                            hsolve->funcs, hsolve->ravals,
                                            hsolve->fwd_seg_start, hsolve->bwd_seg_start,
                                            hsolve->fwd_root_row, hsolve->fwd_raval_start,
@@ -209,14 +242,14 @@ int cuda_chip_update(Hsolve *hsolve)
                     return do_chip_hh4_update(hsolve);
                 }
             }
-            if (cuda_backend_multiloop_tree(hsolve->vm, hsolve->chip,
+            if (cuda_backend_multiloop_tree(hsolve->accel_state, hsolve->vm, hsolve->chip,
                                             hsolve->results, cuda_multiloop_total) == 0) {
                 cuda_multiloop_called = 1;
                 return 1;
             }
             return 0;
         }
-        if (cuda_backend_multiloop(hsolve->vm, hsolve->chip,
+        if (cuda_backend_multiloop(hsolve->accel_state, hsolve->vm, hsolve->chip,
                                    hsolve->results, cuda_multiloop_total) == 0) {
             cuda_multiloop_called = 1;
             return 1;
@@ -226,10 +259,10 @@ int cuda_chip_update(Hsolve *hsolve)
 
     /* per-step mode: upload chip once, then vm every step */
     if (!cuda_chip_uploaded) {
-        cuda_backend_upload_chip(hsolve->chip);
+        cuda_backend_upload_chip(hsolve->accel_state, hsolve->chip);
         cuda_chip_uploaded = 1;
     }
-    if (cuda_backend_perstep(hsolve->vm, hsolve->results) != 0) {
+    if (cuda_backend_perstep(hsolve->accel_state, hsolve->vm, hsolve->results) != 0) {
         cuda_disabled = 1;
         return do_chip_hh4_update(hsolve);
     }
@@ -238,8 +271,8 @@ int cuda_chip_update(Hsolve *hsolve)
 
 void cuda_sync_chip(Hsolve *hsolve)
 {
-    if (cuda_backend_chip_on_gpu())
-        cuda_backend_sync_chip(hsolve->chip);
+    if (cuda_backend_chip_on_gpu(hsolve->accel_state))
+        cuda_backend_sync_chip(hsolve->accel_state, hsolve->chip);
 }
 
 void cuda_cleanup(void)
@@ -251,7 +284,12 @@ void cuda_cleanup(void)
         printf("  no-op steps      : %d (CPU Hines identity pass-through)\n",
                cuda_multiloop_called - 1);
     }
-    cuda_backend_cleanup();
+    while (cuda_states) {
+        CudaStateNode *n = cuda_states;
+        cuda_states = n->next;
+        cuda_backend_cleanup(n->handle);
+        free(n);
+    }
 }
 
 #endif /* USE_CUDA */

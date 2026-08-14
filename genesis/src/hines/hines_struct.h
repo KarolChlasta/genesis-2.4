@@ -397,6 +397,23 @@ struct hsolve_type {
 	long    *numrbytes;	/* Array number of bytes to receive from each */
 	long	*sendid;    	/* Array Delta message IDs for each dest node */
 	long	*netid;		/* Array of network dependent id */
+
+	/* Accelerator (OpenCL/CUDA) state owned by this solver, or NULL.
+	** Opaque here so that hines_struct.h stays free of backend headers;
+	** the backends cast it to their own state type.
+	**
+	** Declared UNCONDITIONALLY, never under #ifdef USE_OPENCL/USE_CUDA.
+	** GENESIS builds its subdirectories with different flag sets (see
+	** CFLAGS_IN in genesis/src/Makefile), so a field that exists only in
+	** accelerator-enabled translation units would give sizeof(Hsolve) two
+	** different values in one binary -- silent memory corruption rather
+	** than a link error. One pointer per solver is a cheap price for not
+	** having that failure mode.
+	**
+	** Zero-initialised: GENESIS element memory starts cleared, which the
+	** CREATE handler in hines.c already relies on (`if (!hsolve->path)`).
+	*/
+	void	*accel_state;
 };
 
 

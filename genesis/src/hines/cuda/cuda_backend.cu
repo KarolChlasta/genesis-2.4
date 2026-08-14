@@ -70,7 +70,6 @@ struct CudaState {
     int *d_fwd_root_row = nullptr, *d_fwd_raval_start = nullptr, *d_bwd_raval_start = nullptr;
 };
 
-CudaState S;
 
 inline void d2f(const double *src, float *dst, int n) {
     for (int i = 0; i < n; i++) dst[i] = (float)src[i];
@@ -88,50 +87,87 @@ extern "C" {
 /* Configure device + upload static data. opstart/chipstart are built by the
    C glue (build_comp_index) exactly as for OpenCL. tablist/xvals are the
    double source arrays (may be null when there are no tabchannels). */
-int cuda_backend_init(int ncompts, int nchips, int nops, int ncols, int xdivs,
+
+/* Release everything a CudaState may own. Safe on a partially built state:
+   the struct is calloc'd, so every pointer starts NULL and cudaFree(NULL) and
+   free(NULL) are both no-ops. Used by the failure paths in cuda_backend_init,
+   which previously returned without releasing the device buffers they had
+   already allocated. */
+static void cuda_state_destroy(CudaState *st)
+{
+    if (!st) return;
+    cudaFree(st->d_vm); cudaFree(st->d_chip); cudaFree(st->d_results);
+    cudaFree(st->d_tablist); cudaFree(st->d_xvals);
+    cudaFree(st->d_ops); cudaFree(st->d_opstart); cudaFree(st->d_chipstart);
+    cudaFree(st->d_funcs); cudaFree(st->d_ravals);
+    cudaFree(st->d_fwd_seg_start); cudaFree(st->d_fwd_seg_end);
+    cudaFree(st->d_bwd_seg_start); cudaFree(st->d_bwd_seg_end);
+    cudaFree(st->d_fwd_root_row); cudaFree(st->d_fwd_raval_start);
+    cudaFree(st->d_bwd_raval_start);
+    free(st->f_vm); free(st->f_chip); free(st->f_results);
+    if (st->ev_start) cudaEventDestroy(st->ev_start);
+    if (st->ev_stop)  cudaEventDestroy(st->ev_stop);
+    free(st);
+}
+
+/* Pointer-returning variant of CUDA_CHECK for cuda_backend_init. */
+#define CUDA_CHECK_P(call, what)                                                \
+    do {                                                                        \
+        cudaError_t _e = (call);                                                \
+        if (_e != cudaSuccess) {                                                \
+            fprintf(stderr, "CUDA: %s failed: %s\n", (what),                    \
+                    cudaGetErrorString(_e));                                    \
+            cuda_state_destroy(st);                                             \
+            return NULL;                                                        \
+        }                                                                       \
+    } while (0)
+
+void *cuda_backend_init(int ncompts, int nchips, int nops, int ncols, int xdivs,
                       double xmin, double invdx,
                       const int *ops,
                       const double *tablist, int ntab,
                       const double *xvals, int nx,
                       const int *opstart, const int *chipstart)
 {
+    CudaState *st = (CudaState *)calloc(1, sizeof(CudaState));
+    if (!st) return NULL;
     int dev_count = 0;
-    CUDA_CHECK(cudaGetDeviceCount(&dev_count), "cudaGetDeviceCount");
+    CUDA_CHECK_P(cudaGetDeviceCount(&dev_count), "cudaGetDeviceCount");
     if (dev_count < 1) {
         fprintf(stderr, "CUDA: no device found\n");
-        return -1;
+        cuda_state_destroy(st); return NULL;
     }
     cudaDeviceProp prop;
-    CUDA_CHECK(cudaGetDeviceProperties(&prop, 0), "cudaGetDeviceProperties");
+    CUDA_CHECK_P(cudaGetDeviceProperties(&prop, 0), "cudaGetDeviceProperties");
     printf("CUDA: device: %s (sm_%d%d, %d SMs)\n",
            prop.name, prop.major, prop.minor, prop.multiProcessorCount);
 
-    S.ncompts = ncompts; S.nchips = nchips; S.nops = nops;
-    S.ncols = ncols; S.xdivs = xdivs;
-    S.xmin = (float)xmin; S.invdx = (float)invdx;
+    st->ncompts = ncompts; st->nchips = nchips; st->nops = nops;
+    st->ncols = ncols; st->xdivs = xdivs;
+    st->xmin = (float)xmin; st->invdx = (float)invdx;
 
     if (ntab < 1) ntab = 1;
     if (nx  < 1) nx  = 1;
 
-    CUDA_CHECK(cudaMalloc(&S.d_vm,        ncompts * sizeof(float)),   "malloc vm");
-    CUDA_CHECK(cudaMalloc(&S.d_chip,      nchips  * sizeof(float)),   "malloc chip");
-    CUDA_CHECK(cudaMalloc(&S.d_results,   ncompts * 2 * sizeof(float)),"malloc results");
-    CUDA_CHECK(cudaMalloc(&S.d_tablist,   ntab    * sizeof(float)),   "malloc tablist");
-    CUDA_CHECK(cudaMalloc(&S.d_xvals,     nx      * sizeof(float)),   "malloc xvals");
-    CUDA_CHECK(cudaMalloc(&S.d_ops,       nops    * sizeof(int)),     "malloc ops");
-    CUDA_CHECK(cudaMalloc(&S.d_opstart,   ncompts * sizeof(int)),     "malloc opstart");
-    CUDA_CHECK(cudaMalloc(&S.d_chipstart, ncompts * sizeof(int)),     "malloc chipstart");
+    CUDA_CHECK_P(cudaMalloc(&st->d_vm,        ncompts * sizeof(float)),   "malloc vm");
+    CUDA_CHECK_P(cudaMalloc(&st->d_chip,      nchips  * sizeof(float)),   "malloc chip");
+    CUDA_CHECK_P(cudaMalloc(&st->d_results,   ncompts * 2 * sizeof(float)),"malloc results");
+    CUDA_CHECK_P(cudaMalloc(&st->d_tablist,   ntab    * sizeof(float)),   "malloc tablist");
+    CUDA_CHECK_P(cudaMalloc(&st->d_xvals,     nx      * sizeof(float)),   "malloc xvals");
+    CUDA_CHECK_P(cudaMalloc(&st->d_ops,       nops    * sizeof(int)),     "malloc ops");
+    CUDA_CHECK_P(cudaMalloc(&st->d_opstart,   ncompts * sizeof(int)),     "malloc opstart");
+    CUDA_CHECK_P(cudaMalloc(&st->d_chipstart, ncompts * sizeof(int)),     "malloc chipstart");
 
-    S.f_vm      = (float *)malloc(ncompts * sizeof(float));
-    S.f_chip    = (float *)malloc(nchips  * sizeof(float));
-    S.f_results = (float *)malloc(ncompts * 2 * sizeof(float));
+    st->f_vm      = (float *)malloc(ncompts * sizeof(float));
+    st->f_chip    = (float *)malloc(nchips  * sizeof(float));
+    st->f_results = (float *)malloc(ncompts * 2 * sizeof(float));
 
     /* upload static data (once): ops, opstart, chipstart, and fp32 tables */
-    CUDA_CHECK(cudaMemcpy(S.d_ops, ops, nops * sizeof(int),
+    CUDA_CHECK_P(cudaMemcpy(st->d_ops, ops, nops * sizeof(int),
                           cudaMemcpyHostToDevice), "copy ops");
-    CUDA_CHECK(cudaMemcpy(S.d_opstart, opstart, ncompts * sizeof(int),
+    CUDA_CHECK_P(cudaMemcpy(st->d_opstart, opstart, ncompts * sizeof(int),
                           cudaMemcpyHostToDevice), "copy opstart");
-    CUDA_CHECK(cudaMemcpy(S.d_chipstart, chipstart, ncompts * sizeof(int),
+    CUDA_CHECK_P(cudaMemcpy(st->d_chipstart, chipstart, ncompts * sizeof(int),
                           cudaMemcpyHostToDevice), "copy chipstart");
 
     {
@@ -139,49 +175,51 @@ int cuda_backend_init(int ncompts, int nchips, int nops, int ncols, int xdivs,
         float *fconv = (float *)malloc((ntab > nx ? ntab : nx) * sizeof(float));
         if (tablist && xdivs > 0) {
             d2f(tablist, fconv, ntab);
-            CUDA_CHECK(cudaMemcpy(S.d_tablist, fconv, ntab * sizeof(float),
+            CUDA_CHECK_P(cudaMemcpy(st->d_tablist, fconv, ntab * sizeof(float),
                                   cudaMemcpyHostToDevice), "copy tablist");
         } else {
-            CUDA_CHECK(cudaMemcpy(S.d_tablist, &dummy, sizeof(float),
+            CUDA_CHECK_P(cudaMemcpy(st->d_tablist, &dummy, sizeof(float),
                                   cudaMemcpyHostToDevice), "copy tablist(dummy)");
         }
         if (xvals && xdivs > 0) {
             d2f(xvals, fconv, nx);
-            CUDA_CHECK(cudaMemcpy(S.d_xvals, fconv, nx * sizeof(float),
+            CUDA_CHECK_P(cudaMemcpy(st->d_xvals, fconv, nx * sizeof(float),
                                   cudaMemcpyHostToDevice), "copy xvals");
         } else {
-            CUDA_CHECK(cudaMemcpy(S.d_xvals, &dummy, sizeof(float),
+            CUDA_CHECK_P(cudaMemcpy(st->d_xvals, &dummy, sizeof(float),
                                   cudaMemcpyHostToDevice), "copy xvals(dummy)");
         }
         free(fconv);
     }
 
-    cudaEventCreate(&S.ev_start);
-    cudaEventCreate(&S.ev_stop);
+    cudaEventCreate(&st->ev_start);
+    cudaEventCreate(&st->ev_stop);
 
-    S.initialized = 1;
-    S.chip_on_gpu = 0;
+    st->initialized = 1;
+    st->chip_on_gpu = 0;
     printf("CUDA: ready (%d compartments, %d chips)\n", ncompts, nchips);
-    return 0;
+    return st;
 }
 
 /* One-step dispatch: upload vm (always) + chip (first call only), launch the
    single-step kernel, download results[]. Mirrors ocl_chip_update per-step. */
-int cuda_backend_perstep(const double *vm, double *results_out)
+int cuda_backend_perstep(void *sth, const double *vm, double *results_out)
 {
-    int n = S.ncompts, nc = S.nchips;
-    d2f(vm, S.f_vm, n);
-    CUDA_CHECK(cudaMemcpy(S.d_vm, S.f_vm, n * sizeof(float),
+    CudaState *st = (CudaState *)sth;
+    if (!st) return -1;
+    int n = st->ncompts, nc = st->nchips;
+    d2f(vm, st->f_vm, n);
+    CUDA_CHECK(cudaMemcpy(st->d_vm, st->f_vm, n * sizeof(float),
                           cudaMemcpyHostToDevice), "upload vm");
     /* chip[] uploaded by cuda_backend_upload_chip() on the first step */
 
     int block = 64, grid = grid_for(n, block);
-    cudaEventRecord(S.ev_start);
+    cudaEventRecord(st->ev_start);
     cuda_chip_channel_update<<<grid, block>>>(
-        S.d_vm, S.d_chip, S.d_results, S.d_tablist, S.d_xvals,
-        S.d_ops, S.d_opstart, S.d_chipstart,
-        n, S.ncols, S.xdivs, S.xmin, S.invdx);
-    cudaEventRecord(S.ev_stop);
+        st->d_vm, st->d_chip, st->d_results, st->d_tablist, st->d_xvals,
+        st->d_ops, st->d_opstart, st->d_chipstart,
+        n, st->ncols, st->xdivs, st->xmin, st->invdx);
+    cudaEventRecord(st->ev_stop);
 
     cudaError_t kerr = cudaGetLastError();
     if (kerr != cudaSuccess) {
@@ -189,51 +227,55 @@ int cuda_backend_perstep(const double *vm, double *results_out)
                 cudaGetErrorString(kerr));
         return -1;
     }
-    S.chip_on_gpu = 1;
+    st->chip_on_gpu = 1;
 
-    CUDA_CHECK(cudaMemcpy(S.f_results, S.d_results, n * 2 * sizeof(float),
+    CUDA_CHECK(cudaMemcpy(st->f_results, st->d_results, n * 2 * sizeof(float),
                           cudaMemcpyDeviceToHost), "download results");
-    f2d(S.f_results, results_out, n * 2);
+    f2d(st->f_results, results_out, n * 2);
 
-    cudaEventSynchronize(S.ev_stop);
+    cudaEventSynchronize(st->ev_stop);
     float ms = 0.0f;
-    cudaEventElapsedTime(&ms, S.ev_start, S.ev_stop);
-    S.prof_kernel_ms += ms;
-    S.prof_calls++;
+    cudaEventElapsedTime(&ms, st->ev_start, st->ev_stop);
+    st->prof_kernel_ms += ms;
+    st->prof_calls++;
     return 0;
 }
 
 /* Upload chip[] to device (called once, before the first per-step kernel). */
-int cuda_backend_upload_chip(const double *chip)
+int cuda_backend_upload_chip(void *sth, const double *chip)
 {
-    d2f(chip, S.f_chip, S.nchips);
-    CUDA_CHECK(cudaMemcpy(S.d_chip, S.f_chip, S.nchips * sizeof(float),
+    CudaState *st = (CudaState *)sth;
+    if (!st) return -1;
+    d2f(chip, st->f_chip, st->nchips);
+    CUDA_CHECK(cudaMemcpy(st->d_chip, st->f_chip, st->nchips * sizeof(float),
                           cudaMemcpyHostToDevice), "upload chip");
-    S.chip_on_gpu = 1;
+    st->chip_on_gpu = 1;
     return 0;
 }
 
 /* Multiloop dispatch: one upload of vm+chip, one K-step kernel launch, one
    download of vm+chip+results. Mirrors ocl_multiloop_dispatch. */
-int cuda_backend_multiloop(double *vm_io, double *chip_io,
+int cuda_backend_multiloop(void *sth, double *vm_io, double *chip_io,
                            double *results_out, int nsteps)
 {
-    int n = S.ncompts, nc = S.nchips;
+    CudaState *st = (CudaState *)sth;
+    if (!st) return -1;
+    int n = st->ncompts, nc = st->nchips;
 
-    d2f(vm_io, S.f_vm, n);
-    d2f(chip_io, S.f_chip, nc);
-    CUDA_CHECK(cudaMemcpy(S.d_vm, S.f_vm, n * sizeof(float),
+    d2f(vm_io, st->f_vm, n);
+    d2f(chip_io, st->f_chip, nc);
+    CUDA_CHECK(cudaMemcpy(st->d_vm, st->f_vm, n * sizeof(float),
                           cudaMemcpyHostToDevice), "ml upload vm");
-    CUDA_CHECK(cudaMemcpy(S.d_chip, S.f_chip, nc * sizeof(float),
+    CUDA_CHECK(cudaMemcpy(st->d_chip, st->f_chip, nc * sizeof(float),
                           cudaMemcpyHostToDevice), "ml upload chip");
 
     int block = 64, grid = grid_for(n, block);
-    cudaEventRecord(S.ev_start);
+    cudaEventRecord(st->ev_start);
     cuda_chip_channel_multiloop<<<grid, block>>>(
-        S.d_vm, S.d_chip, S.d_results, S.d_tablist, S.d_xvals,
-        S.d_ops, S.d_opstart, S.d_chipstart,
-        n, S.ncols, S.xdivs, S.xmin, S.invdx, nsteps);
-    cudaEventRecord(S.ev_stop);
+        st->d_vm, st->d_chip, st->d_results, st->d_tablist, st->d_xvals,
+        st->d_ops, st->d_opstart, st->d_chipstart,
+        n, st->ncols, st->xdivs, st->xmin, st->invdx, nsteps);
+    cudaEventRecord(st->ev_stop);
 
     cudaError_t kerr = cudaGetLastError();
     if (kerr != cudaSuccess) {
@@ -242,20 +284,20 @@ int cuda_backend_multiloop(double *vm_io, double *chip_io,
         return -1;
     }
 
-    CUDA_CHECK(cudaMemcpy(S.f_vm, S.d_vm, n * sizeof(float),
+    CUDA_CHECK(cudaMemcpy(st->f_vm, st->d_vm, n * sizeof(float),
                           cudaMemcpyDeviceToHost), "ml download vm");
-    CUDA_CHECK(cudaMemcpy(S.f_results, S.d_results, n * 2 * sizeof(float),
+    CUDA_CHECK(cudaMemcpy(st->f_results, st->d_results, n * 2 * sizeof(float),
                           cudaMemcpyDeviceToHost), "ml download results");
-    CUDA_CHECK(cudaMemcpy(S.f_chip, S.d_chip, nc * sizeof(float),
+    CUDA_CHECK(cudaMemcpy(st->f_chip, st->d_chip, nc * sizeof(float),
                           cudaMemcpyDeviceToHost), "ml download chip");
-    f2d(S.f_vm, vm_io, n);
-    f2d(S.f_results, results_out, n * 2);
-    f2d(S.f_chip, chip_io, nc);
-    S.chip_on_gpu = 0;
+    f2d(st->f_vm, vm_io, n);
+    f2d(st->f_results, results_out, n * 2);
+    f2d(st->f_chip, chip_io, nc);
+    st->chip_on_gpu = 0;
 
-    cudaEventSynchronize(S.ev_stop);
+    cudaEventSynchronize(st->ev_stop);
     float ms = 0.0f;
-    cudaEventElapsedTime(&ms, S.ev_start, S.ev_stop);
+    cudaEventElapsedTime(&ms, st->ev_start, st->ev_stop);
     printf("CUDA MULTILOOP: %d steps | kernel %.1f ms | total %.1f ms | %.3f us/step\n",
            nsteps, ms, ms, ms * 1e3 / nsteps);
     return 0;
@@ -270,12 +312,14 @@ int cuda_backend_multiloop(double *vm_io, double *chip_io,
 ** opencl/ocl_hsolve.c's ocl_tree_buffers_init, which this mirrors
 ** exactly). Called once, lazily, the first time a multiloop batch
 ** actually needs it (real tree structure, not all-single-compartment). */
-int cuda_backend_tree_init(int n_trees, int nfuncs, int nravals,
+int cuda_backend_tree_init(void *sth, int n_trees, int nfuncs, int nravals,
                            const int *funcs, const double *ravals,
                            const int *fwd_seg_start, const int *bwd_seg_start,
                            const int *fwd_root_row, const int *fwd_raval_start,
                            const int *bwd_raval_start)
 {
+    CudaState *st = (CudaState *)sth;
+    if (!st) return -1;
     std::vector<int> fwd_seg_end(n_trees), bwd_seg_end(n_trees);
     std::vector<float> fravals(nravals);
     std::vector<std::pair<int,int> > sorted(n_trees); /* (bwd_seg_start, idx) */
@@ -292,33 +336,33 @@ int cuda_backend_tree_init(int n_trees, int nfuncs, int nravals,
     }
     d2f(ravals, fravals.data(), nravals);
 
-    CUDA_CHECK(cudaMalloc(&S.d_funcs, nfuncs * sizeof(int)), "malloc funcs");
-    CUDA_CHECK(cudaMalloc(&S.d_ravals, nravals * sizeof(float)), "malloc ravals(tree)");
-    CUDA_CHECK(cudaMalloc(&S.d_fwd_seg_start, n_trees * sizeof(int)), "malloc fwd_seg_start");
-    CUDA_CHECK(cudaMalloc(&S.d_fwd_seg_end, n_trees * sizeof(int)), "malloc fwd_seg_end");
-    CUDA_CHECK(cudaMalloc(&S.d_bwd_seg_start, n_trees * sizeof(int)), "malloc bwd_seg_start");
-    CUDA_CHECK(cudaMalloc(&S.d_bwd_seg_end, n_trees * sizeof(int)), "malloc bwd_seg_end");
-    CUDA_CHECK(cudaMalloc(&S.d_fwd_root_row, n_trees * sizeof(int)), "malloc fwd_root_row");
-    CUDA_CHECK(cudaMalloc(&S.d_fwd_raval_start, n_trees * sizeof(int)), "malloc fwd_raval_start");
-    CUDA_CHECK(cudaMalloc(&S.d_bwd_raval_start, n_trees * sizeof(int)), "malloc bwd_raval_start");
+    CUDA_CHECK(cudaMalloc(&st->d_funcs, nfuncs * sizeof(int)), "malloc funcs");
+    CUDA_CHECK(cudaMalloc(&st->d_ravals, nravals * sizeof(float)), "malloc ravals(tree)");
+    CUDA_CHECK(cudaMalloc(&st->d_fwd_seg_start, n_trees * sizeof(int)), "malloc fwd_seg_start");
+    CUDA_CHECK(cudaMalloc(&st->d_fwd_seg_end, n_trees * sizeof(int)), "malloc fwd_seg_end");
+    CUDA_CHECK(cudaMalloc(&st->d_bwd_seg_start, n_trees * sizeof(int)), "malloc bwd_seg_start");
+    CUDA_CHECK(cudaMalloc(&st->d_bwd_seg_end, n_trees * sizeof(int)), "malloc bwd_seg_end");
+    CUDA_CHECK(cudaMalloc(&st->d_fwd_root_row, n_trees * sizeof(int)), "malloc fwd_root_row");
+    CUDA_CHECK(cudaMalloc(&st->d_fwd_raval_start, n_trees * sizeof(int)), "malloc fwd_raval_start");
+    CUDA_CHECK(cudaMalloc(&st->d_bwd_raval_start, n_trees * sizeof(int)), "malloc bwd_raval_start");
 
-    CUDA_CHECK(cudaMemcpy(S.d_funcs, funcs, nfuncs * sizeof(int), cudaMemcpyHostToDevice), "copy funcs");
-    CUDA_CHECK(cudaMemcpy(S.d_ravals, fravals.data(), nravals * sizeof(float), cudaMemcpyHostToDevice), "copy ravals(tree)");
-    CUDA_CHECK(cudaMemcpy(S.d_fwd_seg_start, fwd_seg_start, n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy fwd_seg_start");
-    CUDA_CHECK(cudaMemcpy(S.d_fwd_seg_end, fwd_seg_end.data(), n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy fwd_seg_end");
-    CUDA_CHECK(cudaMemcpy(S.d_bwd_seg_start, bwd_seg_start, n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy bwd_seg_start");
-    CUDA_CHECK(cudaMemcpy(S.d_bwd_seg_end, bwd_seg_end.data(), n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy bwd_seg_end");
-    CUDA_CHECK(cudaMemcpy(S.d_fwd_root_row, fwd_root_row, n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy fwd_root_row");
-    CUDA_CHECK(cudaMemcpy(S.d_fwd_raval_start, fwd_raval_start, n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy fwd_raval_start");
-    CUDA_CHECK(cudaMemcpy(S.d_bwd_raval_start, bwd_raval_start, n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy bwd_raval_start");
+    CUDA_CHECK(cudaMemcpy(st->d_funcs, funcs, nfuncs * sizeof(int), cudaMemcpyHostToDevice), "copy funcs");
+    CUDA_CHECK(cudaMemcpy(st->d_ravals, fravals.data(), nravals * sizeof(float), cudaMemcpyHostToDevice), "copy ravals(tree)");
+    CUDA_CHECK(cudaMemcpy(st->d_fwd_seg_start, fwd_seg_start, n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy fwd_seg_start");
+    CUDA_CHECK(cudaMemcpy(st->d_fwd_seg_end, fwd_seg_end.data(), n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy fwd_seg_end");
+    CUDA_CHECK(cudaMemcpy(st->d_bwd_seg_start, bwd_seg_start, n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy bwd_seg_start");
+    CUDA_CHECK(cudaMemcpy(st->d_bwd_seg_end, bwd_seg_end.data(), n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy bwd_seg_end");
+    CUDA_CHECK(cudaMemcpy(st->d_fwd_root_row, fwd_root_row, n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy fwd_root_row");
+    CUDA_CHECK(cudaMemcpy(st->d_fwd_raval_start, fwd_raval_start, n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy fwd_raval_start");
+    CUDA_CHECK(cudaMemcpy(st->d_bwd_raval_start, bwd_raval_start, n_trees * sizeof(int), cudaMemcpyHostToDevice), "copy bwd_raval_start");
 
-    S.n_trees = n_trees;
-    S.tree_ready = 1;
+    st->n_trees = n_trees;
+    st->tree_ready = 1;
     printf("CUDA: tree-elimination kernel ready (%d trees)\n", n_trees);
     return 0;
 }
 
-int cuda_backend_tree_ready(void) { return S.tree_ready; }
+int cuda_backend_tree_ready(void *sth) { CudaState *st = (CudaState *)sth; return st ? st->tree_ready : 0; }
 
 /* GENESIS 2.5 GPU-solve (Karol Chlasta, 2026-07-25): multiloop dispatch for
 ** real multicompartment trees -- nsteps iterations of (channel kernel over
@@ -333,35 +377,37 @@ int cuda_backend_tree_ready(void) { return S.tree_ready; }
 ** host-side command queue (see that function's comment for why this
 ** alone did NOT explain the large-ncompts hang found on a local AMD iGPU
 ** and not reproduced on cluster A40 -- ported here defensively anyway). */
-int cuda_backend_multiloop_tree(double *vm_io, double *chip_io, double *results_out, int nsteps)
+int cuda_backend_multiloop_tree(void *sth, double *vm_io, double *chip_io, double *results_out, int nsteps)
 {
-    int n = S.ncompts, nc = S.nchips;
+    CudaState *st = (CudaState *)sth;
+    if (!st) return -1;
+    int n = st->ncompts, nc = st->nchips;
     int step;
 
-    d2f(vm_io, S.f_vm, n);
-    d2f(chip_io, S.f_chip, nc);
-    CUDA_CHECK(cudaMemcpy(S.d_vm, S.f_vm, n * sizeof(float), cudaMemcpyHostToDevice), "mlt upload vm");
-    CUDA_CHECK(cudaMemcpy(S.d_chip, S.f_chip, nc * sizeof(float), cudaMemcpyHostToDevice), "mlt upload chip");
+    d2f(vm_io, st->f_vm, n);
+    d2f(chip_io, st->f_chip, nc);
+    CUDA_CHECK(cudaMemcpy(st->d_vm, st->f_vm, n * sizeof(float), cudaMemcpyHostToDevice), "mlt upload vm");
+    CUDA_CHECK(cudaMemcpy(st->d_chip, st->f_chip, nc * sizeof(float), cudaMemcpyHostToDevice), "mlt upload chip");
 
     {
     int chan_block = 64, chan_grid = grid_for(n, chan_block);
-    int tree_block = 64, tree_grid = grid_for(S.n_trees, tree_block);
+    int tree_block = 64, tree_grid = grid_for(st->n_trees, tree_block);
 
-    cudaEventRecord(S.ev_start);
+    cudaEventRecord(st->ev_start);
     for (step = 0; step < nsteps; step++) {
         cuda_chip_channel_update<<<chan_grid, chan_block>>>(
-            S.d_vm, S.d_chip, S.d_results, S.d_tablist, S.d_xvals,
-            S.d_ops, S.d_opstart, S.d_chipstart,
-            n, S.ncols, S.xdivs, S.xmin, S.invdx);
+            st->d_vm, st->d_chip, st->d_results, st->d_tablist, st->d_xvals,
+            st->d_ops, st->d_opstart, st->d_chipstart,
+            n, st->ncols, st->xdivs, st->xmin, st->invdx);
         cuda_hines_tree_eliminate<<<tree_grid, tree_block>>>(
-            S.d_funcs, S.d_ravals, S.d_results, S.d_vm,
-            S.d_fwd_seg_start, S.d_fwd_seg_end,
-            S.d_bwd_seg_start, S.d_bwd_seg_end,
-            S.d_fwd_root_row, S.d_fwd_raval_start, S.d_bwd_raval_start,
-            S.n_trees);
+            st->d_funcs, st->d_ravals, st->d_results, st->d_vm,
+            st->d_fwd_seg_start, st->d_fwd_seg_end,
+            st->d_bwd_seg_start, st->d_bwd_seg_end,
+            st->d_fwd_root_row, st->d_fwd_raval_start, st->d_bwd_raval_start,
+            st->n_trees);
         if ((step & 15) == 15) cudaDeviceSynchronize();
     }
-    cudaEventRecord(S.ev_stop);
+    cudaEventRecord(st->ev_stop);
 
     cudaError_t kerr = cudaGetLastError();
     if (kerr != cudaSuccess) {
@@ -369,59 +415,50 @@ int cuda_backend_multiloop_tree(double *vm_io, double *chip_io, double *results_
         return -1;
     }
 
-    CUDA_CHECK(cudaMemcpy(S.f_vm, S.d_vm, n * sizeof(float), cudaMemcpyDeviceToHost), "mlt download vm");
-    CUDA_CHECK(cudaMemcpy(S.f_results, S.d_results, n * 2 * sizeof(float), cudaMemcpyDeviceToHost), "mlt download results");
-    CUDA_CHECK(cudaMemcpy(S.f_chip, S.d_chip, nc * sizeof(float), cudaMemcpyDeviceToHost), "mlt download chip");
-    f2d(S.f_vm, vm_io, n);
-    f2d(S.f_results, results_out, n * 2);
-    f2d(S.f_chip, chip_io, nc);
-    S.chip_on_gpu = 0;
+    CUDA_CHECK(cudaMemcpy(st->f_vm, st->d_vm, n * sizeof(float), cudaMemcpyDeviceToHost), "mlt download vm");
+    CUDA_CHECK(cudaMemcpy(st->f_results, st->d_results, n * 2 * sizeof(float), cudaMemcpyDeviceToHost), "mlt download results");
+    CUDA_CHECK(cudaMemcpy(st->f_chip, st->d_chip, nc * sizeof(float), cudaMemcpyDeviceToHost), "mlt download chip");
+    f2d(st->f_vm, vm_io, n);
+    f2d(st->f_results, results_out, n * 2);
+    f2d(st->f_chip, chip_io, nc);
+    st->chip_on_gpu = 0;
 
-    cudaEventSynchronize(S.ev_stop);
+    cudaEventSynchronize(st->ev_stop);
     float ms = 0.0f;
-    cudaEventElapsedTime(&ms, S.ev_start, S.ev_stop);
+    cudaEventElapsedTime(&ms, st->ev_start, st->ev_stop);
     printf("CUDA MULTILOOP (tree): %d steps x 2 kernels | total %.1f ms | %.3f us/step\n",
            nsteps, ms, ms * 1e3 / nsteps);
     }
     return 0;
 }
 
-void cuda_backend_sync_chip(double *chip_out)
+void cuda_backend_sync_chip(void *sth, double *chip_out)
 {
-    if (!S.initialized || !S.chip_on_gpu) return;
-    cudaMemcpy(S.f_chip, S.d_chip, S.nchips * sizeof(float),
+    CudaState *st = (CudaState *)sth;
+    if (!st) return;
+    if (!st->initialized || !st->chip_on_gpu) return;
+    cudaMemcpy(st->f_chip, st->d_chip, st->nchips * sizeof(float),
                cudaMemcpyDeviceToHost);
-    f2d(S.f_chip, chip_out, S.nchips);
-    S.chip_on_gpu = 0;
+    f2d(st->f_chip, chip_out, st->nchips);
+    st->chip_on_gpu = 0;
 }
 
-int cuda_backend_chip_on_gpu(void) { return S.chip_on_gpu; }
-int cuda_backend_initialized(void) { return S.initialized; }
+int cuda_backend_chip_on_gpu(void *sth) { CudaState *st = (CudaState *)sth; return st ? st->chip_on_gpu : 0; }
+int cuda_backend_initialized(void *sth) { CudaState *st = (CudaState *)sth; return st ? st->initialized : 0; }
 
-void cuda_backend_cleanup(void)
+void cuda_backend_cleanup(void *sth)
 {
-    if (!S.initialized) return;
-    cudaFree(S.d_vm); cudaFree(S.d_chip); cudaFree(S.d_results);
-    cudaFree(S.d_tablist); cudaFree(S.d_xvals);
-    cudaFree(S.d_ops); cudaFree(S.d_opstart); cudaFree(S.d_chipstart);
-    if (S.tree_ready) {
-        cudaFree(S.d_funcs); cudaFree(S.d_ravals);
-        cudaFree(S.d_fwd_seg_start); cudaFree(S.d_fwd_seg_end);
-        cudaFree(S.d_bwd_seg_start); cudaFree(S.d_bwd_seg_end);
-        cudaFree(S.d_fwd_root_row); cudaFree(S.d_fwd_raval_start); cudaFree(S.d_bwd_raval_start);
-    }
-    free(S.f_vm); free(S.f_chip); free(S.f_results);
-    if (S.ev_start) cudaEventDestroy(S.ev_start);
-    if (S.ev_stop)  cudaEventDestroy(S.ev_stop);
-    if (S.prof_calls > 0) {
+    CudaState *st = (CudaState *)sth;
+    if (!st) return;
+    if (st->prof_calls > 0) {
         printf("CUDA PROFILING SUMMARY\n");
-        printf("  steps profiled : %lu\n", S.prof_calls);
+        printf("  steps profiled : %lu\n", st->prof_calls);
         printf("  kernel total   : %.3f ms  (%.2f us/step)\n",
-               S.prof_kernel_ms, S.prof_kernel_ms * 1e3 / S.prof_calls);
+               st->prof_kernel_ms, st->prof_kernel_ms * 1e3 / st->prof_calls);
         printf("  NOTE: kernel is only the channel-update fraction of a step;\n");
         printf("        the Hines solve runs on the CPU (per-step mode).\n");
     }
-    S.initialized = 0;
+    cuda_state_destroy(st);
 }
 
 } /* extern "C" */
