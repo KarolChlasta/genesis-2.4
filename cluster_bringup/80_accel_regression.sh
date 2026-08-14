@@ -30,7 +30,10 @@ ROOT=$(cd "$HERE/.." && pwd)
 cd "$ROOT"
 
 MODE=${1:-check}
-GOLDEN="$HERE/accel_regression_golden.txt"
+# Overridable so the same harness can hold separate baselines per backend: the
+# fp32 OpenCL and CUDA kernels are not bit-identical to each other, so each
+# needs its own golden (as does each device -- see the check below).
+GOLDEN=${ACCEL_GOLDEN:-"$HERE/accel_regression_golden.txt"}
 OUT=$(mktemp)
 trap 'rm -f "$OUT"' EXIT
 
