@@ -18,6 +18,38 @@ A manuscript describing all of this is being prepared for submission to
 draft is [`paper/manuscript_softwarex_draft.pdf`](paper/manuscript_softwarex_draft.pdf).
 See [Citing this work](#citing-this-work) below.
 
+## Important: defect in the v2.5 release, fixed after it
+
+**If you ran the `v2.5` tag (or its Zenodo archive) with `chanmode=4`/`5` on a
+model that uses synaptic channels, a `spike` element, GHK, or calcium
+concentration pools, the results are wrong.** Re-run on current `master`.
+
+The GPU kernels implement five opcodes and silently ignore any other — without
+skipping its operands. The first unhandled opcode therefore desynchronises the
+walk over the solver's `ops[]` program, and every later coefficient read lands
+on a wrong index. `SPIKE_OP` carries two operands, so a soma with a `spike`
+element is enough. There is no error message; membrane voltage is wrong from
+the first step and typically diverges.
+
+The detection for this already existed — `build_comp_index()` marked the
+affected compartments — but the mask was computed and freed without ever being
+consulted, and the CUDA port omitted it entirely.
+
+It went unnoticed because every validation model in this repository uses only
+`tabchannel` elements driven by `inject`, which never trips it. It shows up
+immediately on a real network model: on the bundled
+[`genesis/Scripts/VAnet2`](genesis/Scripts/VAnet2) (Vogels & Abbott 2005, as
+published in Brette et al. 2007, ModelDB 83319) the CUDA backend produced
+Vm = 1.5 V at t = 0 against a correct −0.065 V.
+
+Fixed in commit `5027e73`: both backends now refuse such a model, print which
+compartments are affected, and fall back to the CPU solver for that `hsolve`.
+Verified byte-identical to the CPU reference over the full VAnet2 run.
+
+**Unaffected:** models built only from `tabchannel` elements and driven by
+`inject`, including every benchmark under `genesis/Scripts/benchmark/`. The
+speedup figures below were measured on those and are not touched by this.
+
 ## Where the speedups come from
 
 For single-compartment (isopotential) networks, a batched multi-step
