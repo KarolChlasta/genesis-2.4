@@ -94,11 +94,6 @@ typedef struct {
 /* Shared device resources, initialised once. */
 extern OclDeviceState ocl_dev;
 
-/* Per-hsolve buffers. Still a single global instance at this step: the split
-   above is a pure move of the device-level fields, with no behavioural change,
-   so it can be verified byte-identical by cluster_bringup/80_accel_regression.sh
-   before the state is actually made per-hsolve. */
-extern OclHsolveState ocl_state;
 
 int  ocl_init(Hsolve *hsolve);
 int  ocl_chip_update(Hsolve *hsolve);

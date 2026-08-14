@@ -86,6 +86,19 @@ Doing step 4 before step 2 is what makes `hineslib_cpu.o` a CUDA object; the
 symptom is undefined `cuda*` symbols at the PGENESIS link, which looks
 unrelated to anything above.
 
+## Changing hines_struct.h requires a full rebuild
+
+`struct hsolve_type` carries `accel_state`, so any edit to that struct changes
+`sizeof(Hsolve)`. GENESIS compiles its subdirectories separately, and an
+incremental rebuild of `hines/` alone leaves `simlib.o`, `shelllib.o` and the
+rest compiled against the previous layout. The result is not a link error --
+it is memory corruption at run time.
+
+The observed symptom was a segmentation fault in the GPU arm plus every GPU
+benchmark silently producing no output, which looks exactly like a bug in the
+accelerator and is not. `make clean` first, or run `10_build.sh`, whenever this
+header changes.
+
 ## Still carried from the earlier session (unchanged, still true)
 
 1. **libfl missing** — cluster has `flex` but not `libfl`. Local stub at
