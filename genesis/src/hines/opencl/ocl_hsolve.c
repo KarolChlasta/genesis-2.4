@@ -17,6 +17,11 @@
 #include "../hines_defs.h"
 #include "ocl_hsolve.h"
 
+/* Device-level resources, created once per process and shared by every hsolve.
+   Kept separate from the per-hsolve buffers below so that the one-solver-per-cell
+   idiom (`call solver DUPLICATE`) can share a single context. */
+OclDeviceState ocl_dev = {0};
+
 OclHsolveState ocl_state = {0};
 
 /* Wczytuje plik .cl jako string */
@@ -128,11 +133,11 @@ int ocl_init(Hsolve *hsolve)
     }
 
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1,
-                         &ocl_state.device, NULL);
+                         &ocl_dev.device, NULL);
     if (err != CL_SUCCESS) {
         fprintf(stderr, "OCL: brak GPU, probuje CPU\n");
         err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1,
-                             &ocl_state.device, NULL);
+                             &ocl_dev.device, NULL);
         if (err != CL_SUCCESS) {
             fprintf(stderr, "OCL: brak urzadzenia (%d)\n", err);
             return -1;
@@ -140,7 +145,7 @@ int ocl_init(Hsolve *hsolve)
     }
 
     char devname[128];
-    clGetDeviceInfo(ocl_state.device, CL_DEVICE_NAME,
+    clGetDeviceInfo(ocl_dev.device, CL_DEVICE_NAME,
                     sizeof(devname), devname, NULL);
     printf("OCL: urzadzenie: %s\n", devname);
 
@@ -148,7 +153,7 @@ int ocl_init(Hsolve *hsolve)
        so devices without double-precision support (e.g. AMD RDNA3 890M)
        are no longer excluded here. */
 
-    ocl_state.context = clCreateContext(NULL, 1, &ocl_state.device,
+    ocl_dev.context = clCreateContext(NULL, 1, &ocl_dev.device,
                                         NULL, NULL, &err);
     if (err != CL_SUCCESS) {
         fprintf(stderr, "OCL: clCreateContext (%d)\n", err);
@@ -158,8 +163,8 @@ int ocl_init(Hsolve *hsolve)
     cl_queue_properties qprops[] = {
         CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0
     };
-    ocl_state.queue = clCreateCommandQueueWithProperties(
-                          ocl_state.context, ocl_state.device, qprops, &err);
+    ocl_dev.queue = clCreateCommandQueueWithProperties(
+                          ocl_dev.context, ocl_dev.device, qprops, &err);
     if (err != CL_SUCCESS) {
         fprintf(stderr, "OCL: clCreateCommandQueue (%d)\n", err);
         return -1;
@@ -184,7 +189,7 @@ int ocl_init(Hsolve *hsolve)
         return -1;
     }
 
-    ocl_state.program = clCreateProgramWithSource(ocl_state.context, 1,
+    ocl_dev.program = clCreateProgramWithSource(ocl_dev.context, 1,
                             (const char **)&src, NULL, &err);
     free(src);
     } /* end cl_paths block */
@@ -194,17 +199,17 @@ int ocl_init(Hsolve *hsolve)
     }
 
     /* -cl-fast-relaxed-math: szybsze obliczenia zmiennoprzecinkowe na GPU */
-    err = clBuildProgram(ocl_state.program, 1, &ocl_state.device,
+    err = clBuildProgram(ocl_dev.program, 1, &ocl_dev.device,
                          "-cl-fast-relaxed-math", NULL, NULL);
     if (err != CL_SUCCESS) {
         char log[4096];
-        clGetProgramBuildInfo(ocl_state.program, ocl_state.device,
+        clGetProgramBuildInfo(ocl_dev.program, ocl_dev.device,
                               CL_PROGRAM_BUILD_LOG, sizeof(log), log, NULL);
         fprintf(stderr, "OCL: blad kompilacji:\n%s\n", log);
         return -1;
     }
 
-    ocl_state.kernel = clCreateKernel(ocl_state.program,
+    ocl_dev.kernel = clCreateKernel(ocl_dev.program,
                                       "chip_channel_update", &err);
     if (err != CL_SUCCESS) {
         fprintf(stderr, "OCL: clCreateKernel (%d)\n", err);
@@ -271,20 +276,20 @@ int ocl_init(Hsolve *hsolve)
 
     /* buf_vm is READ_WRITE: chip_channel_update reads it, chip_channel_multiloop
        reads AND writes it (voltage update inline each step). */
-    ocl_state.buf_vm      = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_vm      = clCreateBuffer(ocl_dev.context,
                                 CL_MEM_READ_WRITE, n*sizeof(float),  NULL, &err);
-    ocl_state.buf_chip    = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_chip    = clCreateBuffer(ocl_dev.context,
                                 CL_MEM_READ_WRITE, nc*sizeof(float), NULL, &err);
-    ocl_state.buf_results = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_results = clCreateBuffer(ocl_dev.context,
                                 CL_MEM_WRITE_ONLY, n*2*sizeof(float),NULL, &err);
-    ocl_state.buf_tablist = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_tablist = clCreateBuffer(ocl_dev.context,
                                 CL_MEM_READ_ONLY,  nt*sizeof(float), NULL, &err);
-    ocl_state.buf_xvals   = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_xvals   = clCreateBuffer(ocl_dev.context,
                                 CL_MEM_READ_ONLY,  nx*sizeof(float), NULL, &err);
-    ocl_state.buf_ops     = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_ops     = clCreateBuffer(ocl_dev.context,
                                 CL_MEM_READ_ONLY,  no*sizeof(int),    NULL, &err);
     if (ns > 0)
-        ocl_state.buf_stablist = clCreateBuffer(ocl_state.context,
+        ocl_state.buf_stablist = clCreateBuffer(ocl_dev.context,
                                      CL_MEM_READ_ONLY, ns*sizeof(float), NULL, &err);
 
     /* host-side float scratch reused every step (ocl_chip_update / multiloop) */
@@ -294,10 +299,10 @@ int ocl_init(Hsolve *hsolve)
 
     /* indeksy zbudowane wyzej (przed alokacja buforow); tu tylko upload —
        dane statyczne, wysylane tylko raz */
-    buf_opstart = clCreateBuffer(ocl_state.context,
+    buf_opstart = clCreateBuffer(ocl_dev.context,
                       CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                       n*sizeof(int), opstart, &err);
-    buf_chipstart = clCreateBuffer(ocl_state.context,
+    buf_chipstart = clCreateBuffer(ocl_dev.context,
                         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                         n*sizeof(int), chipstart, &err);
     free(cpu_only);
@@ -308,48 +313,48 @@ int ocl_init(Hsolve *hsolve)
     fconv = (float *)malloc((nt > nx ? nt : nx) * sizeof(float));
     if (hsolve->tablist && hsolve->xdivs > 0) {
         d2f(hsolve->tablist, fconv, nt);
-        clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_tablist, CL_TRUE, 0,
+        clEnqueueWriteBuffer(ocl_dev.queue, ocl_state.buf_tablist, CL_TRUE, 0,
             nt*sizeof(float), fconv, 0, NULL, NULL);
     } else {
-        clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_tablist, CL_TRUE, 0,
+        clEnqueueWriteBuffer(ocl_dev.queue, ocl_state.buf_tablist, CL_TRUE, 0,
             sizeof(float), &dummy, 0, NULL, NULL);
     }
     if (hsolve->xvals && hsolve->xdivs > 0) {
         d2f(hsolve->xvals, fconv, nx);
-        clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_xvals, CL_TRUE, 0,
+        clEnqueueWriteBuffer(ocl_dev.queue, ocl_state.buf_xvals, CL_TRUE, 0,
             nx*sizeof(float), fconv, 0, NULL, NULL);
     } else {
-        clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_xvals, CL_TRUE, 0,
+        clEnqueueWriteBuffer(ocl_dev.queue, ocl_state.buf_xvals, CL_TRUE, 0,
             sizeof(float), &dummy, 0, NULL, NULL);
     }
     free(fconv);
-    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_ops, CL_TRUE,
+    clEnqueueWriteBuffer(ocl_dev.queue, ocl_state.buf_ops, CL_TRUE,
                          0, no*sizeof(int), hsolve->ops, 0, NULL, NULL);
     if (ns > 0 && hsolve->stablist) {
         float *sconv = (float *)malloc(ns * sizeof(float));
         d2f(hsolve->stablist, sconv, ns);
-        clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_stablist, CL_TRUE,
+        clEnqueueWriteBuffer(ocl_dev.queue, ocl_state.buf_stablist, CL_TRUE,
                              0, ns*sizeof(float), sconv, 0, NULL, NULL);
         free(sconv);
     }
 
     /* argumenty kernela — stale przez caly czas zycia */
-    clSetKernelArg(ocl_state.kernel,  0, sizeof(cl_mem), &ocl_state.buf_vm);
-    clSetKernelArg(ocl_state.kernel,  1, sizeof(cl_mem), &ocl_state.buf_chip);
-    clSetKernelArg(ocl_state.kernel,  2, sizeof(cl_mem), &ocl_state.buf_results);
-    clSetKernelArg(ocl_state.kernel,  3, sizeof(cl_mem), &ocl_state.buf_tablist);
-    clSetKernelArg(ocl_state.kernel,  4, sizeof(cl_mem), &ocl_state.buf_xvals);
-    clSetKernelArg(ocl_state.kernel,  5, sizeof(cl_mem), &ocl_state.buf_ops);
-    clSetKernelArg(ocl_state.kernel,  6, sizeof(cl_mem), &buf_opstart);
-    clSetKernelArg(ocl_state.kernel,  7, sizeof(cl_mem), &buf_chipstart);
-    clSetKernelArg(ocl_state.kernel,  8, sizeof(int),    &n);
-    clSetKernelArg(ocl_state.kernel,  9, sizeof(int),    &ncols);
-    clSetKernelArg(ocl_state.kernel, 10, sizeof(int),    &xdivs);
-    clSetKernelArg(ocl_state.kernel, 11, sizeof(float),  &fxmin);
-    clSetKernelArg(ocl_state.kernel, 12, sizeof(float),  &finvdx);
+    clSetKernelArg(ocl_dev.kernel,  0, sizeof(cl_mem), &ocl_state.buf_vm);
+    clSetKernelArg(ocl_dev.kernel,  1, sizeof(cl_mem), &ocl_state.buf_chip);
+    clSetKernelArg(ocl_dev.kernel,  2, sizeof(cl_mem), &ocl_state.buf_results);
+    clSetKernelArg(ocl_dev.kernel,  3, sizeof(cl_mem), &ocl_state.buf_tablist);
+    clSetKernelArg(ocl_dev.kernel,  4, sizeof(cl_mem), &ocl_state.buf_xvals);
+    clSetKernelArg(ocl_dev.kernel,  5, sizeof(cl_mem), &ocl_state.buf_ops);
+    clSetKernelArg(ocl_dev.kernel,  6, sizeof(cl_mem), &buf_opstart);
+    clSetKernelArg(ocl_dev.kernel,  7, sizeof(cl_mem), &buf_chipstart);
+    clSetKernelArg(ocl_dev.kernel,  8, sizeof(int),    &n);
+    clSetKernelArg(ocl_dev.kernel,  9, sizeof(int),    &ncols);
+    clSetKernelArg(ocl_dev.kernel, 10, sizeof(int),    &xdivs);
+    clSetKernelArg(ocl_dev.kernel, 11, sizeof(float),  &fxmin);
+    clSetKernelArg(ocl_dev.kernel, 12, sizeof(float),  &finvdx);
 
     /* --- multiloop kernel --- */
-    ocl_state.kernel_multi = clCreateKernel(ocl_state.program,
+    ocl_dev.kernel_multi = clCreateKernel(ocl_dev.program,
                                             "chip_channel_multiloop", &err);
     if (err != CL_SUCCESS) {
         fprintf(stderr, "OCL: clCreateKernel multiloop (%d)\n", err);
@@ -358,20 +363,20 @@ int ocl_init(Hsolve *hsolve)
     {
     /* args 0-12 identical to chip_channel_update, arg 13 = nsteps (set per-call) */
     int zero = 0;
-    clSetKernelArg(ocl_state.kernel_multi,  0, sizeof(cl_mem), &ocl_state.buf_vm);
-    clSetKernelArg(ocl_state.kernel_multi,  1, sizeof(cl_mem), &ocl_state.buf_chip);
-    clSetKernelArg(ocl_state.kernel_multi,  2, sizeof(cl_mem), &ocl_state.buf_results);
-    clSetKernelArg(ocl_state.kernel_multi,  3, sizeof(cl_mem), &ocl_state.buf_tablist);
-    clSetKernelArg(ocl_state.kernel_multi,  4, sizeof(cl_mem), &ocl_state.buf_xvals);
-    clSetKernelArg(ocl_state.kernel_multi,  5, sizeof(cl_mem), &ocl_state.buf_ops);
-    clSetKernelArg(ocl_state.kernel_multi,  6, sizeof(cl_mem), &buf_opstart);
-    clSetKernelArg(ocl_state.kernel_multi,  7, sizeof(cl_mem), &buf_chipstart);
-    clSetKernelArg(ocl_state.kernel_multi,  8, sizeof(int),    &n);
-    clSetKernelArg(ocl_state.kernel_multi,  9, sizeof(int),    &ncols);
-    clSetKernelArg(ocl_state.kernel_multi, 10, sizeof(int),    &xdivs);
-    clSetKernelArg(ocl_state.kernel_multi, 11, sizeof(float),  &fxmin);
-    clSetKernelArg(ocl_state.kernel_multi, 12, sizeof(float),  &finvdx);
-    clSetKernelArg(ocl_state.kernel_multi, 13, sizeof(int),    &zero); /* nsteps placeholder */
+    clSetKernelArg(ocl_dev.kernel_multi,  0, sizeof(cl_mem), &ocl_state.buf_vm);
+    clSetKernelArg(ocl_dev.kernel_multi,  1, sizeof(cl_mem), &ocl_state.buf_chip);
+    clSetKernelArg(ocl_dev.kernel_multi,  2, sizeof(cl_mem), &ocl_state.buf_results);
+    clSetKernelArg(ocl_dev.kernel_multi,  3, sizeof(cl_mem), &ocl_state.buf_tablist);
+    clSetKernelArg(ocl_dev.kernel_multi,  4, sizeof(cl_mem), &ocl_state.buf_xvals);
+    clSetKernelArg(ocl_dev.kernel_multi,  5, sizeof(cl_mem), &ocl_state.buf_ops);
+    clSetKernelArg(ocl_dev.kernel_multi,  6, sizeof(cl_mem), &buf_opstart);
+    clSetKernelArg(ocl_dev.kernel_multi,  7, sizeof(cl_mem), &buf_chipstart);
+    clSetKernelArg(ocl_dev.kernel_multi,  8, sizeof(int),    &n);
+    clSetKernelArg(ocl_dev.kernel_multi,  9, sizeof(int),    &ncols);
+    clSetKernelArg(ocl_dev.kernel_multi, 10, sizeof(int),    &xdivs);
+    clSetKernelArg(ocl_dev.kernel_multi, 11, sizeof(float),  &fxmin);
+    clSetKernelArg(ocl_dev.kernel_multi, 12, sizeof(float),  &finvdx);
+    clSetKernelArg(ocl_dev.kernel_multi, 13, sizeof(int),    &zero); /* nsteps placeholder */
     }
 
     /* Multiloop mode: GENESIS_OCL_MULTILOOP=<nsteps> enables batching */
@@ -462,60 +467,60 @@ static int ocl_tree_buffers_init(Hsolve *hsolve)
     }
     free(sorted);
 
-    ocl_state.buf_funcs = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_funcs = clCreateBuffer(ocl_dev.context,
         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
         nfuncs * sizeof(int), hsolve->funcs, &err);
 
     fravals = (float *)malloc(nravals * sizeof(float));
     d2f(hsolve->ravals, fravals, nravals);
-    ocl_state.buf_ravals = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_ravals = clCreateBuffer(ocl_dev.context,
         CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
         nravals * sizeof(float), fravals, &err);
     free(fravals);
 
-    ocl_state.buf_fwd_seg_start = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_fwd_seg_start = clCreateBuffer(ocl_dev.context,
         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
         n_trees * sizeof(int), hsolve->fwd_seg_start, &err);
-    ocl_state.buf_fwd_seg_end = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_fwd_seg_end = clCreateBuffer(ocl_dev.context,
         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
         n_trees * sizeof(int), fwd_seg_end, &err);
-    ocl_state.buf_bwd_seg_start = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_bwd_seg_start = clCreateBuffer(ocl_dev.context,
         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
         n_trees * sizeof(int), hsolve->bwd_seg_start, &err);
-    ocl_state.buf_bwd_seg_end = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_bwd_seg_end = clCreateBuffer(ocl_dev.context,
         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
         n_trees * sizeof(int), bwd_seg_end, &err);
-    ocl_state.buf_fwd_root_row = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_fwd_root_row = clCreateBuffer(ocl_dev.context,
         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
         n_trees * sizeof(int), hsolve->fwd_root_row, &err);
-    ocl_state.buf_fwd_raval_start = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_fwd_raval_start = clCreateBuffer(ocl_dev.context,
         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
         n_trees * sizeof(int), hsolve->fwd_raval_start, &err);
-    ocl_state.buf_bwd_raval_start = clCreateBuffer(ocl_state.context,
+    ocl_state.buf_bwd_raval_start = clCreateBuffer(ocl_dev.context,
         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
         n_trees * sizeof(int), hsolve->bwd_raval_start, &err);
 
     free(fwd_seg_end);
     free(bwd_seg_end);
 
-    ocl_state.kernel_tree = clCreateKernel(ocl_state.program,
+    ocl_dev.kernel_tree = clCreateKernel(ocl_dev.program,
                                            "hines_tree_eliminate", &err);
     if (err != CL_SUCCESS) {
         fprintf(stderr, "OCL: clCreateKernel hines_tree_eliminate (%d)\n", err);
         return -1;
     }
-    clSetKernelArg(ocl_state.kernel_tree,  0, sizeof(cl_mem), &ocl_state.buf_funcs);
-    clSetKernelArg(ocl_state.kernel_tree,  1, sizeof(cl_mem), &ocl_state.buf_ravals);
-    clSetKernelArg(ocl_state.kernel_tree,  2, sizeof(cl_mem), &ocl_state.buf_results);
-    clSetKernelArg(ocl_state.kernel_tree,  3, sizeof(cl_mem), &ocl_state.buf_vm);
-    clSetKernelArg(ocl_state.kernel_tree,  4, sizeof(cl_mem), &ocl_state.buf_fwd_seg_start);
-    clSetKernelArg(ocl_state.kernel_tree,  5, sizeof(cl_mem), &ocl_state.buf_fwd_seg_end);
-    clSetKernelArg(ocl_state.kernel_tree,  6, sizeof(cl_mem), &ocl_state.buf_bwd_seg_start);
-    clSetKernelArg(ocl_state.kernel_tree,  7, sizeof(cl_mem), &ocl_state.buf_bwd_seg_end);
-    clSetKernelArg(ocl_state.kernel_tree,  8, sizeof(cl_mem), &ocl_state.buf_fwd_root_row);
-    clSetKernelArg(ocl_state.kernel_tree,  9, sizeof(cl_mem), &ocl_state.buf_fwd_raval_start);
-    clSetKernelArg(ocl_state.kernel_tree, 10, sizeof(cl_mem), &ocl_state.buf_bwd_raval_start);
-    clSetKernelArg(ocl_state.kernel_tree, 11, sizeof(int),    &n_trees);
+    clSetKernelArg(ocl_dev.kernel_tree,  0, sizeof(cl_mem), &ocl_state.buf_funcs);
+    clSetKernelArg(ocl_dev.kernel_tree,  1, sizeof(cl_mem), &ocl_state.buf_ravals);
+    clSetKernelArg(ocl_dev.kernel_tree,  2, sizeof(cl_mem), &ocl_state.buf_results);
+    clSetKernelArg(ocl_dev.kernel_tree,  3, sizeof(cl_mem), &ocl_state.buf_vm);
+    clSetKernelArg(ocl_dev.kernel_tree,  4, sizeof(cl_mem), &ocl_state.buf_fwd_seg_start);
+    clSetKernelArg(ocl_dev.kernel_tree,  5, sizeof(cl_mem), &ocl_state.buf_fwd_seg_end);
+    clSetKernelArg(ocl_dev.kernel_tree,  6, sizeof(cl_mem), &ocl_state.buf_bwd_seg_start);
+    clSetKernelArg(ocl_dev.kernel_tree,  7, sizeof(cl_mem), &ocl_state.buf_bwd_seg_end);
+    clSetKernelArg(ocl_dev.kernel_tree,  8, sizeof(cl_mem), &ocl_state.buf_fwd_root_row);
+    clSetKernelArg(ocl_dev.kernel_tree,  9, sizeof(cl_mem), &ocl_state.buf_fwd_raval_start);
+    clSetKernelArg(ocl_dev.kernel_tree, 10, sizeof(cl_mem), &ocl_state.buf_bwd_raval_start);
+    clSetKernelArg(ocl_dev.kernel_tree, 11, sizeof(int),    &n_trees);
 
     ocl_state.n_trees = n_trees;
     ocl_state.tree_kernel_ready = 1;
@@ -569,9 +574,9 @@ static int ocl_multiloop_dispatch_tree(Hsolve *hsolve, int nsteps)
 
     d2f(hsolve->vm, ocl_state.f_vm, n);
     d2f(hsolve->chip, ocl_state.f_chip, nc);
-    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_vm, CL_FALSE,
+    clEnqueueWriteBuffer(ocl_dev.queue, ocl_state.buf_vm, CL_FALSE,
                          0, n*sizeof(float), ocl_state.f_vm, 0, NULL, NULL);
-    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_chip, CL_FALSE,
+    clEnqueueWriteBuffer(ocl_dev.queue, ocl_state.buf_chip, CL_FALSE,
                          0, nc*sizeof(float), ocl_state.f_chip, 0, NULL, NULL);
 
     {
@@ -581,14 +586,14 @@ static int ocl_multiloop_dispatch_tree(Hsolve *hsolve, int nsteps)
     size_t tree_global = ((hsolve->n_trees + tree_local - 1) / tree_local) * tree_local;
 
     for (step = 0; step < nsteps; step++) {
-        err = clEnqueueNDRangeKernel(ocl_state.queue, ocl_state.kernel,
+        err = clEnqueueNDRangeKernel(ocl_dev.queue, ocl_dev.kernel,
                                       1, NULL, &chan_global, &chan_local,
                                       0, NULL, NULL);
         if (err != CL_SUCCESS) {
             fprintf(stderr, "OCL multiloop (tree): channel kernel error (%d) at step %d\n", err, step);
             return do_chip_hh4_update(hsolve);
         }
-        err = clEnqueueNDRangeKernel(ocl_state.queue, ocl_state.kernel_tree,
+        err = clEnqueueNDRangeKernel(ocl_dev.queue, ocl_dev.kernel_tree,
                                       1, NULL, &tree_global, &tree_local,
                                       0, NULL, NULL);
         if (err != CL_SUCCESS) {
@@ -598,14 +603,14 @@ static int ocl_multiloop_dispatch_tree(Hsolve *hsolve, int nsteps)
         /* Cheap insurance, not a fix (see the hard cap in
            ocl_multiloop_dispatch() for the real guard): periodic sync
            so the host<->device command queue never grows unbounded. */
-        if ((step & 15) == 15) clFinish(ocl_state.queue);
+        if ((step & 15) == 15) clFinish(ocl_dev.queue);
     }
 
-    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_vm, CL_FALSE,
+    clEnqueueReadBuffer(ocl_dev.queue, ocl_state.buf_vm, CL_FALSE,
                         0, n*sizeof(float), ocl_state.f_vm, 0, NULL, NULL);
-    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_results, CL_FALSE,
+    clEnqueueReadBuffer(ocl_dev.queue, ocl_state.buf_results, CL_FALSE,
                         0, n*2*sizeof(float), ocl_state.f_results, 0, NULL, NULL);
-    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_chip, CL_TRUE,
+    clEnqueueReadBuffer(ocl_dev.queue, ocl_state.buf_chip, CL_TRUE,
                         0, nc*sizeof(float), ocl_state.f_chip, 0, NULL, NULL);
 
     f2d(ocl_state.f_vm, hsolve->vm, n);
@@ -710,20 +715,20 @@ static int ocl_multiloop_dispatch(Hsolve *hsolve, int nsteps)
     d2f(hsolve->vm, ocl_state.f_vm, n);
     d2f(hsolve->chip, ocl_state.f_chip, nc);
 
-    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_vm, CL_FALSE,
+    clEnqueueWriteBuffer(ocl_dev.queue, ocl_state.buf_vm, CL_FALSE,
                          0, n*sizeof(float), ocl_state.f_vm, 0, NULL, NULL);
-    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_chip, CL_FALSE,
+    clEnqueueWriteBuffer(ocl_dev.queue, ocl_state.buf_chip, CL_FALSE,
                          0, nc*sizeof(float), ocl_state.f_chip, 0, NULL, NULL);
 
     /* ustaw nsteps w argumencie 13 kernela multiloop */
-    clSetKernelArg(ocl_state.kernel_multi, 13, sizeof(int), &nsteps);
+    clSetKernelArg(ocl_dev.kernel_multi, 13, sizeof(int), &nsteps);
 
     /* dispatch: jeden work-item na kompartment, wszystkie nsteps krokow wewnatrz */
     {
     size_t local_size  = 64;
     size_t global_size = ((n + local_size - 1) / local_size) * local_size;
     cl_event ev;
-    err = clEnqueueNDRangeKernel(ocl_state.queue, ocl_state.kernel_multi,
+    err = clEnqueueNDRangeKernel(ocl_dev.queue, ocl_dev.kernel_multi,
                                   1, NULL, &global_size, &local_size,
                                   0, NULL, &ev);
     if (err != CL_SUCCESS) {
@@ -732,11 +737,11 @@ static int ocl_multiloop_dispatch(Hsolve *hsolve, int nsteps)
     }
 
     /* download vm[] (napięcia po wszystkich krokach) i results[] (tożsame) i chip[] */
-    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_vm, CL_FALSE,
+    clEnqueueReadBuffer(ocl_dev.queue, ocl_state.buf_vm, CL_FALSE,
                         0, n*sizeof(float), ocl_state.f_vm, 0, NULL, NULL);
-    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_results, CL_FALSE,
+    clEnqueueReadBuffer(ocl_dev.queue, ocl_state.buf_results, CL_FALSE,
                         0, n*2*sizeof(float), ocl_state.f_results, 0, NULL, NULL);
-    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_chip, CL_TRUE,
+    clEnqueueReadBuffer(ocl_dev.queue, ocl_state.buf_chip, CL_TRUE,
                         0, nc*sizeof(float), ocl_state.f_chip, 0, NULL, NULL);
 
     /* konwersja float->double z powrotem do hsolve */
@@ -830,13 +835,13 @@ int ocl_chip_update(Hsolve *hsolve)
 
     /* Always upload current vm[] (written by CPU Hines solver each step). */
     d2f(hsolve->vm, ocl_state.f_vm, n);
-    clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_vm, CL_FALSE,
+    clEnqueueWriteBuffer(ocl_dev.queue, ocl_state.buf_vm, CL_FALSE,
                          0, n*sizeof(float), ocl_state.f_vm, 0, NULL, NULL);
 
     /* Upload chip[] only on the first call — after that the GPU owns it. */
     if (!ocl_state.chip_on_gpu) {
         d2f(hsolve->chip, ocl_state.f_chip, nc);
-        clEnqueueWriteBuffer(ocl_state.queue, ocl_state.buf_chip, CL_FALSE,
+        clEnqueueWriteBuffer(ocl_dev.queue, ocl_state.buf_chip, CL_FALSE,
                              0, nc*sizeof(float), ocl_state.f_chip, 0, NULL, NULL);
     }
 
@@ -847,7 +852,7 @@ int ocl_chip_update(Hsolve *hsolve)
     size_t global_size = ((n + local_size - 1) / local_size) * local_size;
 
     cl_event kern_event;
-    cl_int err = clEnqueueNDRangeKernel(ocl_state.queue, ocl_state.kernel,
+    cl_int err = clEnqueueNDRangeKernel(ocl_dev.queue, ocl_dev.kernel,
                                          1, NULL, &global_size, &local_size,
                                          0, NULL, &kern_event);
     if (err != CL_SUCCESS) {
@@ -859,7 +864,7 @@ int ocl_chip_update(Hsolve *hsolve)
     ocl_state.chip_on_gpu = 1;
 
     /* CL_TRUE = bariera synchronizacji — czekamy na zakonczenie GPU */
-    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_results, CL_TRUE,
+    clEnqueueReadBuffer(ocl_dev.queue, ocl_state.buf_results, CL_TRUE,
                         0, n*2*sizeof(float), ocl_state.f_results, 0, NULL, NULL);
     f2d(ocl_state.f_results, hsolve->results, n*2);
 
@@ -898,7 +903,7 @@ int ocl_chip_update(Hsolve *hsolve)
 void ocl_sync_chip(Hsolve *hsolve)
 {
     if (!ocl_state.initialized || !ocl_state.chip_on_gpu) return;
-    clEnqueueReadBuffer(ocl_state.queue, ocl_state.buf_chip, CL_TRUE,
+    clEnqueueReadBuffer(ocl_dev.queue, ocl_state.buf_chip, CL_TRUE,
                         0, ocl_state.nchips * sizeof(float),
                         ocl_state.f_chip, 0, NULL, NULL);
     f2d(ocl_state.f_chip, hsolve->chip, ocl_state.nchips);
@@ -932,16 +937,16 @@ void ocl_cleanup(void)
         clReleaseMemObject(ocl_state.buf_fwd_root_row);
         clReleaseMemObject(ocl_state.buf_fwd_raval_start);
         clReleaseMemObject(ocl_state.buf_bwd_raval_start);
-        clReleaseKernel(ocl_state.kernel_tree);
+        clReleaseKernel(ocl_dev.kernel_tree);
     }
     free(ocl_state.f_vm);
     free(ocl_state.f_chip);
     free(ocl_state.f_results);
-    clReleaseKernel(ocl_state.kernel);
-    if (ocl_state.kernel_multi) clReleaseKernel(ocl_state.kernel_multi);
-    clReleaseProgram(ocl_state.program);
-    clReleaseCommandQueue(ocl_state.queue);
-    clReleaseContext(ocl_state.context);
+    clReleaseKernel(ocl_dev.kernel);
+    if (ocl_dev.kernel_multi) clReleaseKernel(ocl_dev.kernel_multi);
+    clReleaseProgram(ocl_dev.program);
+    clReleaseCommandQueue(ocl_dev.queue);
+    clReleaseContext(ocl_dev.context);
     ocl_state.initialized = 0;
 
     if (ocl_state.multiloop_called > 0) {

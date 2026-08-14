@@ -7,6 +7,12 @@
 /* hines_struct.h included via hines_ext.h — do not include directly */
 typedef struct hsolve_type Hsolve;
 
+/* Device-level resources: one OpenCL context, program and kernel set per
+   GENESIS process, shared by every hsolve element. These are split out from
+   the per-hsolve buffers below because the common GENESIS idiom -- one solver
+   per cell, built with `call solver DUPLICATE` -- creates thousands of hsolve
+   elements, and they must be able to share one context while each keeps its
+   own buffers. */
 typedef struct {
     cl_context       context;
     cl_command_queue queue;
@@ -15,7 +21,9 @@ typedef struct {
     cl_kernel        kernel_multi; /* chip_channel_multiloop — K steps, single-compt only */
     cl_kernel        kernel_tree;  /* hines_tree_eliminate — real multicompartment solve */
     cl_device_id     device;
+} OclDeviceState;
 
+typedef struct {
     /* GPU buffers — float mirrors of hsolve's double arrays. Kernel runs in
        fp32 (device may lack cl_khr_fp64, e.g. AMD RDNA3); host converts
        double<->float at upload/download time using the scratch buffers
@@ -83,7 +91,13 @@ typedef struct {
 
 } OclHsolveState;
 
-/* one global state — one GPU context per GENESIS process */
+/* Shared device resources, initialised once. */
+extern OclDeviceState ocl_dev;
+
+/* Per-hsolve buffers. Still a single global instance at this step: the split
+   above is a pure move of the device-level fields, with no behavioural change,
+   so it can be verified byte-identical by cluster_bringup/80_accel_regression.sh
+   before the state is actually made per-hsolve. */
 extern OclHsolveState ocl_state;
 
 int  ocl_init(Hsolve *hsolve);
