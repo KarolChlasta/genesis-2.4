@@ -159,8 +159,8 @@ USE_MPI = 1
 #            $$nargv      - arguments to the pgenesis executable
 #         (remember to use $$ instead of $ or else "make" will treat
 #          it as a variable to be immediately expanded)
-MPI_CMD = '/home/griffi/.local/bin/mpirun -np $$num_nodes $$exec $$nargv'
-MPI_DEBUG_CMD = '/home/griffi/.local/bin/mpirun -np $$num_nodes $$exec $$nargv'
+MPI_CMD = 'mpirun -np $$num_nodes $$exec $$nargv'
+MPI_DEBUG_CMD = 'mpirun -np $$num_nodes $$exec $$nargv'
 # # these last three are needed even with MPI to keep the scripts happy
 PVM_ROOT = $(PWD)
 PVM_ARCH = $(MACHINE)
@@ -280,7 +280,7 @@ OS=BSD
 ## 64-bit machines need /usr/lib64 here.
 # XLIB=/usr/lib64
 
-CC=/home/griffi/.local/bin/mpicc
+CC=mpicc
 
 ## Old (and probably broken) gcc installations may need the full
 ## path to cpp (preferably NOT one in /lib). If there isn't a 
