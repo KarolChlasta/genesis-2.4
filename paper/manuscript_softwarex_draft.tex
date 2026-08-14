@@ -135,6 +135,10 @@ Modern workstations increasingly ship capable integrated GPUs, but GENESIS has n
 
 GENESIS 2.5 closes this gap: GENESIS 2.4/PGENESIS 2.4 plus an OpenCL backend for the \texttt{hsolve} channel-update path, and a CUDA backend on the same interface (a faithful fp32 port, validated on an NVIDIA RTX~4090 and UMCS cluster NVIDIA A100/A40 nodes; Section~3). No existing CPU, MPI, model, or SLI-script workflow needs to change. While validating this backend we additionally found and fixed three independent solver defects in \texttt{hines\_solve.c}/\texttt{hines\_init.c} affecting any multi-neuron \texttt{hsolve} configuration: current injection (\texttt{inject}) silently failed to produce a voltage response prior to the fix, which would have invalidated any dynamics-comparing benchmark and may have affected unrelated multi-neuron \texttt{hsolve} models elsewhere.
 
+Why a GPU helps here at all is specific to the workload. In a Hodgkin--Huxley model the per-compartment gating-variable integration is the dominant cost, and it is embarrassingly parallel: each compartment's channel state advances from its own voltage and its own table lookups, with no coupling to any other compartment within the step. The state involved is small and the arithmetic intensity low, so the work maps onto thousands of lightweight threads without the memory pressure that limits many scientific kernels. This is why the channel-update path, rather than the tridiagonal solve, is the natural first target.
+
+We provide both OpenCL and CUDA rather than choosing one because they buy different things. OpenCL is vendor-neutral and runs on the integrated GPUs now shipped with ordinary workstations, including devices without double-precision support --- which is why the kernel is written in fp32 throughout. CUDA targets the NVIDIA datacenter and desktop cards where most cluster time is available and where the toolchain and profiling tools are standard. Both sit behind one entry point, so a model and its SLI script are unchanged between them and the choice is a build flag.
+
 We name this release ``2.5'' rather than ``3.0'' deliberately: ``GENESIS 3''~\cite{g3_dev_plans} produced independent successor lines (Neurospaces/Heccer~\cite{cornelis2011}, MOOSE) evolving into the CBI federation~\cite{cornelis2008cbi,cornelis2007dendrite,cornelis2013interop}, not a single artifact comparable to GENESIS 2.4. GENESIS 2.5 is not a re-architecture and targets existing GENESIS 2.4 deployments that should not need to migrate models or scripts to gain accelerator support.
 
 \item Software description
@@ -164,6 +168,8 @@ We name this release ``2.5'' rather than ``3.0'' deliberately: ``GENESIS 3''~\ci
         \item Five corrected $O(n^2)$ model-construction defects in core GENESIS element-creation, path-resolution, and \texttt{hsolve} SETUP code, restoring linear-time construction independent of GPU support (Section~3).
     \end{itemize}
 \end{enumerate}
+
+The tridiagonal (Hines) elimination kernel is what decides whether any of this reaches realistic morphologies. Accelerating channel updates alone leaves the axial coupling between compartments on the CPU, so a multi-compartment model gains little: the solve becomes the bottleneck as soon as the channel work is removed from it. \texttt{hines\_tree\_eliminate} moves that solve onto the device as well, running the identical elimination the CPU performs, one thread per neuron. The consequence is a change in kind rather than degree --- acceleration stops being limited to isopotential point-neuron networks and applies to populations of real dendritic trees, which is the regime Section~3 measures.
 
 \item Illustrative examples
 
