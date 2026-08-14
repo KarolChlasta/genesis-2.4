@@ -38,6 +38,12 @@ namespace {
 
 struct CudaState {
     int initialized = 0;
+    /* Per-hsolve multiloop bookkeeping. Lived in cuda_hsolve.c as file
+       statics, which silently broke any model with more than one solver:
+       the first hsolve consumed the batch and every other one returned
+       "vm[] ready" with vm[] never computed. */
+    int multiloop_total = 0;
+    int multiloop_called = 0;
     int disabled    = 0;
     int chip_on_gpu = 0;
 
@@ -442,6 +448,19 @@ void cuda_backend_sync_chip(void *sth, double *chip_out)
     f2d(st->f_chip, chip_out, st->nchips);
     st->chip_on_gpu = 0;
 }
+
+
+int  cuda_backend_multiloop_total(void *sth)
+{ CudaState *st = (CudaState *)sth; return st ? st->multiloop_total : 0; }
+
+void cuda_backend_set_multiloop_total(void *sth, int k)
+{ CudaState *st = (CudaState *)sth; if (st) st->multiloop_total = k; }
+
+int  cuda_backend_multiloop_called(void *sth)
+{ CudaState *st = (CudaState *)sth; return st ? st->multiloop_called : 0; }
+
+void cuda_backend_bump_multiloop_called(void *sth)
+{ CudaState *st = (CudaState *)sth; if (st) st->multiloop_called++; }
 
 int cuda_backend_chip_on_gpu(void *sth) { CudaState *st = (CudaState *)sth; return st ? st->chip_on_gpu : 0; }
 int cuda_backend_initialized(void *sth) { CudaState *st = (CudaState *)sth; return st ? st->initialized : 0; }

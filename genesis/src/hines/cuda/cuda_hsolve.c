@@ -29,6 +29,10 @@ extern int  cuda_backend_multiloop(void *sth, double *vm_io, double *chip_io,
                                    double *results_out, int nsteps);
 extern void cuda_backend_sync_chip(void *sth, double *chip_out);
 extern int  cuda_backend_chip_on_gpu(void *sth);
+extern int  cuda_backend_multiloop_total(void *sth);
+extern void cuda_backend_set_multiloop_total(void *sth, int k);
+extern int  cuda_backend_multiloop_called(void *sth);
+extern void cuda_backend_bump_multiloop_called(void *sth);
 extern int  cuda_backend_initialized(void *sth);
 extern void cuda_backend_cleanup(void *sth);
 
@@ -72,10 +76,11 @@ static void cuda_state_register(void *handle)
     cuda_states = n;
 }
 
-static int cuda_multiloop_total  = 0;
-static int cuda_multiloop_called = 0;
+/* Process-wide: records that the platform cannot drive the GPU at all. The
+** multiloop counters and the chip-upload flag used to live here too, which
+** silently broke every model with more than one hsolve -- see the CudaState
+** fields they moved to. */
 static int cuda_disabled         = 0;
-static int cuda_chip_uploaded    = 0;
 
 /* Same sentinel-aware walk as opencl/ocl_hsolve.c build_comp_index(), and the
    same cpu_only[] marking: compartments using opcodes the kernel does not
@@ -172,9 +177,10 @@ int cuda_init(Hsolve *hsolve)
     env = getenv("GENESIS_CUDA_MULTILOOP");
     if (!env) env = getenv("GENESIS_OCL_MULTILOOP");
     if (env) {
-        cuda_multiloop_total = atoi(env);
-        if (cuda_multiloop_total > 0)
-            printf("CUDA: multiloop mode -- %d steps per dispatch\n", cuda_multiloop_total);
+        int k = atoi(env);
+        cuda_backend_set_multiloop_total(hsolve->accel_state, k);
+        if (k > 0)
+            printf("CUDA: multiloop mode -- %d steps per dispatch\n", k);
     }
 
     /* cuda_init now runs once per hsolve, and the one-solver-per-cell idiom
@@ -198,9 +204,9 @@ int cuda_chip_update(Hsolve *hsolve)
         }
     }
 
-    if (cuda_multiloop_total > 0) {
-        if (cuda_multiloop_called > 0) {
-            cuda_multiloop_called++;
+    if (cuda_backend_multiloop_total(hsolve->accel_state) > 0) {
+        if (cuda_backend_multiloop_called(hsolve->accel_state) > 0) {
+            cuda_backend_bump_multiloop_called(hsolve->accel_state);
             return 1;   /* vm[] already final; hines.c skips the Hines solve */
         }
         /* GENESIS 2.5 GPU-solve (Karol Chlasta, 2026-07-25): real
@@ -229,7 +235,7 @@ int cuda_chip_update(Hsolve *hsolve)
                     "ocl_hsolve.c/cuda_hsolve.c comments. Falling back to CPU "
                     "for this hsolve; multiloop disabled for the rest of this run.\n",
                     hsolve->ncompts, max_ncompts);
-                cuda_multiloop_total = 0;
+                cuda_backend_set_multiloop_total(hsolve->accel_state, 0);
                 return do_chip_hh4_update(hsolve);
             }
             if (!cuda_backend_tree_ready(hsolve->accel_state)) {
@@ -243,24 +249,23 @@ int cuda_chip_update(Hsolve *hsolve)
                 }
             }
             if (cuda_backend_multiloop_tree(hsolve->accel_state, hsolve->vm, hsolve->chip,
-                                            hsolve->results, cuda_multiloop_total) == 0) {
-                cuda_multiloop_called = 1;
+                                            hsolve->results, cuda_backend_multiloop_total(hsolve->accel_state)) == 0) {
+                cuda_backend_bump_multiloop_called(hsolve->accel_state);
                 return 1;
             }
             return 0;
         }
         if (cuda_backend_multiloop(hsolve->accel_state, hsolve->vm, hsolve->chip,
-                                   hsolve->results, cuda_multiloop_total) == 0) {
-            cuda_multiloop_called = 1;
+                                   hsolve->results, cuda_backend_multiloop_total(hsolve->accel_state)) == 0) {
+            cuda_backend_bump_multiloop_called(hsolve->accel_state);
             return 1;
         }
         return 0;       /* dispatch failed -> CPU Hines solve still needed */
     }
 
     /* per-step mode: upload chip once, then vm every step */
-    if (!cuda_chip_uploaded) {
+    if (!cuda_backend_chip_on_gpu(hsolve->accel_state)) {
         cuda_backend_upload_chip(hsolve->accel_state, hsolve->chip);
-        cuda_chip_uploaded = 1;
     }
     if (cuda_backend_perstep(hsolve->accel_state, hsolve->vm, hsolve->results) != 0) {
         cuda_disabled = 1;
@@ -277,13 +282,10 @@ void cuda_sync_chip(Hsolve *hsolve)
 
 void cuda_cleanup(void)
 {
-    if (cuda_multiloop_called > 0) {
-        printf("CUDA MULTILOOP SUMMARY\n");
-        printf("  batch dispatched : 1 kernel call covering %d steps\n",
-               cuda_multiloop_total);
-        printf("  no-op steps      : %d (CPU Hines identity pass-through)\n",
-               cuda_multiloop_called - 1);
-    }
+    /* The multiloop summary used to be printed here from file-static counters.
+    ** Those are per-hsolve now, so a single process-wide line would be wrong as
+    ** soon as more than one solver runs; cuda_backend_cleanup already reports
+    ** per-state profiling. */
     while (cuda_states) {
         CudaStateNode *n = cuda_states;
         cuda_states = n->next;
