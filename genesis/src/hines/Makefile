@@ -121,7 +121,13 @@ endif
 # Untested on this laptop (no NVIDIA GPU); intended for RunPod / UMCS inf02.
 CUDA_HOME	?=	/usr/local/cuda
 NVCC		?=	$(CUDA_HOME)/bin/nvcc
-NVCCFLAGS	?=	-O2 -std=c++14
+# -Xcompiler -fPIC: nvcc does not inherit the -fPIC that genesis/src/Makefile
+# puts in CFLAGS, and does not pass it to the host compiler on its own, so
+# cuda_backend.o came out with absolute relocations while every other object
+# was position-independent. hineslib.o is a partial link (ld -r) over these,
+# so that single object made the whole library non-PIC and broke the PGENESIS
+# link, where mpicc appends -pie unconditionally on RHEL-derived systems.
+NVCCFLAGS	?=	-O2 -std=c++14 -Xcompiler -fPIC
 ifdef USE_CUDA
 CFLAGS		+=	-DUSE_CUDA
 CUDA_OBJS	=	cuda/cuda_hsolve.o cuda/cuda_backend.o

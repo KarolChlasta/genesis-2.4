@@ -14,7 +14,15 @@
 # package.  It has been heavily modified to adapt it for GENESIS.
 
 LIBS 		=  	-lm
-CFLAGS		= 	$(RNG_CFLAGS)
+# RNG_CFLAGS is not defined anywhere in the GENESIS tree, so CFLAGS used to
+# expand to nothing and SPRNG was the one subdirectory compiled without the
+# flags genesis/src/Makefile passes everybody else in CFLAGS_IN. That silently
+# dropped -fPIC, which PGENESIS needs: mpicc on RHEL-derived systems appends
+# -pie unconditionally, so a non-PIC liblfg.a fails the final link with
+# "relocation R_X86_64_32 against `.rodata' can not be used when making a PIE
+# object". Honour CFLAGS_IN like every other subdirectory; RNG_CFLAGS is kept
+# as an explicit per-build override and appended last so it still wins.
+CFLAGS		= 	$(CFLAGS_IN) $(RNG_CFLAGS)
 INSTALL_LIB 	= 	$(INSTALLDIR)/lib
 INSTALL_INCLUDE	= 	$(INSTALLDIR)/include
 INSTALL_STARTUP	= 	$(INSTALLDIR)/startup

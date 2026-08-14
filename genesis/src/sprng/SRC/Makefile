@@ -35,8 +35,13 @@ TIMESPRNG_LIB = dummy1
 CHECKSPRNG_LIB = dummy2
 
 CLD = $(CC)
-CLDFLAGS = $(RNG_CFLAGS)
-CFLAGS = $(RNG_CFLAGS)
+# Same fix as ../Makefile: RNG_CFLAGS is defined nowhere in the tree, so both
+# of these expanded to nothing and every object here compiled with no flags at
+# all -- including no -fPIC, which the PGENESIS link requires. The parent
+# passes its own CFLAGS down as CFLAGS_IN (see ../Makefile's `source:` rule),
+# so honour that first and let an explicit RNG_CFLAGS override win last.
+CLDFLAGS = $(CFLAGS_IN) $(RNG_CFLAGS)
+CFLAGS = $(CFLAGS_IN) $(RNG_CFLAGS)
 
 #---------------------------------------------------------------------------
 # Jump point to each generator's own makefile
@@ -202,6 +207,16 @@ check_genf_ptr.o : check_genf_ptr.$(FSUFFIX) sprng_f.h
 #---------------------------------------------------------------------------
 clean :
 	rm -f *.o *.i
+# `rm -f *.o` above only reaches this directory. Each generator also has its
+# own subdirectory (lfg/ etc.) whose objects were never removed, so a
+# `make clean` followed by a rebuild relinked the archive from a mix of fresh
+# and stale objects. That is how a non-PIC liblfg.a survived a clean rebuild
+# after -fPIC was added: everything compiled here picked the flag up, while
+# lfg/lfg.o stayed behind from the previous build and kept its absolute
+# relocations, which then broke the PGENESIS link.
+	@for l in lcg lfg lcg64 cmrg mlfg ; do \
+	    rm -f $$l/*.o $$l/*.i ; \
+	done
 	@for l in lcg lfg lcg64 cmrg mlfg ; do \
 	    rm -f $(CHKDIR)/time$$l \
 		  $(CHKDIR)/timef$$l \
