@@ -132,6 +132,37 @@ static void build_comp_index(Hsolve *hsolve,
     *out_cpu_only  = cpu_only;
 }
 
+
+/* A compartment that is simultaneously a leaf and has siblings -- i.e. a branch
+   exactly one compartment long hanging off a branch point -- is not handled by
+   the tree-elimination kernel. GPU_HINES_SOLVE_DESIGN.md isolates the fault to
+   the leading-FORWARD_ELIM bootstrap's seed-row assumption, which does not hold
+   when row 0/1 is itself a leaf-with-siblings; the failure was only ever
+   observed in the first tree, and trees beyond it pass with the identical
+   shape.
+   
+   We refuse it in every tree regardless. Deciding which rows belong to the
+   first tree is one more thing the guard could get subtly wrong, and the shape
+   does not occur in real dendrite models -- a branch that extends no further is
+   an odd way of modelling the soma -- so declining it everywhere costs nothing
+   in practice and cannot be got wrong.
+   
+   Until this commit the case was documented but not enforced: the kernels
+   carried a comment about it and do_pertree_validate detected it, but only
+   under the opt-in GENESIS_VALIDATE_PERTREE comparison. An ordinary run
+   dispatched such a model and produced silently wrong voltages. */
+static int ocl_has_degenerate_branch(Hsolve *hsolve)
+{
+    int i, p;
+    if (!hsolve->parents || !hsolve->nkids) return 0;
+    for (i = 0; i < hsolve->ncompts; i++) {
+        p = hsolve->parents[i];
+        if (hsolve->nkids[i] == 0 && p >= 0 && hsolve->nkids[p] > 1)
+            return 1;
+    }
+    return 0;
+}
+
 /*
  * ocl_init — inicjalizacja OpenCL, wywolywana raz przy pierwszym kroku
  *
@@ -276,6 +307,15 @@ int ocl_init(Hsolve *hsolve)
         fprintf(stderr, "OCL: hsolve nie zainicjalizowany (n=%d nc=%d no=%d)\n",
                 n, nc, no);
         free(st); return -1;
+    }
+
+    if (ocl_has_degenerate_branch(hsolve)) {
+        fprintf(stderr,
+            "OCL: this hsolve contains a single-compartment branch off a "
+            "branch point, which the tree-elimination kernel does not handle; "
+            "acceleration disabled for this hsolve, computing on CPU.\n");
+        free(st);
+        return -1;
     }
 
     /* Indeksy budujemy PRZED alokacja buforow, bo cpu_only[] decyduje o tym,
