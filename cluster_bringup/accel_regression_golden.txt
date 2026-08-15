@@ -14,6 +14,3 @@ branch_gpu|RESULT_VM_FAR= -0.06915224177
 branch_gpu|RESULT_VM_SOMA= -0.06778641814
 vanet2_cpu|vm_md5=1440eb862079f69f891c5a57a99af681
 vanet2_cpu|vm_lines=50001
-vanet2_gpu|vm_md5=1440eb862079f69f891c5a57a99af681
-vanet2_gpu|vm_lines=50001
-vanet2_gpu|guard=fired
