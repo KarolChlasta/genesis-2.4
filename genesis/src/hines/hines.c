@@ -120,8 +120,26 @@ static char rcsid[] = "$Id: hines.c,v 1.4 2006/01/10 08:59:01 svitak Exp $";
 
 int DEBUG_HinesSolver=0;
 
+/* GENESIS_VALIDATE_PERTREE is read once, not on every step.
+**
+** The per-tree validation hooks below were querying it with getenv() at each
+** call site, inside PROCESS -- so once per hsolve per step. A spiking network
+** gives each cell its own solver, and the bundled Vogels-Abbott model at 4,000
+** cells over 100,000 steps therefore made hundreds of millions of getenv()
+** calls, each a linear scan of the environment. perf put that at 14.5% of the
+** step phase, plus the strncmp it does internally.
+**
+** The variable cannot change during a run, so one lookup is enough. */
+static int h_validate_pertree(void)
+{
+    static int cached = -1;
+    if (cached < 0) cached = getenv("GENESIS_VALIDATE_PERTREE") ? 1 : 0;
+    return cached;
+}
+
 int HinesSolver(hsolve,action)
 Hsolve	*hsolve;
+
 Action	*action;
 {
 	int	i,n;
@@ -173,13 +191,13 @@ Action	*action;
 			    if (hsolve->nconcchips) 
 					do_h2_conc_chip_update(hsolve);
 			    if (hsolve->ndiffs) do_h_conc_solve(hsolve);
-			    if (getenv("GENESIS_VALIDATE_PERTREE")) do_pertree_snapshot(hsolve);
+			    if (h_validate_pertree()) do_pertree_snapshot(hsolve);
 			    if (BaseObject(hsolve)->method == CRANK_INT) {
 				do_crank_hsolve(hsolve);
 			    } else {
 				do_euler_hsolve(hsolve);
 			    }
-			    if (getenv("GENESIS_VALIDATE_PERTREE")) do_pertree_validate(hsolve);
+			    if (h_validate_pertree()) do_pertree_validate(hsolve);
 			    do_vm_update(hsolve);
 			    break;
 			case 3:
@@ -192,13 +210,13 @@ Action	*action;
 			    if (hsolve->nconcchips) 
 					do_h2_conc_chip_update(hsolve);
 			    if (hsolve->ndiffs) do_h_conc_solve(hsolve);
-			    if (getenv("GENESIS_VALIDATE_PERTREE")) do_pertree_snapshot(hsolve);
+			    if (h_validate_pertree()) do_pertree_snapshot(hsolve);
 			    if (BaseObject(hsolve)->method == CRANK_INT) {
 				do_crank_hsolve(hsolve);
 			    } else {
 				do_euler_hsolve(hsolve);
 			    }
-			    if (getenv("GENESIS_VALIDATE_PERTREE")) do_pertree_validate(hsolve);
+			    if (h_validate_pertree()) do_pertree_validate(hsolve);
 			    if (hsolve->outinfo) h_out_msgs(hsolve);
 			    break;
 			case 4:
@@ -220,7 +238,7 @@ Action	*action;
 				do_h4_conc_chip_update(hsolve);
 			    if (hsolve->ndiffs) do_h_conc_solve(hsolve);
 			    if (!ocl_vm_ready) {
-				if (getenv("GENESIS_VALIDATE_PERTREE")) do_pertree_snapshot(hsolve);
+				if (h_validate_pertree()) do_pertree_snapshot(hsolve);
 				if (BaseObject(hsolve)->method == CRANK_INT)
 				    do_crank_hsolve(hsolve);
 				else
@@ -229,7 +247,7 @@ Action	*action;
 				** actually ran this step -- multiloop mode's vm[] is
 				** GPU-multiloop-computed, not from this function, and
 				** would just show the already-known-broken divergence. */
-				if (getenv("GENESIS_VALIDATE_PERTREE")) do_pertree_validate(hsolve);
+				if (h_validate_pertree()) do_pertree_validate(hsolve);
 			    }
 			    }
 #else
@@ -241,12 +259,12 @@ Action	*action;
 			    if (hsolve->nconcchips)
 				do_h4_conc_chip_update(hsolve);
 			    if (hsolve->ndiffs) do_h_conc_solve(hsolve);
-			    if (getenv("GENESIS_VALIDATE_PERTREE")) do_pertree_snapshot(hsolve);
+			    if (h_validate_pertree()) do_pertree_snapshot(hsolve);
 			    if (BaseObject(hsolve)->method == CRANK_INT)
 				do_crank_hsolve(hsolve);
 			    else
 				do_euler_hsolve(hsolve);
-			    if (getenv("GENESIS_VALIDATE_PERTREE")) do_pertree_validate(hsolve);
+			    if (h_validate_pertree()) do_pertree_validate(hsolve);
 #endif
 			    if (hsolve->outinfo) h_out_msgs(hsolve);
 			    break;
