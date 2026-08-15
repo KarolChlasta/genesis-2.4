@@ -29,6 +29,8 @@ extern int  cuda_backend_multiloop(void *sth, double *vm_io, double *chip_io,
                                    double *results_out, int nsteps);
 extern void cuda_backend_sync_chip(void *sth, double *chip_out);
 extern int  cuda_backend_chip_on_gpu(void *sth);
+extern double cuda_backend_last_batch_time(void *sth);
+extern void cuda_backend_set_last_batch_time(void *sth, double t);
 extern int  cuda_backend_multiloop_total(void *sth);
 extern void cuda_backend_set_multiloop_total(void *sth, int k);
 extern int  cuda_backend_multiloop_called(void *sth);
@@ -60,20 +62,64 @@ extern int do_chip_hh4_update(Hsolve *hsolve);
 ** list here is what lets the exit path release them all. Registration is O(1)
 ** and the list is walked exactly once, at process exit. */
 typedef struct cuda_state_node {
-    void *handle;
+    void   *handle;
+    Hsolve *hsolve;              /* owner, so the barrier can dispatch for it */
     struct cuda_state_node *next;
 } CudaStateNode;
 
 static CudaStateNode *cuda_states = NULL;
 static int cuda_atexit_registered = 0;
 
-static void cuda_state_register(void *handle)
+static void cuda_state_register(Hsolve *hsolve, void *handle)
 {
     CudaStateNode *n = (CudaStateNode *)malloc(sizeof(CudaStateNode));
     if (!n) return;              /* losing a handle leaks; it must not crash */
     n->handle = handle;
+    n->hsolve = hsolve;
     n->next   = cuda_states;
     cuda_states = n;
+}
+
+/* One dispatch per simulation step covering every registered solver, rather
+** than one per solver. The scheduler calls the accelerator once per hsolve per
+** step, so the first call of a step does the work for all of them; later calls
+** in the same step find their stamp already set and return.
+**
+** This reorders channel computation relative to h_in_msgs(), which the
+** scheduler runs per solver immediately before each update, so solver B's
+** channels are computed before B's own h_in_msgs() has run this step. Sound
+** only when no solver's input depends on another solver's output within the
+** step -- i.e. no spike-mediated coupling. hsolve->spikegen is the marker.
+** ininfo is NOT the right test: INJECT creates an ininfo entry too
+** (hines_msgs.c), so keying on it would disable batching for inject-driven
+** models, which are exactly the ones this is meant to speed up. */
+static int cuda_batch_checked = 0;
+static int cuda_batch_ok      = 0;
+
+static int cuda_batch_allowed(void)
+{
+    CudaStateNode *n;
+    if (cuda_batch_checked) return cuda_batch_ok;
+    cuda_batch_checked = 1;
+    cuda_batch_ok = 1;
+    for (n = cuda_states; n; n = n->next) {
+        if (n->hsolve && n->hsolve->spikegen) {
+            fprintf(stderr, "CUDA: spikegen present; cross-hsolve batching "
+                            "disabled (message ordering would change).\n");
+            cuda_batch_ok = 0;
+            break;
+        }
+    }
+    return cuda_batch_ok;
+}
+
+/* The work for one solver, factored out so the barrier can run it on behalf of
+** solvers whose own turn has not come yet this step. */
+static int cuda_perstep_one(Hsolve *hsolve)
+{
+    if (!cuda_backend_chip_on_gpu(hsolve->accel_state))
+        cuda_backend_upload_chip(hsolve->accel_state, hsolve->chip);
+    return cuda_backend_perstep(hsolve->accel_state, hsolve->vm, hsolve->results);
 }
 
 /* Process-wide: records that the platform cannot drive the GPU at all. The
@@ -209,7 +255,8 @@ int cuda_init(Hsolve *hsolve)
         free(opstart); free(chipstart);
         return -1;
     }
-    cuda_state_register(hsolve->accel_state);
+    cuda_state_register(hsolve, hsolve->accel_state);
+    cuda_batch_checked = 0;   /* a solver joined; re-evaluate */
     free(opstart); free(chipstart);
 
     /* Same env var as the OpenCL path so benchmarks/scripts are unchanged;
@@ -303,13 +350,33 @@ int cuda_chip_update(Hsolve *hsolve)
         return 0;       /* dispatch failed -> CPU Hines solve still needed */
     }
 
-    /* per-step mode: upload chip once, then vm every step */
-    if (!cuda_backend_chip_on_gpu(hsolve->accel_state)) {
-        cuda_backend_upload_chip(hsolve->accel_state, hsolve->chip);
+    /* per-step mode, one dispatch per step across all solvers */
+    {
+    double t = SimulationTime();
+    CudaStateNode *n;
+
+    if (cuda_batch_allowed()) {
+        for (n = cuda_states; n; n = n->next) {
+            if (!n->hsolve || !n->hsolve->accel_state) continue;
+            if (cuda_backend_last_batch_time(n->handle) == t) continue;
+            if (cuda_perstep_one(n->hsolve) != 0) {
+                cuda_disabled = 1;
+                return do_chip_hh4_update(hsolve);
+            }
+            cuda_backend_set_last_batch_time(n->handle, t);
+        }
     }
-    if (cuda_backend_perstep(hsolve->accel_state, hsolve->vm, hsolve->results) != 0) {
-        cuda_disabled = 1;
-        return do_chip_hh4_update(hsolve);
+
+    /* Covers this solver whether or not the batch ran: if it registered after
+    ** the batch for this step, its stamp is still unset and it is computed here
+    ** rather than returning without having been updated. */
+    if (cuda_backend_last_batch_time(hsolve->accel_state) != t) {
+        if (cuda_perstep_one(hsolve) != 0) {
+            cuda_disabled = 1;
+            return do_chip_hh4_update(hsolve);
+        }
+        cuda_backend_set_last_batch_time(hsolve->accel_state, t);
+    }
     }
     return 0;
 }

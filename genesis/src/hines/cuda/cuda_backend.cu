@@ -42,6 +42,19 @@ struct CudaState {
        statics, which silently broke any model with more than one solver:
        the first hsolve consumed the batch and every other one returned
        "vm[] ready" with vm[] never computed. */
+    /* Simulation time this solver's channel update was last computed for, so
+       the batch barrier can tell "already done this step" from "not yet". Kept
+       here, in the state the solver already holds a pointer to, so the check is
+       O(1); a registry lookup would be O(N) per call and O(N^2) per step.
+
+       NOTE the explicit assignment in cuda_backend_init: the state is calloc'd,
+       and calloc does not run C++ default member initialisers. Every other
+       field here defaults to 0 or nullptr, which zeroed memory happens to
+       match, so this is the first field where it matters -- a stamp of 0.0
+       equals the simulation time of the first step, which made the barrier skip
+       the very first channel update and diverge from there. Any future field
+       with a non-zero default needs the same treatment. */
+    double last_batch_time = -1.0;
     int multiloop_total = 0;
     int multiloop_called = 0;
     int disabled    = 0;
@@ -137,6 +150,7 @@ void *cuda_backend_init(int ncompts, int nchips, int nops, int ncols, int xdivs,
 {
     CudaState *st = (CudaState *)calloc(1, sizeof(CudaState));
     if (!st) return NULL;
+    st->last_batch_time = -1.0;   /* calloc does not run the C++ initialiser */
     int dev_count = 0;
     CUDA_CHECK_P(cudaGetDeviceCount(&dev_count), "cudaGetDeviceCount");
     if (dev_count < 1) {
@@ -449,6 +463,13 @@ void cuda_backend_sync_chip(void *sth, double *chip_out)
     st->chip_on_gpu = 0;
 }
 
+
+
+double cuda_backend_last_batch_time(void *sth)
+{ CudaState *st = (CudaState *)sth; return st ? st->last_batch_time : -1.0; }
+
+void cuda_backend_set_last_batch_time(void *sth, double t)
+{ CudaState *st = (CudaState *)sth; if (st) st->last_batch_time = t; }
 
 int  cuda_backend_multiloop_total(void *sth)
 { CudaState *st = (CudaState *)sth; return st ? st->multiloop_total : 0; }
