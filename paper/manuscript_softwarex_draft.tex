@@ -81,7 +81,7 @@
 \cortext[cor1]{Corresponding author.}
 
 \begin{abstract}
-GENESIS is a long-established compartmental neural simulator. PGENESIS extends it to MPI execution. We release GENESIS 2.5, an accelerator-enabled extension of GENESIS 2.4/PGENESIS 2.4, adding opt-in OpenCL and CUDA backends for the Hodgkin--Huxley channel-update path while keeping every existing CPU, MPI, model, and SLI-script workflow intact. A batched multi-step GPU kernel reaches up to $\sim$18$\times$ wall-clock speedup on an integrated AMD Radeon~890M and 7--174$\times$ on an NVIDIA RTX~4090, matching the fp64 CPU to $\sim10^{-7}$\,V. This multiloop kernel is exact only for single-compartment (isopotential) neurons. We additionally implement and validate \texttt{hines\_tree\_eliminate}, a GPU tridiagonal (Hines) elimination kernel extending acceleration to real, axially-coupled multi-compartment dendritic trees. One GPU thread per neuron runs the identical elimination the CPU solver does. Measured on UMCS cluster NVIDIA A40/A100 GPUs (10 replicates), it reaches $37.3\times$ (A40) and $82.1\times$ (A100) step-phase speedup at $N=50\,000$ neurons $\times$ 16 compartments, still rising with $N$. This kernel accelerates population-scale simulation, parallelizing across neurons rather than within a single tree. Pushing this population toward the Blue Brain Project's $\sim$31\,000-neuron microcircuit scale~\cite{markram2015reconstruction} surfaced a latent, GPU-independent $O(n^2)$ model-construction bottleneck. Fixing it restores linear scaling: a 1.7-million-compartment, $N=100\,000$ population now builds in $51.5\pm0.6$\,s, down from not finishing at all, a correctness-preserving fix benefiting any GENESIS/PGENESIS user, independent of accelerator use. We also fix three independent, previously unnoticed Hines-solver defects that silently suppressed \texttt{inject}-driven voltage transients in any multi-neuron \texttt{hsolve} configuration.
+GENESIS is a long-established compartmental neural simulator. PGENESIS extends it to MPI execution. We release GENESIS 2.5, an accelerator-enabled extension of GENESIS 2.4/PGENESIS 2.4, adding opt-in OpenCL and CUDA backends for the Hodgkin--Huxley channel-update path while keeping every existing CPU, MPI, model, and SLI-script workflow intact. A batched multi-step GPU kernel reaches $21.0\pm0.3\times$ (NVIDIA A40) and $21.9\pm0.3\times$ (NVIDIA A100) end-to-end wall-clock speedup at $N=50\,000$ single-compartment neurons, matching the fp64 CPU to $\sim10^{-7}$\,V. Speedups are reported end-to-end throughout: both arms are timed identically, so construction, host--device transfers and per-step host work are inside every figure quoted here. This multiloop kernel is exact only for single-compartment (isopotential) neurons. We additionally implement and validate \texttt{hines\_tree\_eliminate}, a GPU tridiagonal (Hines) elimination kernel extending acceleration to real, axially-coupled multi-compartment dendritic trees. One GPU thread per neuron runs the identical elimination the CPU solver does. Measured on UMCS cluster NVIDIA A40/A100 GPUs (10 replicates), it reaches $37.3\times$ (A40) and $82.1\times$ (A100) step-phase speedup at $N=50\,000$ neurons $\times$ 16 compartments, still rising with $N$. This kernel accelerates population-scale simulation, parallelizing across neurons rather than within a single tree. Pushing this population toward the Blue Brain Project's $\sim$31\,000-neuron microcircuit scale~\cite{markram2015reconstruction} surfaced a latent, GPU-independent $O(n^2)$ model-construction bottleneck. Fixing it restores linear scaling: a 1.7-million-compartment, $N=100\,000$ population now builds in $51.5\pm0.6$\,s, down from not finishing at all, a correctness-preserving fix benefiting any GENESIS/PGENESIS user, independent of accelerator use. We also fix three independent, previously unnoticed Hines-solver defects that silently suppressed \texttt{inject}-driven voltage transients in any multi-neuron \texttt{hsolve} configuration.
 \end{abstract}
 
 \begin{keyword}
@@ -221,24 +221,28 @@ Table~\ref{tab:multiloop_fp32} and Fig.~\ref{fig:multiloop_speedup} report the r
 \label{fig:divergence}
 \end{figure}
 
-\textbf{CUDA backend on NVIDIA hardware.} The CUDA backend builds from the same source (\texttt{make USE\_CUDA=1}) against the identical harness. On an NVIDIA RTX~4090 (Ada, CUDA~12.8, fp32) the multiloop kernel reproduces the fp64 CPU action potential to $7\times10^{-8}$\,V, confirming parity with both CPU and OpenCL paths. A 10-replicate sweep on all three devices (Table~\ref{tab:cuda}) rises with network size rather than peaking like the integrated GPU; A40 unexpectedly outperforms both A100 and RTX~4090 at every $N$ ($212.7\times$ vs.\ $178.4\times$ and $174.2\times$ at $N=50\,000$), opposite the tree-elimination kernel's ordering (Table~\ref{tab:multicomp}), plausibly since this dispatch is lightweight and latency-bound.
+\textbf{CUDA backend on NVIDIA hardware.} The CUDA backend builds from the same source (\texttt{make USE\_CUDA=1}) against the identical harness, and reproduces the fp64 CPU action potential to $7\times10^{-8}$\,V, confirming parity with both the CPU and OpenCL paths. Table~\ref{tab:cuda} reports a 10-replicate sweep on the two UMCS cluster GPUs.
+
+These are \emph{end-to-end} speedups: both arms are timed by wall clock around the whole process, so construction, host--device transfers and all per-step host work are inside the measurement. This matters more than it may appear. An earlier version of this campaign took the CPU number from GENESIS's own \texttt{\{cpu\}} step-loop timer and the GPU number from the device-side \texttt{CUDA MULTILOOP} kernel report --- two different quantities, with everything outside the kernel excluded from the GPU side. That comparison gave $212.7\times$ on the A40 at $N=50\,000$ where the end-to-end figure is $21.0\times$, a factor of ten. It also manufactured an apparent ordering between the cards: under the mixed definition the A40 appeared to beat the A100 at every $N$, which invited a hardware explanation. Measured consistently the two are indistinguishable ($21.0\pm0.3\times$ vs.\ $21.9\pm0.3\times$), and the earlier gap was an artefact of what was being timed.
+
+The speedup grows with network size rather than peaking as the integrated GPU does (Table~\ref{tab:multiloop_fp32}), and at $N=500$ the accelerator barely pays for itself: at that size the fixed costs of construction and transfer dominate a run that the CPU finishes in under a second.
 
 \begin{table}[!h]
 \centering
 \small
-\begin{tabular}{|r|r|r|r|}
+\begin{tabular}{|r|r|r|r|r|}
 \hline
-\textbf{$N$} & \textbf{RTX~4090 speedup} & \textbf{A40 speedup} & \textbf{A100 speedup} \\
-             & \textbf{(mean $\pm$ std, 10 reps)} & \textbf{(mean $\pm$ std, 10 reps)} & \textbf{(mean $\pm$ std, 10 reps)} \\
+\textbf{$N$} & \multicolumn{2}{c|}{\textbf{NVIDIA A40}} & \multicolumn{2}{c|}{\textbf{NVIDIA A100}} \\
+             & \textbf{CPU (s)} & \textbf{end-to-end} & \textbf{CPU (s)} & \textbf{end-to-end} \\
 \hline
-500     &  7.4 $\pm$ 0.17$\times$ & 7.6 $\pm$ 0.02$\times$ & 5.9 $\pm$ 1.5$\times$ \\
+500     & 0.76 & 1.5 $\pm$ 0.1$\times$  & 0.78 & 1.8 $\pm$ 0.3$\times$ \\
 \hline
-5\,000  &  70.3 $\pm$ 0.06$\times$  & 75.1 $\pm$ 0.1$\times$ & 34.3 $\pm$ 0.4$\times$ \\
+5\,000  & 5.70 & 8.7 $\pm$ 0.3$\times$  & 5.86 & 9.7 $\pm$ 0.4$\times$ \\
 \hline
-50\,000 & 174.2 $\pm$ 1.6$\times$  & \textbf{212.7 $\pm$ 0.6}$\times$ & 178.4 $\pm$ 14.4$\times$ \\
+50\,000 & 57.06 & \textbf{21.0 $\pm$ 0.3}$\times$ & 58.47 & \textbf{21.9 $\pm$ 0.3}$\times$ \\
 \hline
 \end{tabular}
-\caption{CUDA backend (fp32) vs.\ CPU (fp64) single-compartment multiloop kernel (\texttt{hh\_spiking\_benchmark.g}, $K=50\,000$ steps), mean $\pm$ std, 10 replicates. RTX~4090: WarsawIQ. A40/A100: UMCS cluster. GPU arm timed via the device-side \texttt{CUDA MULTILOOP} report, not the script's \texttt{\{cpu\}} timer ($\approx0$ for this arm). \textbf{A40 outperforms both A100 and RTX~4090 at every $N$} here, opposite the multi-compartment kernel (Table~\ref{tab:multicomp}). Raw data: \protect\path{cluster_bringup/logs/cuda_singlecomp_campaign_wiq_RTX4090_20260727_210047.csv} (RTX~4090), \protect\path{..._inf02_A40_20260727_024553.csv} (A40), \protect\path{..._inf03_A100_20260727_024613.csv} (A100).}
+\caption{CUDA backend (fp32) vs.\ CPU (fp64), single-compartment multiloop kernel (\texttt{hh\_spiking\_benchmark.g}, $K=50\,000$ steps), UMCS cluster. Mean of 10 replicates; the quoted uncertainty propagates the standard deviations of both arms. \textbf{Both arms are timed identically}, by wall clock around the whole process, so the ratio is end-to-end and includes construction, transfers and per-step host work --- see \protect\path{cluster_bringup/53_singlecomp_walltime.sh}. The two cards are indistinguishable at every size. Raw data: \protect\path{cluster_bringup/logs/singlecomp_walltime_inf02_20260815_132840.csv} (A40), \protect\path{..._inf03_20260815_135147.csv} (A100).}
 \label{tab:cuda}
 \end{table}
 
