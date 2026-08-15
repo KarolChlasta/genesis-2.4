@@ -31,6 +31,7 @@
 #define IPOL1V_OP    4001
 #define FINISH_OP    7
 #define SPIKE_OP     200
+#define SYN2_OP      4100
 
 /* ------------------------------------------------------------------ */
 /* One channel-update step for compartment gid. Returns the new voltage;
@@ -46,6 +47,7 @@ cuda_channel_step(int gid,
                   const int   *ops,
                   const int   *comp_opstart,
                   const int   *comp_chipstart,
+                  const float *stablist,       /* synaptic constants, 6 per table */
                   int         *spike_refrac,   /* [ncompts], mutable; NULL if unused */
                   int         *spike_flag,     /* [ncompts], set to 1 on a spike */
                   const int   ncols,
@@ -113,6 +115,32 @@ cuda_channel_step(int gid,
             }
             op_i += 2;
             continue;
+        } else if (op == SYN2_OP) {
+            /* Synaptic channel. The parts that need the GENESIS element system
+               -- the event countdown and h_dosynchan(), which calls into the
+               synchan child to fetch its activation -- are done on the host
+               before this dispatch; by the time the kernel runs, chip[] already
+               carries the injected activation. What is left is arithmetic:
+               decay the X state, then the dual-exponential update that yields
+               the conductance. Mirrors hines_chip.c's SYN2_OP block.
+
+               Three operands (table index, countdown, child index) and two chip
+               slots (X and Y state) -- the same accounting build_comp_index
+               uses, and the reason a mismatch here would silently desynchronise
+               the whole stream. */
+            int   ktab = ops[op_i];
+            float X;
+            /* The X decay and the activation injection both happen on the host,
+               in that order, before this dispatch -- hines_chip.c decays first
+               and only then lets h_dosynchan() add to chip[], so doing the
+               decay here would also decay whatever arrived this step. */
+            X = chip[chip_i];
+            chip_i++;
+            chip[chip_i] = X * stablist[ktab + 1] + chip[chip_i] * stablist[ktab + 2];
+            Gk *= chip[chip_i];
+            chip_i++;
+            op_i += 3;
+            continue;
         } else if (op == IPOL1V_OP) {
             int col  = ops[op_i++];
             int base = filo * ncols + col;
@@ -161,6 +189,7 @@ cuda_chip_channel_update(const float *vm,
                          const int   *ops,
                          const int   *comp_opstart,
                          const int   *comp_chipstart,
+                         const float *stablist,     /* synaptic constants, 6 per table */
                          int         *spike_refrac,  /* [ncompts], mutable; NULL if unused */
                          int         *spike_flag,    /* [ncompts], set to 1 on a spike */
                          const int   ncompts,
@@ -226,6 +255,32 @@ cuda_chip_channel_update(const float *vm,
             }
             op_i += 2;
             continue;
+        } else if (op == SYN2_OP) {
+            /* Synaptic channel. The parts that need the GENESIS element system
+               -- the event countdown and h_dosynchan(), which calls into the
+               synchan child to fetch its activation -- are done on the host
+               before this dispatch; by the time the kernel runs, chip[] already
+               carries the injected activation. What is left is arithmetic:
+               decay the X state, then the dual-exponential update that yields
+               the conductance. Mirrors hines_chip.c's SYN2_OP block.
+
+               Three operands (table index, countdown, child index) and two chip
+               slots (X and Y state) -- the same accounting build_comp_index
+               uses, and the reason a mismatch here would silently desynchronise
+               the whole stream. */
+            int   ktab = ops[op_i];
+            float X;
+            /* The X decay and the activation injection both happen on the host,
+               in that order, before this dispatch -- hines_chip.c decays first
+               and only then lets h_dosynchan() add to chip[], so doing the
+               decay here would also decay whatever arrived this step. */
+            X = chip[chip_i];
+            chip_i++;
+            chip[chip_i] = X * stablist[ktab + 1] + chip[chip_i] * stablist[ktab + 2];
+            Gk *= chip[chip_i];
+            chip_i++;
+            op_i += 3;
+            continue;
         } else if (op == IPOL1V_OP) {
             int col  = ops[op_i++];
             int base = filo * ncols + col;
@@ -275,6 +330,7 @@ cuda_chip_channel_multiloop(float       *vm,
                             float       *results,
                             const float *tablist,
                             const float *xvals,
+                            const float *stablist,
                             const int   *ops,
                             const int   *comp_opstart,
                             const int   *comp_chipstart,
@@ -292,6 +348,7 @@ cuda_chip_channel_multiloop(float       *vm,
         float Vm_new = cuda_channel_step(gid, vm[gid], chip,
                                          tablist, xvals, ops,
                                          comp_opstart, comp_chipstart,
+                                         stablist,
                                          (int *)0, (int *)0,
                                          ncols, xdivs, xmin, invdx);
         vm[gid] = Vm_new;

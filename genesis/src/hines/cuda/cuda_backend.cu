@@ -66,6 +66,10 @@ struct CudaState {
     /* device buffers (fp32 mirrors of hsolve's double arrays) */
     float *d_vm = nullptr, *d_chip = nullptr, *d_results = nullptr;
     float *d_tablist = nullptr, *d_xvals = nullptr;
+    /* Synaptic constants (6 per synchan table). The CUDA backend never needed
+       these until SYN2_OP became supported; OpenCL has carried them all along. */
+    float *d_stablist = nullptr;
+    int    sntab = 0;
     int   *d_ops = nullptr, *d_opstart = nullptr, *d_chipstart = nullptr;
     /* SPIKE_OP support: the refractory counter must be writable (ops[] is not)
        and the kernel reports spikes back for the host to emit. */
@@ -125,6 +129,7 @@ static void cuda_state_destroy(CudaState *st)
     cudaFree(st->d_tablist); cudaFree(st->d_xvals);
     cudaFree(st->d_ops); cudaFree(st->d_opstart); cudaFree(st->d_chipstart);
     cudaFree(st->d_spike_refrac); cudaFree(st->d_spike_flag);
+    cudaFree(st->d_stablist);
     free(st->h_spike_flag);
     cudaFree(st->d_funcs); cudaFree(st->d_ravals);
     cudaFree(st->d_fwd_seg_start); cudaFree(st->d_fwd_seg_end);
@@ -155,7 +160,8 @@ void *cuda_backend_init(int ncompts, int nchips, int nops, int ncols, int xdivs,
                       const double *tablist, int ntab,
                       const double *xvals, int nx,
                       const int *opstart, const int *chipstart,
-                      const int *spike_refrac0, int nspike)
+                      const int *spike_refrac0, int nspike,
+                      const double *stablist, int sntab)
 {
     CudaState *st = (CudaState *)calloc(1, sizeof(CudaState));
     if (!st) return NULL;
@@ -186,6 +192,19 @@ void *cuda_backend_init(int ncompts, int nchips, int nops, int ncols, int xdivs,
                                 ncompts * sizeof(int), cudaMemcpyHostToDevice), "upload refrac");
         st->h_spike_flag = (int *)calloc(ncompts, sizeof(int));
         if (!st->h_spike_flag) { cuda_state_destroy(st); return NULL; }
+    }
+    st->sntab = sntab;
+    if (sntab > 0 && stablist) {
+        int ns = sntab * 6;
+        float *tmp = (float *)malloc(ns * sizeof(float));
+        if (!tmp) { cuda_state_destroy(st); return NULL; }
+        d2f(stablist, tmp, ns);
+        if (cudaMalloc(&st->d_stablist, ns * sizeof(float)) != cudaSuccess ||
+            cudaMemcpy(st->d_stablist, tmp, ns * sizeof(float),
+                       cudaMemcpyHostToDevice) != cudaSuccess) {
+            free(tmp); cuda_state_destroy(st); return NULL;
+        }
+        free(tmp);
     }
     CUDA_CHECK_P(cudaMalloc(&st->d_vm,        ncompts * sizeof(float)),   "malloc vm");
     CUDA_CHECK_P(cudaMalloc(&st->d_chip,      nchips  * sizeof(float)),   "malloc chip");
@@ -260,7 +279,7 @@ int cuda_backend_perstep(void *sth, const double *vm, double *results_out)
     cuda_chip_channel_update<<<grid, block>>>(
         st->d_vm, st->d_chip, st->d_results, st->d_tablist, st->d_xvals,
         st->d_ops, st->d_opstart, st->d_chipstart,
-        st->d_spike_refrac, st->d_spike_flag,
+        st->d_stablist, st->d_spike_refrac, st->d_spike_flag,
         n, st->ncols, st->xdivs, st->xmin, st->invdx);
     cudaEventRecord(st->ev_stop);
 
@@ -297,6 +316,12 @@ int cuda_backend_perstep(void *sth, const double *vm, double *results_out)
 }
 
 /* Upload chip[] to device (called once, before the first per-step kernel). */
+/* Once synaptic channels are in play the host updates chip[] every step (the
+   synchan callbacks inject activation there), so the one-shot upload is not
+   enough. cuda_perstep_one asks for this explicitly. */
+int cuda_backend_needs_chip_every_step(void *sth)
+{ CudaState *st = (CudaState *)sth; return st ? (st->sntab > 0) : 0; }
+
 int cuda_backend_upload_chip(void *sth, const double *chip)
 {
     CudaState *st = (CudaState *)sth;
@@ -328,6 +353,7 @@ int cuda_backend_multiloop(void *sth, double *vm_io, double *chip_io,
     cudaEventRecord(st->ev_start);
     cuda_chip_channel_multiloop<<<grid, block>>>(
         st->d_vm, st->d_chip, st->d_results, st->d_tablist, st->d_xvals,
+        st->d_stablist,
         st->d_ops, st->d_opstart, st->d_chipstart,
         n, st->ncols, st->xdivs, st->xmin, st->invdx, nsteps);
     cudaEventRecord(st->ev_stop);
@@ -453,6 +479,7 @@ int cuda_backend_multiloop_tree(void *sth, double *vm_io, double *chip_io, doubl
         cuda_chip_channel_update<<<chan_grid, chan_block>>>(
             st->d_vm, st->d_chip, st->d_results, st->d_tablist, st->d_xvals,
             st->d_ops, st->d_opstart, st->d_chipstart,
+            st->d_stablist,
             (int *)0, (int *)0,   /* multiloop refuses SPIKE_OP; see cuda_hsolve.c */
             n, st->ncols, st->xdivs, st->xmin, st->invdx);
         cuda_hines_tree_eliminate<<<tree_grid, tree_block>>>(

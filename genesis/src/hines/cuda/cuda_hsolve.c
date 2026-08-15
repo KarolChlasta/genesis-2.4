@@ -23,7 +23,8 @@ extern void *cuda_backend_init(int ncompts, int nchips, int nops, int ncols, int
                               const double *tablist, int ntab,
                               const double *xvals, int nx,
                               const int *opstart, const int *chipstart,
-                      const int *spike_refrac0, int nspike);
+                      const int *spike_refrac0, int nspike,
+                      const double *stablist, int sntab);
 extern int  cuda_backend_perstep(void *sth, const double *vm, double *results_out);
 extern int  cuda_backend_upload_chip(void *sth, const double *chip);
 extern int  cuda_backend_multiloop(void *sth, double *vm_io, double *chip_io,
@@ -56,6 +57,9 @@ extern int  cuda_backend_multiloop_tree(void *sth, double *vm_io, double *chip_i
 /* GENESIS CPU fallback (in hines_4chip.c) */
 extern int do_chip_hh4_update(Hsolve *hsolve);
 extern void h_dospike_event(Hsolve *hsolve);
+extern void h_dosynchan(Hsolve *hsolve, int stabindex, int cindex);
+extern int  cuda_backend_needs_chip_every_step(void *sth);
+static void cuda_synaptic_pass(Hsolve *hsolve);
 
 
 /* Registry of live per-hsolve accelerator states.
@@ -121,8 +125,12 @@ static int cuda_batch_allowed(void)
 ** solvers whose own turn has not come yet this step. */
 static int cuda_perstep_one(Hsolve *hsolve)
 {
-    if (!cuda_backend_chip_on_gpu(hsolve->accel_state))
+    if (cuda_backend_needs_chip_every_step(hsolve->accel_state)) {
+        cuda_synaptic_pass(hsolve);
         cuda_backend_upload_chip(hsolve->accel_state, hsolve->chip);
+    } else if (!cuda_backend_chip_on_gpu(hsolve->accel_state)) {
+        cuda_backend_upload_chip(hsolve->accel_state, hsolve->chip);
+    }
     if (cuda_backend_perstep(hsolve->accel_state, hsolve->vm, hsolve->results) != 0)
         return -1;
     /* The kernel records threshold crossings; emission happens here because
@@ -142,6 +150,34 @@ static int cuda_perstep_one(Hsolve *hsolve)
 ** fields they moved to. */
 static int cuda_disabled         = 0;
 
+/* Where each SYN2_OP's operands start in hsolve->ops[], collected at SETUP.
+   Bounded rather than grown: a solver with more synaptic channels than this
+   simply is not accelerated, which is safer than a partial list. */
+#define MAX_SYN_SITES 4096
+static int syn_sites[MAX_SYN_SITES];
+static int syn_nsites = 0;
+
+/* The half of SYN2_OP that cannot leave the host: the event countdown lives in
+   ops[], and h_dosynchan() calls into the synchan child element to fetch its
+   activation. Order matters and follows hines_chip.c exactly -- decay the X
+   state first, then let an arriving event add to it -- so both are done here,
+   before chip[] is uploaded, and the kernel is left with the dual-exponential
+   update alone. */
+static void cuda_synaptic_pass(Hsolve *hsolve)
+{
+    int i;
+    for (i = 0; i < syn_nsites; i++) {
+        int *op = &hsolve->ops[syn_sites[i]];
+        int  k  = op[0];
+        int  nchip;
+        /* chip slot for this site: the X state, i.e. the first of its two */
+        nchip = hsolve->childchips[op[2]];
+        hsolve->chip[nchip] *= hsolve->stablist[k];
+        if (op[1] == 0) h_dosynchan(hsolve, k, op[2]);
+        op[1] -= 1;
+    }
+}
+
 /* Same sentinel-aware walk as opencl/ocl_hsolve.c build_comp_index(), and the
    same cpu_only[] marking: compartments using opcodes the kernel does not
    implement (SPIKE_OP, synchan, GHK, concentrations) must not be dispatched to
@@ -151,7 +187,8 @@ static int cuda_disabled         = 0;
 static void build_comp_index(Hsolve *hsolve, int **out_opstart,
                              int **out_chipstart, int **out_cpu_only,
                              int **out_spike_refrac, int *out_nspike,
-                             int *out_unsup, int *out_nunsup)
+                             int *out_unsup, int *out_nunsup,
+                             int *out_syn, int *out_nsyn)
 {
     int n = hsolve->ncompts;
     int *opstart   = (int *)malloc(n * sizeof(int));
@@ -176,6 +213,16 @@ static void build_comp_index(Hsolve *hsolve, int **out_opstart,
                 case CHAN_OP:    chip_i++;             break;
                 case ADD_CURR_OP:                      break;
                 case IPOL1V_OP:  op_i += 2; chip_i++;  break;
+                case SYN2_OP:
+                    /* Three operands (table index, event countdown, child
+                       index) and two chip slots (X and Y state), matching the
+                       interpreter in hines_chip.c. Getting this wrong
+                       desynchronises everything after it. */
+                    if (out_syn && *out_nsyn < MAX_SYN_SITES) {
+                        out_syn[*out_nsyn] = op_i;
+                        (*out_nsyn)++;
+                    }
+                    op_i += 3; chip_i += 2;                break;
                 case SPIKE_OP:
                     /* Handled on the device now: the counter is seeded here and
                        kept in a writable buffer, the reload value is read from
@@ -250,6 +297,7 @@ int cuda_init(Hsolve *hsolve)
     int *opstart = NULL, *chipstart = NULL, *cpu_only = NULL, *refrac0 = NULL;
     int nspike = 0;
     int unsup[8], nunsup = 0;
+    int nsyn = 0;
     int unsup_count, ci;
     const char *env;
 
@@ -268,7 +316,7 @@ int cuda_init(Hsolve *hsolve)
     }
 
     build_comp_index(hsolve, &opstart, &chipstart, &cpu_only, &refrac0, &nspike,
-                     unsup, &nunsup);
+                     unsup, &nunsup, syn_sites, &nsyn);
 
     /* Refuse the GPU path when any compartment needs an opcode the kernel does
        not implement; the caller sets cuda_disabled and falls back to the CPU
@@ -298,11 +346,13 @@ int cuda_init(Hsolve *hsolve)
                           hsolve->ops,
                           hsolve->tablist, nt,
                           hsolve->xvals, nx,
-                                            opstart, chipstart, refrac0, nspike);
+                                            opstart, chipstart, refrac0, nspike,
+                                            hsolve->stablist, hsolve->sntab);
     if (!hsolve->accel_state) {
         free(opstart); free(chipstart); free(refrac0);
         return -1;
     }
+    syn_nsites = nsyn;
     cuda_state_register(hsolve, hsolve->accel_state);
     cuda_batch_checked = 0;   /* a solver joined; re-evaluate */
     free(opstart); free(chipstart);
