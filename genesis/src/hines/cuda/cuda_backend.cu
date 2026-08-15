@@ -67,6 +67,12 @@ struct CudaState {
     float *d_vm = nullptr, *d_chip = nullptr, *d_results = nullptr;
     float *d_tablist = nullptr, *d_xvals = nullptr;
     int   *d_ops = nullptr, *d_opstart = nullptr, *d_chipstart = nullptr;
+    /* SPIKE_OP support: the refractory counter must be writable (ops[] is not)
+       and the kernel reports spikes back for the host to emit. */
+    int   *d_spike_refrac = nullptr, *d_spike_flag = nullptr;
+    int   *h_spike_flag = nullptr;
+    int    nspike = 0;
+    int    spikes_this_step = 0;
 
     /* host fp32 scratch reused every step */
     float *f_vm = nullptr, *f_chip = nullptr, *f_results = nullptr;
@@ -118,6 +124,8 @@ static void cuda_state_destroy(CudaState *st)
     cudaFree(st->d_vm); cudaFree(st->d_chip); cudaFree(st->d_results);
     cudaFree(st->d_tablist); cudaFree(st->d_xvals);
     cudaFree(st->d_ops); cudaFree(st->d_opstart); cudaFree(st->d_chipstart);
+    cudaFree(st->d_spike_refrac); cudaFree(st->d_spike_flag);
+    free(st->h_spike_flag);
     cudaFree(st->d_funcs); cudaFree(st->d_ravals);
     cudaFree(st->d_fwd_seg_start); cudaFree(st->d_fwd_seg_end);
     cudaFree(st->d_bwd_seg_start); cudaFree(st->d_bwd_seg_end);
@@ -146,7 +154,8 @@ void *cuda_backend_init(int ncompts, int nchips, int nops, int ncols, int xdivs,
                       const int *ops,
                       const double *tablist, int ntab,
                       const double *xvals, int nx,
-                      const int *opstart, const int *chipstart)
+                      const int *opstart, const int *chipstart,
+                      const int *spike_refrac0, int nspike)
 {
     CudaState *st = (CudaState *)calloc(1, sizeof(CudaState));
     if (!st) return NULL;
@@ -169,6 +178,15 @@ void *cuda_backend_init(int ncompts, int nchips, int nops, int ncols, int xdivs,
     if (ntab < 1) ntab = 1;
     if (nx  < 1) nx  = 1;
 
+    st->nspike = nspike;
+    if (nspike > 0) {
+        CUDA_CHECK_P(cudaMalloc(&st->d_spike_refrac, ncompts * sizeof(int)), "malloc refrac");
+        CUDA_CHECK_P(cudaMalloc(&st->d_spike_flag,   ncompts * sizeof(int)), "malloc spikeflag");
+        CUDA_CHECK_P(cudaMemcpy(st->d_spike_refrac, spike_refrac0,
+                                ncompts * sizeof(int), cudaMemcpyHostToDevice), "upload refrac");
+        st->h_spike_flag = (int *)calloc(ncompts, sizeof(int));
+        if (!st->h_spike_flag) { cuda_state_destroy(st); return NULL; }
+    }
     CUDA_CHECK_P(cudaMalloc(&st->d_vm,        ncompts * sizeof(float)),   "malloc vm");
     CUDA_CHECK_P(cudaMalloc(&st->d_chip,      nchips  * sizeof(float)),   "malloc chip");
     CUDA_CHECK_P(cudaMalloc(&st->d_results,   ncompts * 2 * sizeof(float)),"malloc results");
@@ -233,11 +251,16 @@ int cuda_backend_perstep(void *sth, const double *vm, double *results_out)
                           cudaMemcpyHostToDevice), "upload vm");
     /* chip[] uploaded by cuda_backend_upload_chip() on the first step */
 
+    if (st->nspike > 0)
+        CUDA_CHECK(cudaMemset(st->d_spike_flag, 0, n * sizeof(int)),
+                   "clear spike flags");
+
     int block = 64, grid = grid_for(n, block);
     cudaEventRecord(st->ev_start);
     cuda_chip_channel_update<<<grid, block>>>(
         st->d_vm, st->d_chip, st->d_results, st->d_tablist, st->d_xvals,
         st->d_ops, st->d_opstart, st->d_chipstart,
+        st->d_spike_refrac, st->d_spike_flag,
         n, st->ncols, st->xdivs, st->xmin, st->invdx);
     cudaEventRecord(st->ev_stop);
 
@@ -252,6 +275,18 @@ int cuda_backend_perstep(void *sth, const double *vm, double *results_out)
     CUDA_CHECK(cudaMemcpy(st->f_results, st->d_results, n * 2 * sizeof(float),
                           cudaMemcpyDeviceToHost), "download results");
     f2d(st->f_results, results_out, n * 2);
+
+    /* Count spikes for the caller to emit. The kernel cannot do the emission
+       itself: h_dospike_event() dispatches to synapses on other cells, which is
+       host-side GENESIS messaging. */
+    if (st->nspike > 0) {
+        int i, fired = 0;
+        CUDA_CHECK(cudaMemcpy(st->h_spike_flag, st->d_spike_flag,
+                              n * sizeof(int), cudaMemcpyDeviceToHost),
+                   "download spike flags");
+        for (i = 0; i < n; i++) if (st->h_spike_flag[i]) fired++;
+        st->spikes_this_step = fired;
+    }
 
     cudaEventSynchronize(st->ev_stop);
     float ms = 0.0f;
@@ -418,6 +453,7 @@ int cuda_backend_multiloop_tree(void *sth, double *vm_io, double *chip_io, doubl
         cuda_chip_channel_update<<<chan_grid, chan_block>>>(
             st->d_vm, st->d_chip, st->d_results, st->d_tablist, st->d_xvals,
             st->d_ops, st->d_opstart, st->d_chipstart,
+            (int *)0, (int *)0,   /* multiloop refuses SPIKE_OP; see cuda_hsolve.c */
             n, st->ncols, st->xdivs, st->xmin, st->invdx);
         cuda_hines_tree_eliminate<<<tree_grid, tree_block>>>(
             st->d_funcs, st->d_ravals, st->d_results, st->d_vm,
@@ -470,6 +506,13 @@ double cuda_backend_last_batch_time(void *sth)
 
 void cuda_backend_set_last_batch_time(void *sth, double t)
 { CudaState *st = (CudaState *)sth; if (st) st->last_batch_time = t; }
+
+
+int cuda_backend_spikes_this_step(void *sth)
+{ CudaState *st = (CudaState *)sth; return st ? st->spikes_this_step : 0; }
+
+int cuda_backend_has_spikes(void *sth)
+{ CudaState *st = (CudaState *)sth; return st ? (st->nspike > 0) : 0; }
 
 int  cuda_backend_multiloop_total(void *sth)
 { CudaState *st = (CudaState *)sth; return st ? st->multiloop_total : 0; }

@@ -22,7 +22,8 @@ extern void *cuda_backend_init(int ncompts, int nchips, int nops, int ncols, int
                               const int *ops,
                               const double *tablist, int ntab,
                               const double *xvals, int nx,
-                              const int *opstart, const int *chipstart);
+                              const int *opstart, const int *chipstart,
+                      const int *spike_refrac0, int nspike);
 extern int  cuda_backend_perstep(void *sth, const double *vm, double *results_out);
 extern int  cuda_backend_upload_chip(void *sth, const double *chip);
 extern int  cuda_backend_multiloop(void *sth, double *vm_io, double *chip_io,
@@ -31,6 +32,8 @@ extern void cuda_backend_sync_chip(void *sth, double *chip_out);
 extern int  cuda_backend_chip_on_gpu(void *sth);
 extern double cuda_backend_last_batch_time(void *sth);
 extern void cuda_backend_set_last_batch_time(void *sth, double t);
+extern int  cuda_backend_spikes_this_step(void *sth);
+extern int  cuda_backend_has_spikes(void *sth);
 extern int  cuda_backend_multiloop_total(void *sth);
 extern void cuda_backend_set_multiloop_total(void *sth, int k);
 extern int  cuda_backend_multiloop_called(void *sth);
@@ -52,6 +55,7 @@ extern int  cuda_backend_multiloop_tree(void *sth, double *vm_io, double *chip_i
 
 /* GENESIS CPU fallback (in hines_4chip.c) */
 extern int do_chip_hh4_update(Hsolve *hsolve);
+extern void h_dospike_event(Hsolve *hsolve);
 
 
 /* Registry of live per-hsolve accelerator states.
@@ -119,7 +123,17 @@ static int cuda_perstep_one(Hsolve *hsolve)
 {
     if (!cuda_backend_chip_on_gpu(hsolve->accel_state))
         cuda_backend_upload_chip(hsolve->accel_state, hsolve->chip);
-    return cuda_backend_perstep(hsolve->accel_state, hsolve->vm, hsolve->results);
+    if (cuda_backend_perstep(hsolve->accel_state, hsolve->vm, hsolve->results) != 0)
+        return -1;
+    /* The kernel records threshold crossings; emission happens here because
+       h_dospike_event() dispatches to synapses on other cells, which is
+       host-side GENESIS messaging the device cannot do. One call per crossing,
+       matching what the CPU interpreter does. */
+    if (cuda_backend_has_spikes(hsolve->accel_state)) {
+        int k = cuda_backend_spikes_this_step(hsolve->accel_state);
+        while (k-- > 0) h_dospike_event(hsolve);
+    }
+    return 0;
 }
 
 /* Process-wide: records that the platform cannot drive the GPU at all. The
@@ -135,12 +149,19 @@ static int cuda_disabled         = 0;
    operands, so the ops[] stream desynchronises from the first such opcode and
    every later chip read lands on a wrong index -- silently wrong results. */
 static void build_comp_index(Hsolve *hsolve, int **out_opstart,
-                             int **out_chipstart, int **out_cpu_only)
+                             int **out_chipstart, int **out_cpu_only,
+                             int **out_spike_refrac, int *out_nspike,
+                             int *out_unsup, int *out_nunsup)
 {
     int n = hsolve->ncompts;
     int *opstart   = (int *)malloc(n * sizeof(int));
     int *chipstart = (int *)malloc(n * sizeof(int));
     int *cpu_only  = (int *)calloc(n, sizeof(int));
+    /* Initial refractory counter per compartment, lifted out of ops[] because
+       the kernel cannot mutate the opcode stream (uploaded read-only). Zero
+       where the compartment has no SPIKE_OP. */
+    int *refrac0   = (int *)calloc(n, sizeof(int));
+    int nspike = 0;
     int op_i = 1, chip_i = 0, c;
 
     for (c = 0; c < n; c++) {
@@ -155,9 +176,25 @@ static void build_comp_index(Hsolve *hsolve, int **out_opstart,
                 case CHAN_OP:    chip_i++;             break;
                 case ADD_CURR_OP:                      break;
                 case IPOL1V_OP:  op_i += 2; chip_i++;  break;
-                case SPIKE_OP:   op_i += 2; chip_i++;
-                    cpu_only[c] = 1;                   break;
+                case SPIKE_OP:
+                    /* Handled on the device now: the counter is seeded here and
+                       kept in a writable buffer, the reload value is read from
+                       ops[] by the kernel, and the event itself is emitted by
+                       the host after the dispatch returns. */
+                    refrac0[c] = hsolve->ops[op_i];
+                    nspike++;
+                    op_i += 2; chip_i++;               break;
                 default:
+                    /* Record the first few distinct unsupported opcodes so the
+                       refusal message can say what is actually missing, rather
+                       than leaving the user to bisect a model. */
+                    {
+                        int k, seen = 0;
+                        for (k = 0; k < *out_nunsup && k < 8; k++)
+                            if (out_unsup[k] == op) { seen = 1; break; }
+                        if (!seen && *out_nunsup < 8)
+                            out_unsup[(*out_nunsup)++] = op;
+                    }
                     cpu_only[c] = 1;                   break;
             }
         }
@@ -167,6 +204,8 @@ static void build_comp_index(Hsolve *hsolve, int **out_opstart,
     *out_opstart   = opstart;
     *out_chipstart = chipstart;
     *out_cpu_only  = cpu_only;
+    *out_spike_refrac = refrac0;
+    *out_nspike = nspike;
 }
 
 
@@ -208,8 +247,10 @@ int cuda_init(Hsolve *hsolve)
     int nt  = (hsolve->xdivs > 0 && hsolve->ncols > 0)
               ? (hsolve->xdivs + 2) * hsolve->ncols : 1;
     int nx  = (hsolve->xdivs > 0) ? hsolve->xdivs + 2 : 1;
-    int *opstart = NULL, *chipstart = NULL, *cpu_only = NULL;
-    int unsup, ci;
+    int *opstart = NULL, *chipstart = NULL, *cpu_only = NULL, *refrac0 = NULL;
+    int nspike = 0;
+    int unsup[8], nunsup = 0;
+    int unsup_count, ci;
     const char *env;
 
     if (n <= 0 || nc <= 0 || no <= 0) {
@@ -226,21 +267,28 @@ int cuda_init(Hsolve *hsolve)
         return -1;
     }
 
-    build_comp_index(hsolve, &opstart, &chipstart, &cpu_only);
+    build_comp_index(hsolve, &opstart, &chipstart, &cpu_only, &refrac0, &nspike,
+                     unsup, &nunsup);
 
     /* Refuse the GPU path when any compartment needs an opcode the kernel does
        not implement; the caller sets cuda_disabled and falls back to the CPU
        solver for the rest of the run. Checked before cuda_backend_init() so no
        device resources are allocated on the refusal path. */
-    unsup = 0;
+    unsup_count = 0;
     for (ci = 0; ci < n; ci++)
-        if (cpu_only[ci]) unsup++;
-    if (unsup > 0) {
+        if (cpu_only[ci]) unsup_count++;
+    if (unsup_count > 0) {
         fprintf(stderr,
-            "CUDA: %d of %d compartments use opcodes not implemented by the "
-            "kernel (SPIKE_OP/synchan/GHK/concentrations); acceleration "
-            "disabled for this hsolve, computing on CPU.\n", unsup, n);
-        free(opstart); free(chipstart); free(cpu_only);
+            "CUDA: %d of %d compartments use opcodes the kernel does not "
+            "implement; acceleration disabled for this hsolve, computing on "
+            "CPU.\n", unsup_count, n);
+        {
+            int k;
+            fprintf(stderr, "CUDA: unsupported opcodes seen:");
+            for (k = 0; k < nunsup; k++) fprintf(stderr, " %d", unsup[k]);
+            fprintf(stderr, "%s\n", nunsup >= 8 ? " (list truncated)" : "");
+        }
+        free(opstart); free(chipstart); free(cpu_only); free(refrac0);
         return -1;
     }
     free(cpu_only);
@@ -250,9 +298,9 @@ int cuda_init(Hsolve *hsolve)
                           hsolve->ops,
                           hsolve->tablist, nt,
                           hsolve->xvals, nx,
-                                            opstart, chipstart);
+                                            opstart, chipstart, refrac0, nspike);
     if (!hsolve->accel_state) {
-        free(opstart); free(chipstart);
+        free(opstart); free(chipstart); free(refrac0);
         return -1;
     }
     cuda_state_register(hsolve, hsolve->accel_state);
@@ -291,6 +339,21 @@ int cuda_chip_update(Hsolve *hsolve)
         }
     }
 
+    if (cuda_backend_multiloop_total(hsolve->accel_state) > 0 &&
+        cuda_backend_has_spikes(hsolve->accel_state)) {
+        /* A K-step batch runs entirely on the device, so a spike raised inside
+           it cannot reach other cells' synapses before the batch ends. That is
+           a property of the batching, not of the opcode, so multiloop is
+           refused rather than the model. */
+        static int warned = 0;
+        if (!warned) {
+            fprintf(stderr, "CUDA: multiloop disabled for this hsolve -- it "
+                            "contains spike generators and events cannot be "
+                            "delivered inside a batch.\n");
+            warned = 1;
+        }
+        cuda_backend_set_multiloop_total(hsolve->accel_state, 0);
+    }
     if (cuda_backend_multiloop_total(hsolve->accel_state) > 0) {
         if (cuda_backend_multiloop_called(hsolve->accel_state) > 0) {
             cuda_backend_bump_multiloop_called(hsolve->accel_state);

@@ -30,6 +30,7 @@
 #define ADD_CURR_OP  3200
 #define IPOL1V_OP    4001
 #define FINISH_OP    7
+#define SPIKE_OP     200
 
 /* ------------------------------------------------------------------ */
 /* One channel-update step for compartment gid. Returns the new voltage;
@@ -45,6 +46,8 @@ cuda_channel_step(int gid,
                   const int   *ops,
                   const int   *comp_opstart,
                   const int   *comp_chipstart,
+                  int         *spike_refrac,   /* [ncompts], mutable; NULL if unused */
+                  int         *spike_flag,     /* [ncompts], set to 1 on a spike */
                   const int   ncols,
                   const int   xdivs,
                   const float xmin,
@@ -82,6 +85,33 @@ cuda_channel_step(int gid,
         } else if (op == ADD_CURR_OP) {
             sumgchan += Gk;
             ichan    += Ek * Gk;
+            continue;
+        } else if (op == SPIKE_OP) {
+            /* Mirrors hines_chip.c: the refractory counter is decremented every
+               step, the threshold consumes one chip slot unconditionally, and a
+               spike fires only when the voltage is over threshold AND the
+               counter has run out, which also reloads it from the second
+               operand.
+
+               The counter lives in a separate writable buffer rather than in
+               ops[]: the CPU interpreter mutates the opcode stream in place,
+               but ops[] is uploaded once and read-only on the device. The
+               reload value is static, so it is read straight from ops[].
+
+               Delivery is not done here. h_dospike_event() dispatches to
+               synapses on other cells, which is host-side messaging; the kernel
+               only records that a spike happened and the host emits it after
+               the dispatch returns. */
+            float thresh = chip[chip_i++];
+            if (spike_refrac) {
+                int r = spike_refrac[gid] - 1;
+                if (Vm > thresh && r <= 0) {
+                    if (spike_flag) spike_flag[gid] = 1;
+                    r = ops[op_i + 1];
+                }
+                spike_refrac[gid] = r;
+            }
+            op_i += 2;
             continue;
         } else if (op == IPOL1V_OP) {
             int col  = ops[op_i++];
@@ -131,6 +161,8 @@ cuda_chip_channel_update(const float *vm,
                          const int   *ops,
                          const int   *comp_opstart,
                          const int   *comp_chipstart,
+                         int         *spike_refrac,  /* [ncompts], mutable; NULL if unused */
+                         int         *spike_flag,    /* [ncompts], set to 1 on a spike */
                          const int   ncompts,
                          const int   ncols,
                          const int   xdivs,
@@ -173,6 +205,26 @@ cuda_chip_channel_update(const float *vm,
         } else if (op == ADD_CURR_OP) {
             sumgchan += Gk;
             ichan    += Ek * Gk;
+            continue;
+        } else if (op == SPIKE_OP) {
+            /* Same semantics as hines_chip.c and as cuda_channel_step above:
+               counter decremented every step, threshold consumes one chip slot
+               unconditionally, spike only when over threshold and the counter
+               has run out, which reloads it from the second operand. The
+               counter is kept in a writable buffer because ops[] is uploaded
+               once and read-only here; the reload value is static and read from
+               ops[] directly. Delivery is the host's job -- h_dospike_event()
+               dispatches to other cells' synapses. */
+            float thresh = chip[chip_i++];
+            if (spike_refrac) {
+                int r = spike_refrac[gid] - 1;
+                if (Vm > thresh && r <= 0) {
+                    if (spike_flag) spike_flag[gid] = 1;
+                    r = ops[op_i + 1];
+                }
+                spike_refrac[gid] = r;
+            }
+            op_i += 2;
             continue;
         } else if (op == IPOL1V_OP) {
             int col  = ops[op_i++];
@@ -240,6 +292,7 @@ cuda_chip_channel_multiloop(float       *vm,
         float Vm_new = cuda_channel_step(gid, vm[gid], chip,
                                          tablist, xvals, ops,
                                          comp_opstart, comp_chipstart,
+                                         (int *)0, (int *)0,
                                          ncols, xdivs, xmin, invdx);
         vm[gid] = Vm_new;
     }
