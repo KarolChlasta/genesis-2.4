@@ -474,6 +474,17 @@ int cuda_backend_multiloop_tree(void *sth, double *vm_io, double *chip_io, doubl
     int chan_block = 64, chan_grid = grid_for(n, chan_block);
     int tree_block = 64, tree_grid = grid_for(st->n_trees, tree_block);
 
+    /* The periodic sync below was added defensively after a hang on a laptop
+    ** iGPU that never reproduced on the cluster cards, and each one drains the
+    ** pipeline. GENESIS_CUDA_SYNC_EVERY sets the interval (a power of two);
+    ** 0 disables it entirely. Default stays 16, the original behaviour. */
+    static int sync_mask = -2;
+    if (sync_mask == -2) {
+        const char *e = getenv("GENESIS_CUDA_SYNC_EVERY");
+        int every = e ? atoi(e) : 16;
+        sync_mask = (every <= 0) ? -1 : (every - 1);
+    }
+
     cudaEventRecord(st->ev_start);
     for (step = 0; step < nsteps; step++) {
         cuda_chip_channel_update<<<chan_grid, chan_block>>>(
@@ -488,7 +499,7 @@ int cuda_backend_multiloop_tree(void *sth, double *vm_io, double *chip_io, doubl
             st->d_bwd_seg_start, st->d_bwd_seg_end,
             st->d_fwd_root_row, st->d_fwd_raval_start, st->d_bwd_raval_start,
             st->n_trees);
-        if ((step & 15) == 15) cudaDeviceSynchronize();
+        if (sync_mask >= 0 && (step & sync_mask) == sync_mask) cudaDeviceSynchronize();
     }
     cudaEventRecord(st->ev_stop);
 
