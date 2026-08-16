@@ -1,14 +1,22 @@
 # CUDA backend validation — WarsawIQ NVIDIA RTX 4090
 
-> **Superseded for speedup figures.** The correctness result below still stands,
-> but the speedup numbers (5×→51×→132×) come from a single run that timed the
-> GPU arm with `clock_gettime` around the kernel and the CPU arm with GENESIS's
-> own `{cpu}` step-loop timer. The campaign that the manuscript reports uses one
-> definition for both arms (total wall time per run) over 10 replicates, and
-> gives **7.4× / 70.3× / 174.2×** at N = 500 / 5000 / 50000 — see
-> `cluster_bringup/logs/cuda_singlecomp_campaign_wiq_RTX4090_20260727_210047.csv`.
-> Quote those, not these. The two sets are not comparable because the timing
-> definition differs, not because the hardware or the kernel changed.
+> **Superseded for speedup figures — do not quote any number from this file.**
+> The correctness result below still stands. The speedup numbers (5×→51×→132×)
+> come from a single run that timed the GPU arm with `clock_gettime` around the
+> kernel and the CPU arm with GENESIS's own `{cpu}` step-loop timer. Mixing two
+> timing definitions like that inflates the ratio, because the GPU side excludes
+> host work, transfers and construction.
+>
+> The manuscript now reports **21.0× (A40) and 21.9× (A100)** at N = 50,000 for
+> this benchmark, wall-clocked identically around both arms over 10 replicates:
+> `cluster_bringup/logs/singlecomp_walltime_inf02_20260815_132840.csv` and
+> `..._inf03_20260815_135147.csv`, produced by
+> `cluster_bringup/53_singlecomp_walltime.sh`.
+>
+> An intermediate set (7.4× / 70.3× / 174.2×, from
+> `cuda_singlecomp_campaign_wiq_RTX4090_20260727_210047.csv`) is also superseded:
+> it inherits the same mixed definition. None of these differences come from the
+> hardware or the kernel changing — only from how the two arms were timed.
 
 Date: 2026-07-04. First validation of the GENESIS 2.5 CUDA backend on real
 NVIDIA hardware (previously code-only / unvalidated).

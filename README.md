@@ -52,16 +52,32 @@ speedup figures below were measured on those and are not touched by this.
 
 ## Where the speedups come from
 
+Two numbers are worth separating, because they answer different questions.
+**Step-phase** times the simulation loop alone and measures what the kernel
+can do; **end-to-end** wall-clocks the whole process, model construction
+included, and is what you actually wait for. We quote both.
+
 For single-compartment (isopotential) networks, a batched multi-step
-"multiloop" kernel gets up to ~18x on an integrated AMD Radeon 890M and
-7-174x on an RTX 4090, matching the fp64 CPU reference to about 1e-7 V.
+"multiloop" kernel reaches 21.0x (A40) and 21.9x (A100) end-to-end at
+N=50,000, matching the fp64 CPU reference to about 1e-7 V.
 
 That kernel updates each compartment independently, which is only correct
 for isopotential cells. Real dendritic trees need the Hines tridiagonal
 elimination, so we added a second kernel, `hines_tree_eliminate`, that runs
 the same elimination the CPU solver does, one GPU thread per neuron. On the
-UMCS cluster, 10 replicates each, that's 37.3x (A40) and 82.1x (A100) at
-N=50,000 neurons x 16 compartments, and it's still climbing with N.
+UMCS cluster, 10 replicates each, at N=50,000 neurons x 16 compartments that
+is 37.3x (A40) and 80.8x (A100) step-phase, still climbing with N, but
+3.6x and 3.9x end-to-end. The gap is not a kernel deficiency: these runs are
+only 200 steps, so the unaccelerated construction phase dominates, and the
+end-to-end figure rises toward the step-phase ceiling as runs lengthen.
+
+Against other simulators, on the Vogels-Abbott COBAHH network (4000 cells,
+5 s, single-threaded CPU on one cluster node) GENESIS 2.5 finishes in
+46.9 ± 2.1 s against 76.5 ± 0.3 s for CoreNEURON and 95.8 ± 0.2 s for
+NEURON 9.0.2 — 1.63x and 2.04x respectively. Both networks match in size,
+connectivity, stimulation protocol and firing rate (26.8 vs 27.9 Hz); the
+harness and the equivalence checks are in
+[`cluster_bringup/coreneuron/`](cluster_bringup/coreneuron/).
 
 Pushing that multi-compartment benchmark toward a Blue Brain Project-scale
 population (~31,000 neurons) is what surfaced the O(n²) construction bug
@@ -70,7 +86,7 @@ after, a 1.7-million-compartment, N=100,000 population builds in
 51.5 ± 0.6 s.
 
 <p align="center">
-  <img src="paper/figures/fig10_multicompartment_speedup.png" alt="Multi-compartment GPU tree-elimination step-phase speedup vs. CPU, UMCS A40/A100 and a local AMD Radeon 890M, log-log" width="600">
+  <img src="paper/figures/fig10_multicompartment_speedup.png" alt="Multi-compartment GPU tree-elimination speedup vs. CPU on the UMCS A40 and A100, log-log, showing step-phase and end-to-end series for each card" width="600">
 </p>
 
 The methodology, the confounds we ran into and had to rule out, and the raw
@@ -147,6 +163,14 @@ A few environment variables control dispatch at run time:
 | `GENESIS_OCL_MULTILOOP=<K>` | Batch `K` steps into one OpenCL dispatch instead of one per step |
 | `GENESIS_CUDA_MULTILOOP=<K>` | Same, CUDA |
 | `GENESIS_OCL_TREE_MAX_NCOMPTS=<N>` | Safety cap for laptop integrated GPUs, which can hang past ~22,000-24,000 compartments when the same chip also drives the display. Confirmed not to affect dedicated GPUs (verified on A40 well beyond that size), so set `0` on any datacenter or desktop card |
+
+**If you run multi-compartment models larger than 20,000 compartments on a
+dedicated GPU, set `GENESIS_OCL_TREE_MAX_NCOMPTS=0`.** That cap defaults to
+20,000, and above it the batched tree solver declines the model and falls back
+to per-step dispatch. The run still produces correct results, but much more
+slowly -- at 800,000 compartments the difference measured 3-7x, larger on the
+faster card, because the per-step launch overhead is fixed. The fallback prints
+a line to stderr, which is easy to lose in a batch script that redirects it.
 
 The kernel-selection logic is in the manuscript's "Software architecture"
 section; the derivation of `hines_tree_eliminate` itself, including the
