@@ -25,6 +25,7 @@ import sys
 import time
 
 import arbor as A
+from arbor import units as U
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 100
 STEPS = int(sys.argv[2]) if len(sys.argv) > 2 else 5000
@@ -45,10 +46,10 @@ def make_cell():
         x += 50.0
 
     decor = A.decor()
-    decor.set_property(Vm=-70.0, cm=0.01, rL=30.0)
-    decor.paint('(all)', A.density('pas', {'g': 1.0 / 3333.33, 'e': -59.387}))
+    decor.set_property(Vm=-70.0 * U.mV, cm=0.01 * U.F / U.m2, rL=30.0 * U.Ohm * U.cm)
+    decor.paint('(all)', A.density('pas/e=-59.387', {'g': 1.0 / 3333.33}))
     decor.paint('(all)', A.density('hh', {'gnabar': 0.12, 'gkbar': 0.036, 'gl': 0.0}))
-    decor.place('(location 0 0.5)', A.iclamp(0.0, 1e9, 0.5), 'ic')
+    decor.place('(location 0 0.5)', A.iclamp(0.0 * U.ms, 1e9 * U.ms, 0.5 * U.nA), 'ic')
     # One CV per segment: the 16 compartments the other simulators use.
     decor.discretization(A.cv_policy_every_segment())
     return A.cable_cell(A.morphology(tree), decor)
@@ -94,11 +95,12 @@ sim = A.simulation(recipe, ctx, decomp)
 build_t = time.time() - build_t0
 
 run_t0 = time.time()
-sim.run(tfinal=STEPS * DT, dt=DT)
+sim.run(tfinal=STEPS * DT * U.ms, dt=DT * U.ms)
 run_t = time.time() - run_t0
 
 print(f"RESULT_N={N} RESULT_NCOMP={NCOMP} RESULT_TOTAL_COMPS={N * NCOMP} RESULT_STEPS={STEPS}")
 print(f"RESULT_GPU={'1' if USE_GPU else '0'} RESULT_HAS_GPU={ctx.has_gpu}")
+print(f"RESULT_CTX={str(ctx).replace(chr(32), '')}")
 print(f"RESULT_BUILD_S={build_t:.3f}")
 print(f"RESULT_RUN_S={run_t:.3f}")
 print(f"RESULT_WALL_S={build_t + run_t:.3f}")
