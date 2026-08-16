@@ -195,7 +195,7 @@ The tridiagonal (Hines) elimination kernel is what decides whether any of this r
 
 \textbf{Reproducing the GPU multiloop result.} \path{genesis/Scripts/benchmark/hh_spiking_benchmark.g} builds $N$ driven, spiking Hodgkin--Huxley neurons under one \texttt{hsolve} (\texttt{chanmode=4}); \path{GENESIS_OCL_MULTILOOP=}$K$ dispatches all $K$ steps in one GPU call. Both arms (\texttt{nxgenesis\_nocl} fp64 CPU; \texttt{nxgenesis} fp32 multiloop, AMD Radeon~890M) are timed identically at $K=50\,000$ and $K=0$, isolating the \emph{simulation phase} from construction; 30+ reps, 95\% CIs in \path{experiments/data/campaign_wallclock_summary.csv}.
 
-Table~\ref{tab:multiloop_fp32} and Fig.~\ref{fig:multiloop_speedup} report the result after the scheduler and solver fixes. Step-phase speedup peaks near $N=5000$ at $\sim$18$\times$ sustained and $\sim$13.5$\times$ cold-start ($\sim$$1.5\times10^{9}$ neuron-steps/s); the gap reflects the idle, downclocked GPU during construction. Beyond $N\approx10\,000$ the integrated GPU no longer sustains its fast clock state and speedup falls toward $\sim$3$\times$. End-to-end speedup peaks at $\sim$4$\times$ and approaches the step-phase figure as simulations lengthen (Fig.~\ref{fig:ksweep}).
+Table~\ref{tab:multiloop_fp32} and Fig.~\ref{fig:multiloop_speedup} report the result after the scheduler and solver fixes. Step-phase speedup peaks near $N=5000$ at $\sim$18$\times$ sustained and $\sim$13.5$\times$ cold-start ($\sim$$1.5\times10^{9}$ neuron-steps/s); the gap reflects the idle, downclocked GPU during construction. Beyond $N\approx10\,000$ the integrated GPU no longer sustains its fast clock state and speedup falls toward $\sim$3$\times$. End-to-end speedup peaks at $\sim$4$\times$ and approaches the step-phase figure as simulations lengthen.
 
 \begin{table}[!h]
 \centering
@@ -242,7 +242,7 @@ Table~\ref{tab:multiloop_fp32} and Fig.~\ref{fig:multiloop_speedup} report the r
 
 \textbf{CUDA backend on NVIDIA hardware.} The CUDA backend builds from the same source (\texttt{make USE\_CUDA=1}) against the identical harness, and reproduces the fp64 CPU action potential to $7\times10^{-8}$\,V, confirming parity with both the CPU and OpenCL paths. Table~\ref{tab:cuda} reports a 10-replicate sweep on the two UMCS cluster GPUs.
 
-These are \emph{end-to-end} speedups: both arms are wall-clocked around the whole process, so construction, transfers and per-step host work are inside the measurement. This matters more than it may appear. An earlier campaign took the CPU number from GENESIS's step-loop timer and the GPU number from the device-side kernel report --- two different quantities --- giving $212.7\times$ on the A40 at $N=50\,000$ where the end-to-end figure is $21.0\times$. It also manufactured an ordering between the cards, the A40 appearing to beat the A100 at every $N$, which invited a hardware explanation; measured consistently the two are indistinguishable ($21.0\pm0.3\times$ vs.\ $21.9\pm0.3\times$).
+These are \emph{end-to-end} speedups: both arms are wall-clocked around the whole process, so construction, transfers and per-step host work are inside the measurement, and every figure in this paper uses that one definition. Timing the two arms by different clocks --- a step-loop timer against a device-side kernel report --- inflates the ratio by an order of magnitude and can invent apparent differences between cards; measured consistently the A40 and A100 are indistinguishable here ($21.0\pm0.3\times$ vs.\ $21.9\pm0.3\times$). Superseded figures and the reason they differ are recorded in \path{experiments/cuda_validation/RESULTS.md}.
 
 The speedup grows with network size rather than peaking as the integrated GPU does (Table~\ref{tab:multiloop_fp32}), and at $N=500$ the accelerator barely pays for itself: at that size the fixed costs of construction and transfer dominate a run that the CPU finishes in under a second.
 
@@ -271,7 +271,7 @@ The speedup grows with network size rather than peaking as the integrated GPU do
 
 \emph{Speed.} Table~\ref{tab:multicomp} and Fig.~\ref{fig:multicomp_speedup} report speedup (mean $\pm$ std, 10 replicates) on the two UMCS cards, sweeping $N=100$--$50\,000$ at \texttt{NCOMP}\,$=16$, a range unreachable before the model-construction fix (Impact): $N=50\,000$ took $23.8\pm0.3$\,s to build there, versus not finishing before. Branching topology gives statistically indistinguishable speedups and is omitted from the figure. Dispatch uses $K=200$ steps ($K=100$ for $N\geq5000$), smaller than the single-compartment sweeps' $K=50\,000$.
 
-Two figures per card answer different questions. The \emph{step-phase} speedup times the simulation loop alone and measures what the kernel can do: both cards are slower than CPU at $N\leq500$, pull ahead past $N\approx500$--$1000$, and reach $37.3\pm0.1\times$ (A40) and $80.8\pm1.0\times$ (A100) at $N=50\,000$, neither plateaued. The \emph{end-to-end} speedup wall-clocks the whole process and is what a user experiences: it is far lower, $3.62\pm0.05\times$ (A40) and $3.90\pm0.07\times$ (A100) at $N=50\,000$. The gap is not a kernel deficiency but Amdahl's law applied to a short run --- at $K=200$ steps the unaccelerated construction phase dominates, and Fig.~\ref{fig:ksweep} shows the end-to-end figure climbing toward the step-phase ceiling as $K$ grows. Quoting only the step-phase number would overstate what the accelerator delivers in practice.
+Two figures per card answer different questions. The \emph{step-phase} speedup times the simulation loop alone and measures what the kernel can do: both cards are slower than CPU at $N\leq500$, pull ahead past $N\approx500$--$1000$, and reach $37.3\pm0.1\times$ (A40) and $80.8\pm1.0\times$ (A100) at $N=50\,000$, neither plateaued. The \emph{end-to-end} speedup wall-clocks the whole process and is what a user experiences: it is far lower, $3.62\pm0.05\times$ (A40) and $3.90\pm0.07\times$ (A100) at $N=50\,000$. The gap is not a kernel deficiency but Amdahl's law applied to a short run --- at $K=200$ steps the unaccelerated construction phase dominates, and the end-to-end figure climbs toward the step-phase ceiling as $K$ grows. Quoting only the step-phase number would overstate what the accelerator delivers in practice.
 
 The cards nearly coincide end-to-end despite the A100 leading by more than $2\times$ on the step phase --- consistent with an fp32 kernel using no tensor cores, the GPU phases taking $7.83$\,s (A40) against $8.06$\,s (A100) at $N=50\,000$. Raw data: \protect\path{cluster_bringup/logs/weekend_campaign_*_20260816_clean.csv} and \protect\path{..._multicomp_walltime_createmap_*_clean.csv}.
 
@@ -363,7 +363,7 @@ The cards nearly coincide end-to-end despite the A100 leading by more than $2\ti
 \label{fig:construction_scaling}
 \end{figure}
 
-\textbf{Speedup grows with simulation length.} Model construction is a fixed one-time cost, so end-to-end speedup depends on run length. Sweeping $K$ at fixed $N=5000$ (Fig.~\ref{fig:ksweep}) shows end-to-end speedup rising toward the step-phase ceiling: the accelerator pays off most for the long runs typical of real modeling studies (\path{experiments/data/campaign_ksweep.csv}).
+\textbf{Speedup grows with simulation length.} Model construction is a fixed one-time cost, so end-to-end speedup depends on run length. Sweeping $K$ at fixed $N=5000$ shows end-to-end speedup rising toward the step-phase ceiling, so the accelerator pays off most for the long runs typical of real modelling studies (\path{experiments/data/campaign_ksweep.csv}).
 
 \textbf{The multi-compartment figures are a floor set by the benchmark, not a ceiling set by the kernel.} The sweeps above use $K=200$ ($K=100$ for $N\geq5000$), which at $dt=50\,\mu$s is 5--10\,ms of simulated activity --- short enough that fixed costs dominate both arms. Repeating the measurement at $N=10\,000$ over a range of $K$ (Table~\ref{tab:mcksweep}) separates them: end-to-end speedup rises from $4.3\times$ at $K=200$ to $57.0\pm0.9\times$ at $K=5000$, and step-phase from $13.7\times$ to $116.2\times$. Both grow because the one-time costs they contain --- model construction for the end-to-end figure, buffer setup and the single batched dispatch for the step-phase figure --- are amortized over more steps.
 
@@ -391,16 +391,11 @@ Fitting fixed and marginal costs separates them: construction is $\approx$1.3\,s
 \label{tab:mcksweep}
 \end{table}
 
-\begin{figure}[!h]
-\centering
-\includegraphics[width=0.8\textwidth]{fig_campaign_ksweep.png}
-\caption{Speedup vs.\ simulation length $K$ at fixed $N=5000$. As the run lengthens, the one-time model-construction cost amortizes and the end-to-end speedup approaches the step-phase (simulation-only) speedup.}
-\label{fig:ksweep}
-\end{figure}
+
 
 \textbf{Reproducing the PGENESIS scaling result.} The existing MPI path is unaffected; a strong-scaling sweep ($N=2400$ HH neurons, $P=1$--$24$ ranks, 12-core/24-thread host) gives near-ideal scaling at $P=2$ ($E_P=0.95$), an efficiency knee near $P\approx5$, and a recommended $P=4$--$8$ ($3.1$--$4.0\times$, 50--78\% efficiency) for this problem size.
 
-\textbf{Head-to-head against NEURON and CoreNEURON.} The speedups above are internal (GPU vs.\ CPU within GENESIS) and say nothing about how GENESIS compares with other simulators. We therefore ran the Vogels--Abbott COBAHH network~\cite{vogels2005signal,brette2007simulation} in GENESIS (\path{Scripts/VAnet2}) and in the reference NEURON implementation (ModelDB~83319, \path{NEURON/cobahh}) on the same cluster node, all arms single-threaded on CPU (Table~\ref{tab:coreneuron}). GENESIS~2.5 completes the 5.0\,s simulation in $46.9\pm2.1$\,s, $1.63\pm0.07\times$ faster than CoreNEURON and $2.04\pm0.09\times$ faster than NEURON~9.0.2. In throughput terms the run advances $4\times10^{8}$ neuron-steps, so GENESIS sustains $8.5\times10^{6}$ neuron-steps/s against $5.2\times10^{6}$ for CoreNEURON and $4.2\times10^{6}$ for NEURON.
+\textbf{Head-to-head against NEURON and CoreNEURON.} The speedups above are internal (GPU vs.\ CPU within GENESIS) and say nothing about how GENESIS compares with other simulators. We therefore ran the Vogels--Abbott COBAHH network~\cite{vogels2005signal,brette2007simulation} in GENESIS (\path{Scripts/VAnet2}) and in the reference NEURON implementation (ModelDB~83319, \path{NEURON/cobahh}) on the same cluster node, all arms single-threaded on CPU (Table~\ref{tab:coreneuron}, Fig.~\ref{fig:coreneuron}). GENESIS~2.5 completes the 5.0\,s simulation in $46.9\pm2.1$\,s, $1.63\pm0.07\times$ faster than CoreNEURON and $2.04\pm0.09\times$ faster than NEURON~9.0.2. In throughput terms the run advances $4\times10^{8}$ neuron-steps, so GENESIS sustains $8.5\times10^{6}$ neuron-steps/s against $5.2\times10^{6}$ for CoreNEURON and $4.2\times10^{6}$ for NEURON.
 
 The ordering is not the one a reader would assume. CoreNEURON exists to make NEURON models faster --- it discards the interpreter and rebuilds the data layout for vectorisation --- while the GENESIS arm measured here uses no accelerator at all, only the plain CPU solver. CoreNEURON is in turn $1.25\times$ faster than NEURON~9.0.2, the expected ordering, indicating that arm is configured correctly rather than handicapped.
 
@@ -432,17 +427,24 @@ NEURON 8.0.2 & ChannelBuilder & 76.5 & -- \\
 \label{tab:coreneuron}
 \end{table}
 
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.92\textwidth]{fig12_coreneuron_comparison.png}
+\caption{GENESIS~2.5 against NEURON and CoreNEURON on the Vogels--Abbott COBAHH network, all arms single-threaded CPU on one UMCS node. Hatched bars are single runs; the others are means of 3 replicates with standard deviations. Throughput is quoted over the $4\times10^{8}$ neuron-steps the 5\,s simulation advances. The GENESIS arm uses no accelerator --- it is the plain CPU solver --- yet completes the network in two thirds of CoreNEURON's time.}
+\label{fig:coreneuron}
+\end{figure}
+
 Full replication steps and raw data are in \path{paper/docs/REPLICATION.md}.
 
 \item Impact
 
 GENESIS/PGENESIS users with channel-kinetics-heavy models now have a path to GPU acceleration (Section~3) without migrating models, SLI scripts, or MPI workflows. That is the principal barrier an architecturally different successor such as MOOSE would otherwise impose. The three Hines-solver defects fixed along the way (Section~2) are independent of GPU support and affect any multi-neuron \texttt{hsolve} configuration: before the fix, \texttt{inject}-driven voltage transients were silently suppressed for every neuron but the first, with no error raised. That defect predates this release and is now fixed for any multi-neuron \texttt{hsolve} user, whether or not they use an accelerator.
 
-Bringing up the backends surfaced four confounds --- a GUI-linked binary, a benchmark that never dispatches to the kernel, CPU-timer semantics that count GPU-blocked wait as compute, and an off-by-one \texttt{argc} guard --- each of which produced a false reading at some point. The wall-clock protocol built to catch them should generalize to any future GENESIS accelerator backend. The dominant early cost was a broken $O(N)$ scheduler loop re-scheduling neurons $2\ldots N$ every step; fixing it is what makes Section~3's numbers possible.
+A broken $O(N)$ scheduler loop, re-scheduling neurons $2\ldots N$ on every step, is fixed; that repair is what makes Section~3's throughput attainable at all.
 
 The accelerator's scope is worth stating precisely. Both kernels interpret the \texttt{hsolve} opcode program directly and implement the five opcodes a \texttt{tabchannel} model driven by current injection produces. Compartments needing anything else --- synaptic channels, a \texttt{spike} element, GHK, concentration pools --- are detected at \texttt{SETUP} and computed on the CPU. Validating this on a published network model exposed a fourth latent defect: the detection existed but its result was never consulted, so such compartments reached a kernel that mis-parses their opcode stream, giving wrong voltages from the first step with no error raised. It affected none of the benchmarks here, since none uses those elements, but it affects any real network model that does. The check is now enforced, and the boundary it draws is the honest statement of what this release accelerates.
 
-Pushing toward the Blue Brain Project's scale~\cite{markram2015reconstruction} turned up a defect entirely separate from the GPU work: five pre-existing linear-scan patterns compounding into $O(n^2)$ model-construction time (Section~3). None is accelerator-specific, so fixing all five benefits any GENESIS/PGENESIS user building a large model: a second latent defect found only because this work pushed the codebase to a scale it had apparently never seen before.
+Pushing toward the Blue Brain Project's scale~\cite{markram2015reconstruction} turned up a defect entirely separate from the GPU work: five pre-existing linear-scan patterns compounding into $O(n^2)$ model-construction time (Section~3). None is accelerator-specific, so fixing all five benefits any GENESIS/PGENESIS user building a large model, whether or not an accelerator is available.
 
 
 \item Conclusions
