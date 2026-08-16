@@ -142,3 +142,55 @@ cannot yet use the GENESIS accelerator efficiently, because one spikegen per
 `hsolve` forces one solver per cell for spiking networks.
 
 Prepared by Karol Chlasta (karol@chlasta.pl).
+
+## Multi-compartment comparison (2026-08-17)
+
+The Vogels-Abbott comparison above runs on CPU on both sides, because that
+network is spiking and the GENESIS accelerator declines it. For a paper about
+GPU acceleration that leaves the central claim untested across simulators, so
+the same three simulators were run on a model the accelerator does support:
+N neurons, each a linear chain of 16 compartments, HH channels, current
+injection, no synapses.
+
+`hh_multicomp_neuron.py` and `hh_multicomp_arbor.py` reimplement
+`hh_multicompartment_createmap.g` with matching geometry, passive properties,
+conductances, injection and timestep. They are throughput benchmarks: the
+per-compartment per-step arithmetic matches, but no claim is made that the
+three produce identical voltages.
+
+N=10000 (160,000 compartments), K=5000 steps, all on inf03 (Xeon Platinum 8358,
+A100), mean of 3:
+
+| simulator | backend | wall (s) |
+|---|---|---:|
+| GENESIS 2.5 | **GPU** | **1.75 ± 0.08** |
+| CoreNEURON 9.0.2 | CPU | 60.94 ± 0.15 |
+| NEURON 9.0.2 | CPU | 82.82 ± 2.00 |
+| GENESIS 2.5 | CPU | 123.41 ± 1.75 |
+
+Two things worth stating plainly. On CPU the GENESIS solver is 2.02x slower
+than CoreNEURON. The accelerator gives 70.5x end-to-end over the same code on
+the same node, which is a like-for-like measurement, and lands GENESIS 34.8x
+ahead of the fastest CPU competitor -- but that last figure compares a GPU
+against a CPU and must be labelled as such, not presented as a simulator-to-
+simulator result.
+
+### Two silent-fallback traps
+
+**CoreNEURON only takes over for cells registered with `ParallelContext` under a
+gid.** Without that it leaves the run on NEURON's own solver, reports nothing,
+and the only symptom is that the timings match the plain arm exactly (83.6 s
+against 81.9 s here). `bench_multicomp_cross.sh` now greps the output for
+CoreNEURON's own `nrn_setup` line and warns when an arm did not engage.
+
+**The nodes have different CPUs** -- inf02 is a Xeon Gold 6342 at 2.80 GHz,
+inf03 a Xeon Platinum 8358 at 2.60 GHz. Single-threaded arms measured on
+different nodes are not comparable; every figure above is from inf03.
+
+### GPU-to-GPU is still missing
+
+CoreNEURON's GPU path is unreachable here (see
+`softwarex-revision/CORENEURON-GPU-BLOKADA.md`). Arbor 0.10.0 **was** built with
+CUDA successfully on this cluster (`arbor.config()["gpu"] == "cuda"`), since it
+targets CUDA directly rather than through OpenACC; `hh_multicomp_arbor.py` is
+the model for it, written but not yet run.

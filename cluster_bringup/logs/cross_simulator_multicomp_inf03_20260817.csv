@@ -1,0 +1,13 @@
+simulator,backend,node,cpu,gpu,n_neurons,ncomp,total_comps,n_steps,rep,wall_s,note
+GENESIS 2.5,GPU,inf03,Xeon Platinum 8358,NVIDIA A100-PCIE-40GB,10000,16,160000,5000,1,1.84,
+GENESIS 2.5,GPU,inf03,Xeon Platinum 8358,NVIDIA A100-PCIE-40GB,10000,16,160000,5000,2,1.71,
+GENESIS 2.5,GPU,inf03,Xeon Platinum 8358,NVIDIA A100-PCIE-40GB,10000,16,160000,5000,3,1.71,
+GENESIS 2.5,CPU,inf03,Xeon Platinum 8358,,10000,16,160000,5000,1,122.26,
+GENESIS 2.5,CPU,inf03,Xeon Platinum 8358,,10000,16,160000,5000,2,122.57,
+GENESIS 2.5,CPU,inf03,Xeon Platinum 8358,,10000,16,160000,5000,3,125.40,
+CoreNEURON 9.0.2,CPU,inf03,Xeon Platinum 8358,,10000,16,160000,5000,1,61.105,engagement confirmed via nrn_setup output
+CoreNEURON 9.0.2,CPU,inf03,Xeon Platinum 8358,,10000,16,160000,5000,2,60.919,engagement confirmed via nrn_setup output
+CoreNEURON 9.0.2,CPU,inf03,Xeon Platinum 8358,,10000,16,160000,5000,3,60.801,engagement confirmed via nrn_setup output
+NEURON 9.0.2,CPU,inf03,Xeon Platinum 8358,,10000,16,160000,5000,1,84.861,
+NEURON 9.0.2,CPU,inf03,Xeon Platinum 8358,,10000,16,160000,5000,2,80.883,
+NEURON 9.0.2,CPU,inf03,Xeon Platinum 8358,,10000,16,160000,5000,3,82.714,
