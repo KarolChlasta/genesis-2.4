@@ -346,6 +346,34 @@ The two cards are close on the end-to-end measure and the A100's lead is modest,
 
 \textbf{Speedup grows with simulation length.} Model construction is a fixed one-time cost, so end-to-end speedup depends on run length. Sweeping $K$ at fixed $N=5000$ (Fig.~\ref{fig:ksweep}) shows end-to-end speedup rising toward the step-phase ceiling: the accelerator pays off most for the long runs typical of real modeling studies (\path{experiments/data/campaign_ksweep.csv}).
 
+\textbf{The multi-compartment figures are a floor set by the benchmark, not a ceiling set by the kernel.} The sweeps above use $K=200$ ($K=100$ for $N\geq5000$), which at $dt=50\,\mu$s is 5--10\,ms of simulated activity --- short enough that fixed costs dominate both arms. Repeating the measurement at $N=10\,000$ over a range of $K$ (Table~\ref{tab:mcksweep}) separates them: end-to-end speedup rises from $4.3\times$ at $K=200$ to $57.0\pm0.9\times$ at $K=5000$, and step-phase from $13.7\times$ to $116.2\times$. Both grow because the one-time costs they contain --- model construction for the end-to-end figure, buffer setup and the single batched dispatch for the step-phase figure --- are amortized over more steps.
+
+Fitting fixed and marginal costs to the sweep separates them directly: construction is $\approx$1.3\,s on both arms, while the marginal cost of one step is $2.31\times10^{-2}$\,s on the CPU against $1.42\times10^{-4}$\,s on the GPU, a ratio of $163\times$. The device-side profile agrees independently, reporting $140.4\,\mu$s per step for the two tree kernels. The GPU arm reproduces the CPU voltages to $\sim$$10^{-7}$\,V at $K=5000$, the same fidelity as the short runs, so this is amortization rather than skipped work.
+
+We report the short-$K$ figures in Table~\ref{tab:multicomp} because they are what the standing benchmark measures, but they understate what the kernel delivers in any realistic study: a 250\,ms simulation of this population already reaches $57\times$ end-to-end.
+
+\begin{table}[!h]
+\centering
+\small
+\begin{tabular}{|r|r|r|r|}
+\hline
+\textbf{$K$ steps} & \textbf{CPU (s)} & \textbf{GPU (s)} & \textbf{End-to-end} \\
+\hline
+200   & 5.86   & 1.37 & 4.28 $\pm$ 0.12 \\
+\hline
+500   & 13.00  & 1.42 & 9.18 $\pm$ 0.25 \\
+\hline
+1\,000  & 24.87  & 1.49 & 16.73 $\pm$ 0.36 \\
+\hline
+2\,000  & 48.03  & 1.63 & 29.48 $\pm$ 0.91 \\
+\hline
+5\,000  & 116.75 & 2.05 & \textbf{57.01 $\pm$ 0.88} \\
+\hline
+\end{tabular}
+\caption{End-to-end wall clock against simulation length, $N=10\,000$ neurons $\times$ 16 compartments (160\,000 compartments), UMCS A40, mean $\pm$ std over 5 replicates, both arms timed identically. The fixed cost each arm carries --- $\approx$1.3\,s of model construction --- is unchanged across the sweep, so the speedup rises as $K$ grows: at $K=200$ construction is most of the GPU run, at $K=5000$ it is under a tenth of it. Raw data: \protect\path{cluster_bringup/logs/multicomp_ksweep_inf02_A40_20260816.csv}, produced by \protect\path{cluster_bringup/55_multicomp_ksweep.sh}.}
+\label{tab:mcksweep}
+\end{table}
+
 \begin{figure}[!h]
 \centering
 \includegraphics[width=0.8\textwidth]{fig_campaign_ksweep.png}
