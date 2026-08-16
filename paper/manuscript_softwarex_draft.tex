@@ -403,7 +403,7 @@ Because these are independent implementations, equivalence was established rathe
 
 The stock benchmark cannot run under CoreNEURON at all: its channels are ChannelBuilder objects rebuilt inside the interpreter, so CoreNEURON aborts in \texttt{nrn\_setup}. We transcribed them into NMODL, exactly reproducing the published COBAHH rates at $V_T=-63$\,mV, after which CoreNEURON yields a spike train byte-identical to NEURON's. Harness, mechanisms and full method are in \path{cluster_bringup/coreneuron/}.
 
-This comparison establishes a single-core baseline only. CoreNEURON targets GPU and multi-rank MPI execution, and exercises neither here; the GENESIS arm is likewise its CPU arm, since VAnet2 cannot yet use the accelerator efficiently (Section~2.1).
+This comparison establishes a single-core baseline only. CoreNEURON targets GPU and multi-rank MPI execution, and exercises neither here; the GENESIS arm is likewise its CPU arm, since VAnet2 cannot yet use the accelerator efficiently (Section~2.1). We attempted the GPU configuration and could not reach it on this cluster. CoreNEURON offloads through OpenACC, so it needs NVIDIA's compilers: built from source with NVHPC 24.11 and 25.3, NEURON~9.0.2 compiles and links, and our transcribed channels pass its GPU code generator, but the binaries segfault: both code generators, the Python module, and the interpreter on a single passive-soma model. The container route was closed by cluster policy (no subuid range, no GPU container toolkit). We report no GPU figure for CoreNEURON because we could not obtain one we would trust, and note the contrast with the effort the comparison asks of a user: GENESIS~2.5 enables its accelerator with a build flag and a run-time setting.
 
 \begin{table}[!h]
 \centering
