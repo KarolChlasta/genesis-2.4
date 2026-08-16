@@ -30,6 +30,10 @@
 
 %% The amssymb package provides various useful mathematical symbols
 \usepackage{amssymb}
+%% Long code identifiers set in \texttt cannot be hyphenated and overflow the
+%% column. These macros give TeX break opportunities at the underscores.
+\newcommand{\hte}{\texttt{hines\_\allowbreak tree\_\allowbreak eliminate}}
+\newcommand{\ccm}{\texttt{chip\_\allowbreak channel\_\allowbreak multiloop}}
 \usepackage{hyperref}
 \setlength{\parindent}{0pt}
 %% The amsthm package provides extended theorem environments
@@ -81,7 +85,7 @@
 \cortext[cor1]{Corresponding author.}
 
 \begin{abstract}
-GENESIS is a long-established compartmental neural simulator. PGENESIS extends it to MPI execution. We release GENESIS 2.5, an accelerator-enabled extension of GENESIS 2.4/PGENESIS 2.4, adding opt-in OpenCL and CUDA backends for the Hodgkin--Huxley channel-update path while keeping every existing CPU, MPI, model, and SLI-script workflow intact. A batched multi-step GPU kernel reaches $21.0\pm0.3\times$ (NVIDIA A40) and $21.9\pm0.3\times$ (NVIDIA A100) end-to-end wall-clock speedup at $N=50\,000$ single-compartment neurons, matching the fp64 CPU to $\sim10^{-7}$\,V. Speedups are reported end-to-end throughout: both arms are timed identically, so construction, host--device transfers and per-step host work are inside every figure quoted here. This multiloop kernel is exact only for single-compartment (isopotential) neurons. We additionally implement and validate \texttt{hines\_tree\_eliminate}, a GPU tridiagonal (Hines) elimination kernel extending acceleration to real, axially-coupled multi-compartment dendritic trees. One GPU thread per neuron runs the identical elimination the CPU solver does. Measured on UMCS cluster NVIDIA A40/A100 GPUs (10 replicates), it reaches $37.3\times$ (A40) and $80.8\times$ (A100) step-phase speedup at $N=50\,000$ neurons $\times$ 16 compartments, still rising with $N$; end-to-end, where the unaccelerated construction phase bounds the achievable gain at these short run lengths, the same sweep gives $3.6\times$ and $3.9\times$. This kernel accelerates population-scale simulation, parallelizing across neurons rather than within a single tree. Against other simulators, GENESIS~2.5 runs the Vogels--Abbott COBAHH network ($4000$ cells, $5$\,s, matched connectivity, protocol and firing rate) $1.63\pm0.07\times$ faster than CoreNEURON and $2.04\pm0.09\times$ faster than NEURON~9.0.2 on the same node, all arms single-threaded CPU. Pushing this population toward the Blue Brain Project's $\sim$31\,000-neuron microcircuit scale~\cite{markram2015reconstruction} surfaced a latent, GPU-independent $O(n^2)$ model-construction bottleneck. Fixing it restores linear scaling: a 1.7-million-compartment, $N=100\,000$ population now builds in $51.5\pm0.6$\,s, down from not finishing at all, a correctness-preserving fix benefiting any GENESIS/PGENESIS user, independent of accelerator use. We also fix three independent, previously unnoticed Hines-solver defects that silently suppressed \texttt{inject}-driven voltage transients in any multi-neuron \texttt{hsolve} configuration.
+GENESIS is a long-established compartmental neural simulator. PGENESIS extends it to MPI execution. We release GENESIS 2.5, an accelerator-enabled extension of GENESIS 2.4/PGENESIS 2.4, adding opt-in OpenCL and CUDA backends for the Hodgkin--Huxley channel-update path while keeping every existing CPU, MPI, model, and SLI-script workflow intact. A batched multi-step GPU kernel reaches $21.0\pm0.3\times$ (NVIDIA A40) and $21.9\pm0.3\times$ (NVIDIA A100) end-to-end wall-clock speedup at $N=50\,000$ single-compartment neurons, matching the fp64 CPU to $\sim10^{-7}$\,V. Speedups are reported end-to-end throughout: both arms are timed identically, so construction, host--device transfers and per-step host work are inside every figure quoted here. This multiloop kernel is exact only for single-compartment (isopotential) neurons. We additionally implement and validate \hte{}, a GPU tridiagonal (Hines) elimination kernel extending acceleration to real, axially-coupled multi-compartment dendritic trees. One GPU thread per neuron runs the identical elimination the CPU solver does. Measured on UMCS cluster NVIDIA A40/A100 GPUs (10 replicates), it reaches $37.3\times$ (A40) and $80.8\times$ (A100) step-phase speedup at $N=50\,000$ neurons $\times$ 16 compartments, still rising with $N$; end-to-end, where the unaccelerated construction phase bounds the achievable gain at these short run lengths, the same sweep gives $3.6\times$ and $3.9\times$. This kernel accelerates population-scale simulation, parallelizing across neurons rather than within a single tree. Against other simulators, GENESIS~2.5 runs the Vogels--Abbott COBAHH network ($4000$ cells, $5$\,s, matched connectivity, protocol and firing rate) $1.63\pm0.07\times$ faster than CoreNEURON and $2.04\pm0.09\times$ faster than NEURON~9.0.2 on the same node, all arms single-threaded CPU. Pushing this population toward the Blue Brain Project's $\sim$31\,000-neuron microcircuit scale~\cite{markram2015reconstruction} surfaced a latent, GPU-independent $O(n^2)$ model-construction bottleneck. Fixing it restores linear scaling: a 1.7-million-compartment, $N=100\,000$ population now builds in $51.5\pm0.6$\,s, down from not finishing at all, a correctness-preserving fix benefiting any GENESIS/PGENESIS user, independent of accelerator use. We also fix three independent, previously unnoticed Hines-solver defects that silently suppressed \texttt{inject}-driven voltage transients in any multi-neuron \texttt{hsolve} configuration.
 \end{abstract}
 
 \begin{keyword}
@@ -99,7 +103,7 @@ GENESIS \sep PGENESIS \sep OpenCL \sep CUDA \sep GPU acceleration \sep compartme
 \label{}
 
 \begin{table}[!h]
-\begin{tabular}{|l|p{6.5cm}|p{6.5cm}|}
+\begin{tabular}{|l|p{6.0cm}|p{6.0cm}|}
 \hline
 \textbf{Nr.} & \textbf{Code metadata description} & \textbf{Please fill in this column} \\
 \hline
@@ -133,6 +137,20 @@ Compartmental neural simulators remain essential for biophysically detailed mode
 
 Modern workstations increasingly ship capable integrated GPUs, but GENESIS has no accelerator backend: every channel-kinetics update runs on the CPU regardless of available hardware, even though channel updates (per-compartment gating-variable integration) are embarrassingly parallel and GPU-friendly. Existing GENESIS/PGENESIS users have no path to accelerator support without abandoning their models and SLI scripts.
 
+\textbf{Existing accelerated simulators, and what they ask of a user.} Compartmental simulation on GPUs is not new, and the alternatives are mature. NEURON~\cite{hines1997neuron} is the most widely used simulator in this class; CoreNEURON~\cite{kumbhar2019coreneuron} is its optimized compute engine, which strips the interpreter and runs the same models on GPUs through OpenACC, reaching large speedups on multi-rank and multi-GPU systems. Arbor~\cite{arbor2019} was written from scratch for many-core and GPU hardware, with a performance-portable back end and its own model description. For network models of point neurons rather than detailed morphologies, NEST~\cite{gewaltig2007nest} targets large-scale distributed simulation, and Brian~2~\cite{stimberg2019brian} generates code from equations, with GPU execution available through GeNN~\cite{yavuz2016genn}.
+
+Each of these is a strong choice for a new model. None is a path for an existing GENESIS model. CoreNEURON accelerates NEURON's models, not GENESIS's; Arbor and Brian~2 require the model to be re-expressed in their own descriptions; and a GENESIS user's investment is typically in SLI scripts, \texttt{.p} cell files and channel prototypes accumulated over years. Porting is not a mechanical translation --- as this work found, two implementations of the same published benchmark differ enough in channel kinetics and connectivity construction that establishing their equivalence is itself experimental work (Section~3). The gap GENESIS~2.5 addresses is therefore not ``fastest simulator'' but ``acceleration without migration'': the same models and scripts, unchanged, on the hardware the user already has.
+
+\textbf{Contributions.} This work contributes:
+
+\begin{enumerate}
+\item An opt-in OpenCL backend and a CUDA backend for the \texttt{hsolve} channel-update path, behind one entry point, leaving every existing CPU, MPI, model and SLI-script workflow unchanged.
+\item \hte{}, a GPU tridiagonal (Hines~\cite{hines1984efficient}) elimination kernel that extends acceleration from isopotential cells to axially-coupled multi-compartment dendritic trees, running the identical elimination the CPU solver does.
+\item Four defects fixed in the accelerator that produced silently wrong results, and three in the Hines solver itself that suppressed \texttt{inject}-driven voltage transients in any multi-neuron \texttt{hsolve} --- the latter independent of GPU use and therefore affecting existing GENESIS users.
+\item A latent $O(n^2)$ model-construction bottleneck, unrelated to accelerator support, reduced to linear; populations that previously did not finish building now do so in under a minute.
+\item A head-to-head evaluation against NEURON and CoreNEURON on a published network model, with the equivalence of the two implementations established rather than assumed, and a benchmarking protocol in which both arms are timed identically throughout.
+\end{enumerate}
+
 GENESIS 2.5 closes this gap: GENESIS 2.4/PGENESIS 2.4 plus an OpenCL backend for the \texttt{hsolve} channel-update path, and a CUDA backend on the same interface (a faithful fp32 port, validated on UMCS cluster NVIDIA A100/A40 nodes; Section~3). No existing CPU, MPI, model, or SLI-script workflow needs to change. While validating this backend we additionally found and fixed three independent solver defects in \texttt{hines\_solve.c}/\texttt{hines\_init.c} affecting any multi-neuron \texttt{hsolve} configuration: current injection (\texttt{inject}) silently failed to produce a voltage response prior to the fix, which would have invalidated any dynamics-comparing benchmark and may have affected unrelated multi-neuron \texttt{hsolve} models elsewhere.
 
 Why a GPU helps here at all is specific to the workload. In a Hodgkin--Huxley model the per-compartment gating-variable integration is the dominant cost, and it is embarrassingly parallel: each compartment's channel state advances from its own voltage and its own table lookups, with no coupling to any other compartment within the step. The state involved is small and the arithmetic intensity low, so the work maps onto thousands of lightweight threads without the memory pressure that limits many scientific kernels. This is why the channel-update path, rather than the tridiagonal solve, is the natural first target.
@@ -148,12 +166,12 @@ We name this release ``2.5'' rather than ``3.0'' deliberately: ``GENESIS 3''~\ci
 
     GENESIS 2.5 keeps the existing GENESIS/PGENESIS architecture (SLI interpreter, \texttt{hsolve} fast compartmental solver, PGENESIS MPI partitioning) unmodified and adds one new component: an OpenCL backend invoked from \texttt{hsolve} when an attached \texttt{hsolve} element uses \texttt{chanmode=4} (or 5) with real ion-channel state. Two dispatch modes are implemented in \texttt{ocl\_hsolve.c} against \path{genesis/src/hines/opencl/ocl_channel.cl}:
     \begin{itemize}
-        \item \emph{Per-step dispatch} (\texttt{ocl\_chip\_update}): one {\small\texttt{clEnqueueNDRangeKernel}} call per simulation step, with channel state uploaded and downloaded every step.
-        \item \emph{Multiloop dispatch} (\texttt{chip\_channel\_multiloop}, via \path{GENESIS_OCL_MULTILOOP=<K>}): a single kernel dispatch runs all $K$ steps in an inner GPU-side loop, amortizing the per-step PCIe transfer cost that otherwise dominates wall time (Section~3).
+        \item \emph{Per-step dispatch} (\texttt{ocl\_chip\_update}): one {\small\texttt{clEnqueue\allowbreak NDRange\allowbreak Kernel}} call per simulation step, with channel state uploaded and downloaded every step.
+        \item \emph{Multiloop dispatch} (\ccm{}, via \path{GENESIS_OCL_MULTILOOP=<K>}): a single kernel dispatch runs all $K$ steps in an inner GPU-side loop, amortizing the per-step PCIe transfer cost that otherwise dominates wall time (Section~3).
     \end{itemize}
     Device attribution and dispatch are confirmed at run time: the command queue uses {\small\path{CL_QUEUE_PROFILING_ENABLE}}, and every accelerator run emits a non-empty \texttt{OCL PROFILING SUMMARY}; this guards against an \texttt{hsolve} with no attached channels never reaching the kernel, and against a kernel that fails to build silently falling back to CPU. The channel kernel is built in \texttt{float} (fp32), so it runs on runtimes exposing no fp64 support (Mesa rusticl on the AMD Radeon 890M used here); the rest of \texttt{hsolve} remains \texttt{double}, with conversion only at the buffer boundary.
 
-    Both dispatch modes update each compartment independently, exact only for single-compartment (isopotential) neurons: a real dendritic tree's compartments are coupled through axial resistance, solved on the CPU by \texttt{hsolve} as a compiled bytecode program performing a bottom-up/top-down Gaussian elimination over the tree's tridiagonal system once per step. We add a third kernel, \texttt{hines\_tree\_eliminate} (\path{ocl_channel.cl}; CUDA port in \path{cuda/cuda_channel.cuh}), executing this identical bytecode on the GPU, one thread per disconnected tree (neuron), operating on the same flat opcode/coefficient arrays the CPU solver already builds at \texttt{SETUP} time. Because independent trees never reference each other's rows (the combined program is block-diagonal), threads need no synchronization. The channel and elimination kernels dispatch back to back on the same queue/stream, so the $K$-step batch still uploads and downloads state once. \path{ocl_hsolve.c}/\path{cuda_hsolve.c} select this path whenever the \texttt{hsolve} contains a multi-compartment tree, leaving the original kernel for single-compartment networks.
+    Both dispatch modes update each compartment independently, exact only for single-compartment (isopotential) neurons: a real dendritic tree's compartments are coupled through axial resistance, solved on the CPU by \texttt{hsolve} as a compiled bytecode program performing a bottom-up/top-down Gaussian elimination over the tree's tridiagonal system once per step. We add a third kernel, \hte{} (\path{ocl_channel.cl}; CUDA port in \path{cuda/cuda_channel.cuh}), executing this identical bytecode on the GPU, one thread per disconnected tree (neuron), operating on the same flat opcode/coefficient arrays the CPU solver already builds at \texttt{SETUP} time. Because independent trees never reference each other's rows (the combined program is block-diagonal), threads need no synchronization. The channel and elimination kernels dispatch back to back on the same queue/stream, so the $K$-step batch still uploads and downloads state once. \path{ocl_hsolve.c}/\path{cuda_hsolve.c} select this path whenever the \texttt{hsolve} contains a multi-compartment tree, leaving the original kernel for single-compartment networks.
 
     \item Software functionalities
 
@@ -164,12 +182,12 @@ We name this release ``2.5'' rather than ``3.0'' deliberately: ``GENESIS 3''~\ci
         \item Device-side dispatch confirmation (\texttt{OCL}/\texttt{CUDA PROFILING SUMMARY}) distinguishing a genuine GPU run from CPU fallback.
         \item A driven-spiking benchmark (\path{hh_spiking_benchmark.g}): $N$ Hodgkin--Huxley neurons under one \texttt{hsolve}, driven suprathreshold to fire action-potential trains, exercising the repaired \texttt{inject} path.
         \item Three corrected Hines-solver defects (forward-elimination fast-path guard, backward-elimination root handling, \path{SET_DIAG}/\path{SKIP_DIAG} row selection) giving correct, independent per-neuron voltage dynamics under current injection, independent of GPU support.
-        \item A GPU tridiagonal (Hines) elimination kernel, \texttt{hines\_tree\_eliminate} (OpenCL and CUDA), extending acceleration to real, axially-coupled multi-compartment dendritic trees (Section~3).
+        \item A GPU tridiagonal (Hines) elimination kernel, \hte{} (OpenCL and CUDA), extending acceleration to real, axially-coupled multi-compartment dendritic trees (Section~3).
         \item Five corrected $O(n^2)$ model-construction defects in core GENESIS element-creation, path-resolution, and \texttt{hsolve} SETUP code, restoring linear-time construction independent of GPU support (Section~3).
     \end{itemize}
 \end{enumerate}
 
-The tridiagonal (Hines) elimination kernel is what decides whether any of this reaches realistic morphologies. Accelerating channel updates alone leaves the axial coupling between compartments on the CPU, so a multi-compartment model gains little: the solve becomes the bottleneck as soon as the channel work is removed from it. \texttt{hines\_tree\_eliminate} moves that solve onto the device as well, running the identical elimination the CPU performs, one thread per neuron. The consequence is a change in kind rather than degree --- acceleration stops being limited to isopotential point-neuron networks and applies to populations of real dendritic trees, which is the regime Section~3 measures.
+The tridiagonal (Hines) elimination kernel is what decides whether any of this reaches realistic morphologies. Accelerating channel updates alone leaves the axial coupling between compartments on the CPU, so a multi-compartment model gains little: the solve becomes the bottleneck as soon as the channel work is removed from it. \hte{} moves that solve onto the device as well, running the identical elimination the CPU performs, one thread per neuron. The consequence is a change in kind rather than degree --- acceleration stops being limited to isopotential point-neuron networks and applies to populations of real dendritic trees, which is the regime Section~3 measures.
 
 \item Illustrative examples
 
@@ -181,6 +199,7 @@ Table~\ref{tab:multiloop_fp32} and Fig.~\ref{fig:multiloop_speedup} report the r
 
 \begin{table}[!h]
 \centering
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{|r|r|r|r|r|r|}
 \hline
 \textbf{$N$} & \textbf{CPU step} & \textbf{GPU step} & \textbf{Step-phase} & \textbf{Step-phase} & \textbf{Throughput} \\
@@ -246,7 +265,7 @@ The speedup grows with network size rather than peaking as the integrated GPU do
 \label{tab:cuda}
 \end{table}
 
-\textbf{Multi-compartment GPU acceleration.} The multiloop kernel above is exact only for single-compartment (isopotential) neurons: for a real dendritic tree it silently drops all axial coupling. \texttt{hines\_tree\_eliminate} (Section~2.1) performs this elimination on-device, dispatched whenever the \texttt{hsolve} contains a multi-compartment tree.
+\textbf{Multi-compartment GPU acceleration.} The multiloop kernel above is exact only for single-compartment (isopotential) neurons: for a real dendritic tree it silently drops all axial coupling. \hte{} (Section~2.1) performs this elimination on-device, dispatched whenever the \texttt{hsolve} contains a multi-compartment tree.
 
 \emph{Correctness.} \path{hh_multicompartment_benchmark.g} (linear-chain) and \path{hh_branching_multicompartment_benchmark.g} (branching, exercising sibling-array opcodes) compare GPU (chanmode~4) against CPU (chanmode~1, fp64) across \texttt{NCOMP}\,$=1$--$32$, up to 4 branches, and up to $N=10\,000$ neurons: agreement is $\sim10^{-7}$\,V, matching single-compartment fidelity. One narrow topology is known not to be handled: a single-compartment branch directly off a branch point --- a row that is simultaneously a leaf and has siblings --- and only in the first tree built, which is the one covered by the kernel's bootstrap special case. Trees beyond the first pass with the identical shape, which isolates the fault to that bootstrap's seed-row assumption rather than to the elimination itself. The shape does not arise in GENESIS dendrite models, where a branch that extends no further is simply an odd way of modelling the soma. It had been documented as a limitation but not enforced, so a model containing it was accelerated and returned wrong voltages silently; both backends now detect the shape when the accelerator initialises for an \texttt{hsolve}, decline that \texttt{hsolve} and compute it on the CPU with a message, on the same pattern used for unsupported opcodes.
 
@@ -256,7 +275,7 @@ We report two figures per card, because they answer different questions. The \em
 
 The two cards are close on the end-to-end measure and the A100's lead is modest, even though it leads the A40 by more than $2\times$ on the step phase --- the opposite ordering from the single-compartment kernel (Table~\ref{tab:cuda}). This is consistent with an fp32 kernel that uses no tensor cores: at $N=50\,000$ the GPU phases take $7.83$\,s (A40) and $8.06$\,s (A100), so once construction is included the two cards are nearly indistinguishable. Raw data: \protect\path{cluster_bringup/logs/weekend_campaign_inf02_A40_20260816_clean.csv}, \protect\path{..._inf03_A100_20260816_clean.csv} (step-phase), and \protect\path{cluster_bringup/logs/multicomp_walltime_createmap_*_clean.csv} (end-to-end).
 
-\emph{Parallelization granularity.} \texttt{hines\_tree\_eliminate} assigns one GPU thread per tree, so speedup comes from spreading many neurons across threads, not from parallelizing elimination \emph{within} a tree. For a single detailed morphology alone ($N=1$), only one thread is active: measured directly (AMD Radeon~890M), the kernel is $\sim$20--21$\times$ \emph{slower} than the CPU at \texttt{NCOMP}\,$=2000$ and $8000$, stable with tree size as expected for a single-thread bottleneck. The kernel therefore accelerates population-scale simulation (Table~\ref{tab:multicomp}), not the single-detailed-cell regime.
+\emph{Parallelization granularity.} \hte{} assigns one GPU thread per tree, so speedup comes from spreading many neurons across threads, not from parallelizing elimination \emph{within} a tree. For a single detailed morphology alone ($N=1$), only one thread is active: measured directly (AMD Radeon~890M), the kernel is $\sim$20--21$\times$ \emph{slower} than the CPU at \texttt{NCOMP}\,$=2000$ and $8000$, stable with tree size as expected for a single-thread bottleneck. The kernel therefore accelerates population-scale simulation (Table~\ref{tab:multicomp}), not the single-detailed-cell regime.
 
 \begin{table}[!h]
 \centering
@@ -383,7 +402,11 @@ We report the short-$K$ figures in Table~\ref{tab:multicomp} because they are wh
 
 \textbf{Reproducing the PGENESIS scaling result.} The existing MPI path is unaffected; a strong-scaling sweep ($N=2400$ HH neurons, $P=1$--$24$ ranks, 12-core/24-thread host) gives near-ideal scaling at $P=2$ ($E_P=0.95$), an efficiency knee near $P\approx5$, and a recommended $P=4$--$8$ ($3.1$--$4.0\times$, 50--78\% efficiency) for this problem size.
 
-\textbf{Head-to-head against NEURON and CoreNEURON.} The speedups above are internal (GPU vs.\ CPU within GENESIS) and say nothing about how GENESIS compares with other simulators. We therefore ran the Vogels--Abbott COBAHH network~\cite{vogels2005signal,brette2007simulation} in GENESIS (\path{Scripts/VAnet2}) and in the reference NEURON implementation (ModelDB~83319, \path{NEURON/cobahh}) on the same cluster node, all arms single-threaded on CPU (Table~\ref{tab:coreneuron}). GENESIS~2.5 completes the 5.0\,s simulation in $46.9\pm2.1$\,s, $1.63\pm0.07\times$ faster than CoreNEURON and $2.04\pm0.09\times$ faster than NEURON~9.0.2. CoreNEURON is in turn $1.25\times$ faster than NEURON~9.0.2, the expected ordering, which indicates the CoreNEURON arm is configured correctly rather than accidentally handicapped.
+\textbf{Head-to-head against NEURON and CoreNEURON.} The speedups above are internal (GPU vs.\ CPU within GENESIS) and say nothing about how GENESIS compares with other simulators. We therefore ran the Vogels--Abbott COBAHH network~\cite{vogels2005signal,brette2007simulation} in GENESIS (\path{Scripts/VAnet2}) and in the reference NEURON implementation (ModelDB~83319, \path{NEURON/cobahh}) on the same cluster node, all arms single-threaded on CPU (Table~\ref{tab:coreneuron}). GENESIS~2.5 completes the 5.0\,s simulation in $46.9\pm2.1$\,s, $1.63\pm0.07\times$ faster than CoreNEURON and $2.04\pm0.09\times$ faster than NEURON~9.0.2. In throughput terms the run advances $4\times10^{8}$ neuron-steps, so GENESIS sustains $8.5\times10^{6}$ neuron-steps/s against $5.2\times10^{6}$ for CoreNEURON and $4.2\times10^{6}$ for NEURON.
+
+This ordering is worth stating plainly, because it is not the one a reader would assume. CoreNEURON exists specifically to make NEURON models run faster: it discards the interpreter, rebuilds the data layout for cache efficiency and vectorisation, and is the engine used for NEURON's largest published simulations. GENESIS~2.5, by contrast, is a 2.4-era codebase with an accelerator added to one path, and the arm measured here does not use that accelerator at all --- it is the plain CPU solver. That it still finishes the same network in two thirds of CoreNEURON's time indicates that GENESIS's tabulated-channel CPU solver is competitive with a purpose-built optimised engine, which is not a claim the previous version of this manuscript was in a position to make.
+
+CoreNEURON is in turn $1.25\times$ faster than NEURON~9.0.2, the expected ordering, which indicates the CoreNEURON arm is configured correctly rather than accidentally handicapped.
 
 Because these are independent implementations of one benchmark, equivalence was established rather than assumed. Both networks have 4000 single-compartment cells (3200 excitatory, 800 inhibitory) and 80 synapses per cell; both are driven externally for the first 50\,ms only and then run on recurrent activity alone; both use $dt=0.05$\,ms for 5.0\,s. Critically, both settle into the same dynamical regime --- $26.8$\,Hz mean firing rate in GENESIS (536\,600 spikes) against $27.9$\,Hz in NEURON (558\,824), a 4\% difference --- so neither is doing materially less synaptic work than the other. Measuring the GENESIS rate required instrumenting every spikegen: the benchmark records membrane potential from three cells, two of which lie on the edge and corner of the grid where distance-dependent connectivity leaves them underconnected, and they fire at $7.6$ and $0.6$\,Hz against $15.8$\,Hz centrally.
 
@@ -419,7 +442,7 @@ Full replication steps and raw data are in \path{paper/docs/REPLICATION.md} and 
 
 GENESIS/PGENESIS users with channel-kinetics-heavy models now have a path to GPU acceleration (Section~3) without migrating models, SLI scripts, or MPI workflows. That is the principal barrier an architecturally different successor such as MOOSE would otherwise impose. The three Hines-solver defects fixed along the way (Section~2) are independent of GPU support and affect any multi-neuron \texttt{hsolve} configuration: before the fix, \texttt{inject}-driven voltage transients were silently suppressed for every neuron but the first, with no error raised. That defect predates this release and is now fixed for any multi-neuron \texttt{hsolve} user, whether or not they use an accelerator.
 
-Bringing up the accelerator backends surfaced four confounds: a GUI-linked binary, a benchmark that never dispatches to the kernel, CPU-timer semantics that overstate GPU-blocked wait as compute, and an off-by-one \texttt{argc} guard. Each produced a false reading at some point, and the wall-clock protocol built to catch them should generalize to any future GENESIS accelerator backend. On the UMCS cluster this scaled to 10-replicate statistical rigor for both kernels (Tables~\ref{tab:cuda}, \ref{tab:multicomp}), the multi-generation GPU comparison the cluster access was meant to provide. The dominant early cost was a broken $O(N)$ scheduler loop leaving neurons $2\ldots N$ unabsorbed and re-scheduled every step; fixing it is what makes Section~3's numbers possible. A further, structural limit remained: the multiloop kernel updates each compartment independently, so it only works for single-compartment networks. \texttt{hines\_tree\_eliminate} (Section~2.1, Section~3) closes that gap for population-scale simulation, parallelizing across neurons rather than within one tree.
+Bringing up the accelerator backends surfaced four confounds: a GUI-linked binary, a benchmark that never dispatches to the kernel, CPU-timer semantics that overstate GPU-blocked wait as compute, and an off-by-one \texttt{argc} guard. Each produced a false reading at some point, and the wall-clock protocol built to catch them should generalize to any future GENESIS accelerator backend. On the UMCS cluster this scaled to 10-replicate statistical rigor for both kernels (Tables~\ref{tab:cuda}, \ref{tab:multicomp}), the multi-generation GPU comparison the cluster access was meant to provide. The dominant early cost was a broken $O(N)$ scheduler loop leaving neurons $2\ldots N$ unabsorbed and re-scheduled every step; fixing it is what makes Section~3's numbers possible. A further, structural limit remained: the multiloop kernel updates each compartment independently, so it only works for single-compartment networks. \hte{} (Section~2.1, Section~3) closes that gap for population-scale simulation, parallelizing across neurons rather than within one tree.
 
 The accelerator is deliberately scoped, and the scope is worth stating precisely rather than leaving to be discovered. Both kernels interpret the \texttt{hsolve} opcode program directly and implement the five opcodes a Hodgkin--Huxley \texttt{tabchannel} model driven by current injection produces. Compartments needing anything else --- synaptic channels, a \texttt{spike} element, GHK, calcium concentration pools --- are detected at \texttt{SETUP} and computed on the CPU, the accelerator declining that \texttt{hsolve} and reporting why. Validating this on a published network model exposed a fourth latent defect: the detection existed but its result was never consulted, so such compartments were dispatched to a kernel that mis-parses their opcode stream, giving wrong voltages from the first step with no error raised. It affected none of the benchmarks reported here, since none uses those elements; it affects any real network model that does. The check is now enforced, and the boundary it enforces is the honest statement of what this release accelerates.
 
@@ -428,11 +451,23 @@ Pushing toward the Blue Brain Project's scale~\cite{markram2015reconstruction} t
 
 \item Conclusions
 
-GENESIS 2.5 adds opt-in OpenCL and CUDA acceleration to GENESIS 2.4/PGENESIS 2.4 for Hodgkin--Huxley \texttt{tabchannel} models, without changes to model files, SLI scripts, or MPI workflows (Section~3 reports speedup and fidelity for both integrated-GPU and cluster-class hardware). Beyond the single-compartment multiloop kernel, \texttt{hines\_tree\_eliminate} extends acceleration to axially-coupled multi-compartment trees at population scale; the single-detailed-cell regime is not helped by this design, which we measure and report rather than omit.
+GENESIS 2.5 adds opt-in OpenCL and CUDA acceleration to GENESIS 2.4/PGENESIS 2.4 for Hodgkin--Huxley \texttt{tabchannel} models, without changes to model files, SLI scripts, or MPI workflows (Section~3 reports speedup and fidelity for both integrated-GPU and cluster-class hardware). Beyond the single-compartment multiloop kernel, \hte{} extends acceleration to axially-coupled multi-compartment trees at population scale; the single-detailed-cell regime is not helped by this design, which we measure and report rather than omit.
 
 The release also carries four correctness fixes independent of accelerator use, benefiting any GENESIS/PGENESIS user. Three are latent Hines-solver defects that silently suppressed \texttt{inject}-driven voltage transients in any multi-neuron \texttt{hsolve}. The fourth is in the accelerator dispatch itself: compartments using opcodes the kernels do not implement were sent to the GPU anyway, producing silently wrong results; they are now detected and computed on the CPU. Separately, five pre-existing linear-scan patterns compounding into $O(n^2)$ model-construction time are fixed, restoring linear scaling and making population-scale models buildable at all.
 
-Development continues along three lines: intra-tree parallelism (e.g.\ cyclic reduction) for the single-detailed-cell regime; extending kernel opcode coverage so synaptically coupled networks are accelerated rather than declined; and batching dispatch across \texttt{hsolve} elements, which the common one-solver-per-cell idiom currently defeats. Packaging into a container-based on-premise/cloud deployment pipeline~\cite{chlasta2023pipeline} is in progress.
+Measured against other simulators on a published network model, GENESIS~2.5 is $1.63\pm0.07\times$ faster than CoreNEURON and $2.04\pm0.09\times$ faster than NEURON~9.0.2 for single-threaded CPU execution of the Vogels--Abbott COBAHH benchmark, with the equivalence of the two implementations established rather than assumed (Section~3).
+
+\textbf{Future work.} Four directions follow directly from the limits measured here, in what we judge to be descending order of value to users.
+
+\emph{Scale.} The kernel assigns one thread per tree, so it accelerates population-scale simulation and not the single detailed cell, where only one thread is active and the GPU is $\sim$20$\times$ slower than the CPU. Intra-tree parallelism --- cyclic reduction or a comparable parallel tridiagonal scheme --- would extend acceleration to the detailed-morphology regime that much of the compartmental-modelling literature works in. This is the dimension along which the present design is furthest from complete.
+
+\emph{Coverage.} Synaptically coupled networks are currently declined rather than accelerated, because the kernels implement only the opcodes a \texttt{tabchannel} model driven by current injection produces. Extending coverage to synaptic channels, spike generators and concentration pools would bring the accelerator to the models most GENESIS users actually run. A structural obstacle sits behind this: GENESIS associates one spike generator with each \texttt{hsolve}, so a spiking network is built as one solver per cell, and per-solver dispatch overhead then dominates. Batching dispatch across \texttt{hsolve} elements is the corresponding fix, and it interacts with event ordering, since a spike raised inside a batch cannot reach another cell's synapses before the batch ends.
+
+\emph{Comparison.} The head-to-head reported here is single-threaded CPU on one node. CoreNEURON is designed for GPU and multi-rank MPI execution, and Arbor for many-core hardware; a comparison across those configurations, and against Arbor on a network reimplemented with the same care taken here, would place GENESIS~2.5 more completely.
+
+\emph{Precision.} The kernels are fp32 throughout, which is what lets them run on integrated GPUs lacking double precision, and which costs $\sim$10$^{-7}$\,V against the fp64 CPU over the runs measured. Whether that divergence stays bounded over the much longer runs used in plasticity or development studies is not established here and should be characterised before such models rely on it.
+
+Packaging into a container-based on-premise/cloud deployment pipeline~\cite{chlasta2023pipeline} is in progress.
 
 \end{enumerate}
 
@@ -510,6 +545,31 @@ CoreNEURON: An Optimized Compute Engine for the NEURON Simulator.
 Markram~H, Muller~E, Ramaswamy~S, et al.
 Reconstruction and Simulation of Neocortical Microcircuitry.
 \textit{Cell} 2015, 163(2):456--492. doi:10.1016/j.cell.2015.09.029.
+
+\bibitem{hines1984efficient}
+Hines~M.
+Efficient computation of branched nerve equations.
+\textit{International Journal of Bio-Medical Computing} 1984, 15(1):69--76. doi:10.1016/0020-7101(84)90008-4.
+
+\bibitem{hines1997neuron}
+Hines~ML, Carnevale~NT.
+The NEURON Simulation Environment.
+\textit{Neural Computation} 1997, 9(6):1179--1209. doi:10.1162/neco.1997.9.6.1179.
+
+\bibitem{gewaltig2007nest}
+Gewaltig~M-O, Diesmann~M.
+NEST (NEural Simulation Tool).
+\textit{Scholarpedia} 2007, 2(4):1430. doi:10.4249/scholarpedia.1430.
+
+\bibitem{stimberg2019brian}
+Stimberg~M, Brette~R, Goodman~DFM.
+Brian~2, an intuitive and efficient neural simulator.
+\textit{eLife} 2019, 8:e47314. doi:10.7554/eLife.47314.
+
+\bibitem{yavuz2016genn}
+Yavuz~E, Turner~J, Nowotny~T.
+GeNN: a code generation framework for accelerated brain simulations.
+\textit{Scientific Reports} 2016, 6:18854. doi:10.1038/srep18854.
 
 \bibitem{vogels2005signal}
 Vogels~TP, Abbott~LF.
