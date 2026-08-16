@@ -24,7 +24,21 @@ LC_SCRIPT="genesis/Scripts/benchmark/hh_multicompartment_benchmark.g"
 BR_SCRIPT="genesis/Scripts/benchmark/hh_branching_multicompartment_benchmark.g"
 
 export LD_LIBRARY_PATH="/storage/opt/cuda/cuda-12.8/lib64:${LD_LIBRARY_PATH:-}"
+# Without this the tree multiloop refuses any hsolve over 20000 compartments
+# and silently falls back to per-step dispatch, which measures a different code
+# path entirely -- at N=50000 that alone looks like a 3-7x GPU slowdown.
 export GENESIS_OCL_TREE_MAX_NCOMPTS=0   # real cluster HW, no iGPU cap needed
+
+# Refuse to measure on a card someone else is using: a foreign job once inflated
+# every GPU time in the companion wall-clock sweep by ~30% while leaving the CPU
+# arm untouched, and the contention was steady enough that the curve still looked
+# smooth and monotonic. Set ALLOW_BUSY_GPU=1 to override deliberately.
+USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null | head -1)
+if [ "${ALLOW_BUSY_GPU:-0}" != "1" ] && [ -n "$USED" ] && [ "$USED" -gt 500 ]; then
+    echo "ERROR: $USED MiB already allocated on $GPU -- timings would be inflated." >&2
+    echo "       Wait for the card, or set ALLOW_BUSY_GPU=1 if that is intended." >&2
+    exit 1
+fi
 
 echo "node,gpu,topology,ncomp_per_neuron,n_neurons,total_comps,mode,rep,t_per_step_s" > "$OUT"
 echo "Weekend campaign on $NODE ($GPU) -> $OUT"

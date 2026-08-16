@@ -88,3 +88,13 @@ cluster/
 # master's history 2026-07-27 ahead of making this repo public -- must stay
 # untracked here.
 liquid/
+
+# Journal submission material: the editor-facing PDFs and, critically, the
+# reviewer reports for SOFTX-D-26-00952. These are correspondence about the
+# work, not the work, and the reports are the reviewers' text rather than ours.
+# The manuscript source and its built PDF stay tracked; these do not.
+paper/SoftwareX/
+paper/SOFTX-*.pdf
+paper/declarationStatement.docx
+paper/drafts/
+*.pdf.bak
