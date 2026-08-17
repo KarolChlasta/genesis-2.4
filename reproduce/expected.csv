@@ -1,0 +1,17 @@
+claim,table,metric,expected,tolerance_pct,units,notes
+correctness_fp32,text,max_abs_vm_diff,1.0e-7,100,V,fp32 GPU against fp64 CPU; order of magnitude is the claim
+singlecomp_a40,tab:cuda,end_to_end_speedup,21.0,20,x,N=50000 single-compartment K=50000
+singlecomp_a100,tab:cuda,end_to_end_speedup,21.9,20,x,N=50000 single-compartment K=50000
+multicomp_stepphase_a40,tab:multicomp,step_phase_speedup,37.3,20,x,N=50000 x 16 comp
+multicomp_stepphase_a100,tab:multicomp,step_phase_speedup,80.8,20,x,N=50000 x 16 comp
+multicomp_e2e_a40,tab:multicomp,end_to_end_speedup,3.62,20,x,N=50000 x 16 comp K=200
+multicomp_e2e_a100,tab:multicomp,end_to_end_speedup,3.90,20,x,N=50000 x 16 comp K=200
+ksweep_k5000,tab:mcksweep,end_to_end_speedup,57.0,20,x,N=10000 x 16 comp K=5000 A40
+vanet2_genesis,tab:coreneuron,wall_s,46.9,25,s,Vogels-Abbott 4000 cells 5 s single-thread CPU
+vanet2_coreneuron,tab:coreneuron,wall_s,76.5,25,s,same model under CoreNEURON
+vanet2_neuron,tab:coreneuron,wall_s,95.8,25,s,same model under NEURON 9.0.2
+crossover_genesis_k5000,tab:mccross,wall_s,1.75,25,s,N=10000 x 16 comp GPU A100
+crossover_genesis_k50000,tab:mccross,wall_s,4.66,25,s,N=10000 x 16 comp GPU A100
+crossover_arbor_k5000,tab:mccross,wall_s,1.56,25,s,Arbor GPU A100
+crossover_arbor_k50000,tab:mccross,wall_s,5.92,25,s,Arbor GPU A100
+crossover_k,fig:crossover,steps,11100,35,steps,where the two GPU lines cross

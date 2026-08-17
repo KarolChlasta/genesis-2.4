@@ -179,12 +179,20 @@ dead ends, is in
 
 ## Reproducing the benchmarks
 
-[`paper/docs/REPLICATION.md`](paper/docs/REPLICATION.md) walks through every build and
-run step behind the paper's numbers, including the confounds that had to be
-ruled out first (a GUI-linked comparison binary, a benchmark that never
-actually dispatches to the kernel, a CPU timer that overstates GPU-blocked
-wait as compute). [`cluster_bringup/`](cluster_bringup/) has the scripts we
-used to run the multi-replicate campaigns on cluster GPUs end to end.
+One command re-measures every number in the paper on your own hardware:
+
+```sh
+sh reproduce/run_all.sh --quick   # ~15 min, the accelerator claims
+sh reproduce/run_all.sh           # ~90 min, adds the full sweeps
+```
+
+It builds, checks the fp32 accelerator against the fp64 CPU solver, measures the
+speedups, regenerates the figures from those measurements, and prints each
+published value beside yours with a verdict. Needs a CUDA 12.x toolkit and an
+NVIDIA GPU; no root, no scheduler. See
+[`reproduce/README.md`](reproduce/README.md) for what is checked, what merely
+follows from it, and the three things that move timings enough to matter.
+
 
 ## Why "2.5" and not "3.0"
 
