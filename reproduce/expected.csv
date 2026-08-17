@@ -14,4 +14,4 @@ crossover_genesis_k5000,tab:mccross,wall_s,1.75,25,s,N=10000 x 16 comp GPU A100
 crossover_genesis_k50000,tab:mccross,wall_s,4.66,25,s,N=10000 x 16 comp GPU A100
 crossover_arbor_k5000,tab:mccross,wall_s,1.56,25,s,Arbor GPU A100
 crossover_arbor_k50000,tab:mccross,wall_s,5.92,25,s,Arbor GPU A100
-crossover_k,fig:crossover,steps,11100,35,steps,where the two GPU lines cross
+crossover_k,fig:crossover,steps,7600,35,steps,where the two GPU lines cross
