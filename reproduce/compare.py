@@ -12,18 +12,19 @@ lands outside tolerance is worth looking into, not automatically a failure of
 the software.
 """
 
-from __future__ import annotations
-
+# Deliberately plain Python: no annotations, no f-string niceties beyond 3.6,
+# no third-party imports. A reviewer's cluster may ship python3.6, and a
+# reproduction pack that needs its own toolchain installed first is not one.
 import csv
 import sys
-from pathlib import Path
+import os
 
 
-def load_measured(path: Path) -> dict[str, tuple[float, str]]:
-    out: dict[str, tuple[float, str]] = {}
-    if not path.exists():
+def load_measured(path):
+    out = {}
+    if not os.path.exists(path):
         return out
-    with path.open(newline="", encoding="utf-8") as f:
+    with open(path, newline="") as f:
         for row in csv.DictReader(f):
             try:
                 out[row["claim"]] = (float(row["measured"]), row.get("units", ""))
@@ -32,15 +33,15 @@ def load_measured(path: Path) -> dict[str, tuple[float, str]]:
     return out
 
 
-def main() -> int:
+def main():
     if len(sys.argv) != 3:
         print("usage: compare.py <summary.csv> <expected.csv>", file=sys.stderr)
         return 2
-    measured = load_measured(Path(sys.argv[1]))
-    expected_path = Path(sys.argv[2])
+    measured = load_measured(sys.argv[1])
+    expected_path = sys.argv[2]
 
     rows, checked, passed, missing = [], 0, 0, 0
-    with expected_path.open(newline="", encoding="utf-8") as f:
+    with open(expected_path, newline="") as f:
         for e in csv.DictReader(f):
             claim = e["claim"]
             exp = float(e["expected"])

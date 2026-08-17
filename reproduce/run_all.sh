@@ -45,6 +45,14 @@ echo "claim,measured,units" > "$SUMMARY"
 
 say() { printf '\n=== %s ===\n' "$1"; }
 
+# compare.py runs on python3.6; the plotting scripts need matplotlib and a
+# newer Python. Pick the best available rather than assuming one.
+PY=python3
+for c in python3.12 python3.11 python3.10 python3.9 python3; do
+    command -v "$c" >/dev/null 2>&1 || continue
+    if "$c" -c "import matplotlib" 2>/dev/null; then PY=$c; break; fi
+done
+
 # ---------------------------------------------------------------- environment
 say "environment"
 uname -srm
@@ -111,13 +119,15 @@ fi
 # same scripts that made the paper's, reading the CSVs just produced, so a
 # reviewer gets the paper's plots drawn from their own hardware.
 say "figures from the measurements just taken"
-if python3 -c "import matplotlib" 2>/dev/null; then
+if "$PY" -c "import matplotlib" 2>/dev/null; then
     for s in plot_crossover.py plot_multicompartment_sweep.py; do
         [ -f "paper/scripts/$s" ] || continue
-        python3 "paper/scripts/$s" 2>&1 | tail -1 || echo "  $s: skipped (needs its full sweep)"
+        "$PY" "paper/scripts/$s" 2>&1 | tail -1 || echo "  $s: skipped (needs its full sweep)"
     done
 else
-    echo "matplotlib not installed; skipping figures (numbers are unaffected)"
+    echo "no Python with matplotlib found; skipping figures."
+    echo "The numbers above are unaffected. To draw them: pip install matplotlib"
+    echo "then run paper/scripts/plot_crossover.py against reproduce/results/."
 fi
 
 # ----------------------------------------------------------------- verdict
