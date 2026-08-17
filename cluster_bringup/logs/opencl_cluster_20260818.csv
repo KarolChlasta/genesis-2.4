@@ -1,0 +1,7 @@
+backend,node,gpu,n_neurons,n_steps,cpu_s,gpu_s,speedup,note
+OpenCL,inf02,NVIDIA A40,500,50000,0.74,0.50,1.5,3 replicates
+OpenCL,inf02,NVIDIA A40,5000,50000,5.52,0.74,7.5,3 replicates
+OpenCL,inf02,NVIDIA A40,50000,50000,53.41,2.78,19.2,3 replicates
+OpenCL,inf03,NVIDIA A100-PCIE-40GB,500,50000,0.76,0.46,1.7,3 replicates
+OpenCL,inf03,NVIDIA A100-PCIE-40GB,5000,50000,5.68,0.65,8.7,3 replicates
+OpenCL,inf03,NVIDIA A100-PCIE-40GB,50000,50000,54.99,2.70,20.4,3 replicates
